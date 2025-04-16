@@ -8,6 +8,13 @@ import Header from "@/components/Header";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -31,6 +38,7 @@ const TaskCreate = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [employees, setEmployees] = useState<Array<{ id: string; username: string }>>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
@@ -39,24 +47,32 @@ const TaskCreate = () => {
     },
   });
 
-  // Updated fetch to only get employees
+  // Updated fetch to only get employees with better error handling
   useEffect(() => {
     const fetchEmployees = async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, username")
-        .eq("role", "employee");
-      
-      if (error) {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("id, username")
+          .eq("role", "employee");
+        
+        if (error) {
+          throw error;
+        }
+        
+        console.log("Fetched employees:", data);
+        setEmployees(data || []);
+      } catch (error) {
+        console.error("Error fetching employees:", error);
         toast({
           title: "Error",
           description: "Failed to fetch employees",
           variant: "destructive",
         });
-        return;
+      } finally {
+        setIsLoading(false);
       }
-      
-      setEmployees(data || []);
     };
 
     fetchEmployees();
@@ -181,19 +197,30 @@ const TaskCreate = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Assign To</FormLabel>
-                  <FormControl>
-                    <select
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2"
-                      {...field}
-                    >
-                      <option value="">Select employee</option>
-                      {employees.map(employee => (
-                        <option key={employee.id} value={employee.id}>
-                          {employee.username}
-                        </option>
-                      ))}
-                    </select>
-                  </FormControl>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
+                    disabled={isLoading}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select employee" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {employees.length === 0 && !isLoading ? (
+                        <SelectItem value="no-employees" disabled>
+                          No employees found
+                        </SelectItem>
+                      ) : (
+                        employees.map(employee => (
+                          <SelectItem key={employee.id} value={employee.id}>
+                            {employee.username}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
