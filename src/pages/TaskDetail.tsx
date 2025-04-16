@@ -3,21 +3,60 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Task, TaskStep as TaskStepType } from "@/types";
 import { useUser } from "@/context/UserContext";
-import { getTaskById, updateTaskStatus, updateTaskStep } from "@/data/mockData";
 import Header from "@/components/Header";
 import TaskStatusBadge from "@/components/TaskStatusBadge";
 import TaskStep from "@/components/TaskStep";
 import { Clock, MapPin, AlertTriangle, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const TaskDetail = () => {
   const { taskId } = useParams<{ taskId: string }>();
-  const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
   const [allCompleted, setAllCompleted] = useState(false);
   const { userId, isAuthenticated } = useUser();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: task, error } = useQuery({
+    queryKey: ["task", taskId],
+    queryFn: async (): Promise<Task | null> => {
+      if (!taskId) throw new Error("No task ID provided");
+
+      const { data: task, error } = await supabase
+        .from("tasks")
+        .select(`
+          *,
+          steps:task_steps(*)
+        `)
+        .eq('id', taskId)
+        .single();
+
+      if (error) throw error;
+      if (!task) return null;
+
+      return {
+        id: task.id,
+        title: task.title,
+        dueTime: new Date(task.due_time).toLocaleString(),
+        location: task.location,
+        status: task.status,
+        assignedTo: task.assigned_to,
+        createdAt: task.created_at,
+        completedAt: task.completed_at,
+        steps: task.steps.map((step: any): TaskStepType => ({
+          id: step.id,
+          title: step.title,
+          isCompleted: step.is_completed,
+          requiresPhoto: step.requires_photo,
+          comment: step.comment,
+          photoUrl: step.photo_url
+        }))
+      };
+    }
+  });
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -30,105 +69,138 @@ const TaskDetail = () => {
       return;
     }
 
-    // Simulate loading data
-    const timer = setTimeout(() => {
-      const fetchedTask = getTaskById(taskId);
-      if (fetchedTask) {
-        setTask(fetchedTask);
-        setAllCompleted(fetchedTask.steps.every(step => step.isCompleted));
-      } else {
-        toast({
-          title: "Task not found",
-          description: "The requested task could not be found",
-          variant: "destructive",
-        });
-        navigate("/tasks");
-      }
+    if (task) {
+      setAllCompleted(task.steps.every(step => step.isCompleted));
       setLoading(false);
-    }, 800);
+    }
+  }, [taskId, userId, isAuthenticated, navigate, task]);
 
-    return () => clearTimeout(timer);
-  }, [taskId, userId, isAuthenticated, navigate, toast]);
-
-  const handleStepComplete = (stepId: string, isCompleted: boolean) => {
+  const handleStepComplete = async (stepId: string, isCompleted: boolean) => {
     if (!task) return;
     
-    // Update the task step in our mock data
-    updateTaskStep(task.id, stepId, isCompleted);
-    
-    // Update the local state
-    const updatedTask = {...task};
-    const stepIndex = updatedTask.steps.findIndex(s => s.id === stepId);
-    if (stepIndex !== -1) {
-      updatedTask.steps[stepIndex].isCompleted = isCompleted;
+    try {
+      // Update the task step in Supabase
+      const { error: stepError } = await supabase
+        .from('task_steps')
+        .update({ is_completed: isCompleted })
+        .eq('id', stepId);
+      
+      if (stepError) throw stepError;
+
+      // Check if all steps are completed after this update
+      const updatedSteps = task.steps.map(s => 
+        s.id === stepId ? { ...s, isCompleted } : s
+      );
+      const allStepsCompleted = updatedSteps.every(s => s.isCompleted);
+      
+      if (allStepsCompleted && task.status !== 'completed') {
+        const { error: taskError } = await supabase
+          .from('tasks')
+          .update({ 
+            status: 'completed',
+            completed_at: new Date().toISOString()
+          })
+          .eq('id', task.id);
+        
+        if (taskError) throw taskError;
+        
+        toast({
+          title: "Task Completed",
+          description: "All steps have been completed",
+        });
+        
+        setTimeout(() => {
+          navigate('/tasks');
+        }, 2000);
+      } else if (!allStepsCompleted && task.status === 'pending') {
+        const { error: taskError } = await supabase
+          .from('tasks')
+          .update({ status: 'inprogress' })
+          .eq('id', task.id);
+        
+        if (taskError) throw taskError;
+      }
+
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["task", taskId] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    } catch (error) {
+      console.error('Error updating task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update task status",
+        variant: "destructive",
+      });
     }
+  };
+  
+  const handleAddComment = async (stepId: string, comment: string) => {
+    if (!task) return;
     
-    // Check if all steps are completed
-    const allStepsCompleted = updatedTask.steps.every(s => s.isCompleted);
-    
-    // Update task status if needed
-    if (allStepsCompleted && updatedTask.status !== 'completed') {
-      updatedTask.status = 'completed';
-      updatedTask.completedAt = new Date().toISOString();
-      updateTaskStatus(task.id, 'completed');
+    try {
+      const { error } = await supabase
+        .from('task_steps')
+        .update({ comment })
+        .eq('id', stepId);
+      
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ["task", taskId] });
       
       toast({
-        title: "Task Completed",
-        description: "All steps have been completed",
+        title: "Comment saved",
+        description: "Your comment has been saved",
       });
+    } catch (error) {
+      console.error('Error saving comment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save comment",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const handleAddPhoto = async (stepId: string, photoUrl: string) => {
+    if (!task) return;
+    
+    try {
+      const { error } = await supabase
+        .from('task_steps')
+        .update({ photo_url: photoUrl })
+        .eq('id', stepId);
       
-      // Navigate back to task list after short delay
-      setTimeout(() => {
-        navigate('/tasks');
-      }, 2000);
-    } else if (!allStepsCompleted && updatedTask.status === 'pending') {
-      updatedTask.status = 'inprogress';
-      updateTaskStatus(task.id, 'inprogress');
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ["task", taskId] });
+      
+      toast({
+        title: "Photo added",
+        description: "Your photo has been uploaded",
+      });
+    } catch (error) {
+      console.error('Error saving photo:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save photo",
+        variant: "destructive",
+      });
     }
-    
-    setTask(updatedTask);
-    setAllCompleted(allStepsCompleted);
   };
-  
-  const handleAddComment = (stepId: string, comment: string) => {
-    if (!task) return;
-    
-    // Update the task step in our mock data
-    updateTaskStep(task.id, stepId, true, comment);
-    
-    // Update the local state
-    const updatedTask = {...task};
-    const stepIndex = updatedTask.steps.findIndex(s => s.id === stepId);
-    if (stepIndex !== -1) {
-      updatedTask.steps[stepIndex].comment = comment;
-    }
-    setTask(updatedTask);
-    
-    toast({
-      title: "Comment saved",
-      description: "Your comment has been saved",
-    });
-  };
-  
-  const handleAddPhoto = (stepId: string, photoUrl: string) => {
-    if (!task) return;
-    
-    // Update the task step in our mock data
-    updateTaskStep(task.id, stepId, true, undefined, photoUrl);
-    
-    // Update the local state
-    const updatedTask = {...task};
-    const stepIndex = updatedTask.steps.findIndex(s => s.id === stepId);
-    if (stepIndex !== -1) {
-      updatedTask.steps[stepIndex].photoUrl = photoUrl;
-    }
-    setTask(updatedTask);
-    
-    toast({
-      title: "Photo added",
-      description: "Your photo has been uploaded",
-    });
-  };
+
+  if (error) {
+    return (
+      <div className="h-screen flex flex-col">
+        <Header showBackButton title="Task Details" />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center text-red-600">
+            <p>Error loading task</p>
+            <p className="text-sm">{error.message}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading || !task) {
     return (
