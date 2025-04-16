@@ -8,6 +8,7 @@ export interface TaskStep {
   requiresPhoto: boolean;
   comment?: string;
   photoUrl?: string;
+  isOptional?: boolean;
 }
 
 export interface Task {
@@ -20,4 +21,5 @@ export interface Task {
   steps: TaskStep[];
   createdAt: string;
   completedAt?: string;
+  deadline?: string;
 }

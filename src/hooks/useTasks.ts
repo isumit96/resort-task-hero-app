@@ -26,13 +26,15 @@ export const useTasks = () => {
         assignedTo: task.assigned_to,
         createdAt: task.created_at,
         completedAt: task.completed_at,
+        deadline: task.deadline ? new Date(task.deadline).toLocaleString() : undefined,
         steps: task.steps.map((step: any): TaskStep => ({
           id: step.id,
           title: step.title,
           isCompleted: step.is_completed,
           requiresPhoto: step.requires_photo,
           comment: step.comment,
-          photoUrl: step.photo_url
+          photoUrl: step.photo_url,
+          isOptional: step.is_optional
         }))
       }));
     }
