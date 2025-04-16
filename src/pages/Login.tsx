@@ -9,11 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const Login = () => {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { login, signup } = useUser();
+  const { login } = useUser();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -22,19 +21,11 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      if (isLogin) {
-        await login(email, password);
-        navigate("/tasks");
-      } else {
-        await signup(email, password);
-        toast({
-          title: "Account created",
-          description: "Please check your email to verify your account",
-        });
-      }
+      await login(email, password);
+      navigate("/tasks");
     } catch (error: any) {
       toast({
-        title: isLogin ? "Login Failed" : "Signup Failed",
+        title: "Login Failed",
         description: error.message,
         variant: "destructive",
       });
@@ -53,12 +44,10 @@ const Login = () => {
             </div>
           </div>
           <h1 className="mt-6 text-2xl font-bold text-gray-900">
-            {isLogin ? "Welcome Back" : "Create Account"}
+            Welcome Back
           </h1>
           <p className="mt-2 text-gray-600">
-            {isLogin
-              ? "Sign in to access your account"
-              : "Sign up to get started"}
+            Sign in to access your account
           </p>
         </div>
 
@@ -92,25 +81,9 @@ const Login = () => {
             className="w-full"
             disabled={isLoading}
           >
-            {isLoading
-              ? "Loading..."
-              : isLogin
-              ? "Sign In"
-              : "Create Account"}
+            {isLoading ? "Loading..." : "Sign In"}
           </Button>
         </form>
-
-        <div className="mt-4 text-center">
-          <button
-            type="button"
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-sm text-blue-600 hover:underline"
-          >
-            {isLogin
-              ? "Need an account? Sign up"
-              : "Already have an account? Sign in"}
-          </button>
-        </div>
       </div>
     </div>
   );
