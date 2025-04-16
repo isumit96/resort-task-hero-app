@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -50,12 +51,18 @@ const TaskCreate = () => {
     const fetchEmployees = async () => {
       setIsLoading(true);
       try {
+        // Log what we're trying to fetch for debugging
+        console.log("Attempting to fetch employees with role=employee");
+        
         const { data, error } = await supabase
           .from("profiles")
           .select("id, username")
           .eq("role", "employee");
         
-        if (error) throw error;
+        if (error) {
+          console.error("Supabase error:", error);
+          throw error;
+        }
         
         console.log("Fetched employees:", data);
         
