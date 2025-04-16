@@ -129,6 +129,88 @@ export type Database = {
         }
         Relationships: []
       }
+      task_steps: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          id: string
+          is_completed: boolean | null
+          photo_url: string | null
+          requires_photo: boolean | null
+          task_id: string | null
+          title: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          photo_url?: string | null
+          requires_photo?: boolean | null
+          task_id?: string | null
+          title: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          photo_url?: string | null
+          requires_photo?: boolean | null
+          task_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_steps_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          assigned_to: string
+          completed_at: string | null
+          created_at: string | null
+          due_time: string
+          id: string
+          location: string
+          status: Database["public"]["Enums"]["task_status"] | null
+          title: string
+        }
+        Insert: {
+          assigned_to: string
+          completed_at?: string | null
+          created_at?: string | null
+          due_time: string
+          id?: string
+          location: string
+          status?: Database["public"]["Enums"]["task_status"] | null
+          title: string
+        }
+        Update: {
+          assigned_to?: string
+          completed_at?: string | null
+          created_at?: string | null
+          due_time?: string
+          id?: string
+          location?: string
+          status?: Database["public"]["Enums"]["task_status"] | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -137,7 +219,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      task_status: "pending" | "inprogress" | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -252,6 +334,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      task_status: ["pending", "inprogress", "completed"],
+    },
   },
 } as const

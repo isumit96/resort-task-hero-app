@@ -1,7 +1,5 @@
 
-import { useEffect, useState } from "react";
-import { Task } from "@/types";
-import { getCurrentUserTasks } from "@/data/mockData";
+import { useEffect } from "react";
 import { useUser } from "@/context/UserContext";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
@@ -9,13 +7,13 @@ import TaskCard from "@/components/TaskCard";
 import BottomNavigation from "@/components/BottomNavigation";
 import { useToast } from "@/hooks/use-toast";
 import { Loader } from "lucide-react";
+import { useTasks } from "@/hooks/useTasks";
 
 const TaskList = () => {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { userId, isAuthenticated } = useUser();
+  const { isAuthenticated } = useUser();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { data: tasks, isLoading, error } = useTasks();
   
   useEffect(() => {
     if (!isAuthenticated) {
@@ -23,32 +21,38 @@ const TaskList = () => {
       return;
     }
     
-    // Simulate loading data
-    const timer = setTimeout(() => {
-      if (userId) {
-        const userTasks = getCurrentUserTasks(userId);
-        setTasks(userTasks);
-        setLoading(false);
-        
-        // Show notification if there are tasks due soon
-        const urgentTasks = userTasks.filter(task => 
-          task.status === 'pending' && 
-          task.dueTime.includes('AM')
-        );
-        
-        if (urgentTasks.length > 0) {
-          toast({
-            title: "Tasks Due Soon",
-            description: `You have ${urgentTasks.length} tasks that need attention`,
-          });
-        }
+    // Show notification if there are tasks due soon
+    if (tasks?.length) {
+      const urgentTasks = tasks.filter(task => 
+        task.status === 'pending' && 
+        task.dueTime.includes('AM')
+      );
+      
+      if (urgentTasks.length > 0) {
+        toast({
+          title: "Tasks Due Soon",
+          description: `You have ${urgentTasks.length} tasks that need attention`,
+        });
       }
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, [userId, isAuthenticated, navigate, toast]);
+    }
+  }, [tasks, isAuthenticated, navigate, toast]);
+
+  if (error) {
+    return (
+      <div className="h-screen flex flex-col">
+        <Header title="Today's Tasks" showBackButton={false} />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center text-red-600">
+            <p>Error loading tasks</p>
+            <p className="text-sm">{error.message}</p>
+          </div>
+        </div>
+        <BottomNavigation />
+      </div>
+    );
+  }
   
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="h-screen flex flex-col">
         <Header title="Today's Tasks" showBackButton={false} />
@@ -58,9 +62,7 @@ const TaskList = () => {
             <p className="mt-2 text-gray-600">Loading tasks...</p>
           </div>
         </div>
-        <div className="h-16">
-          {/* Spacer for bottom nav */}
-        </div>
+        <div className="h-16" />
         <BottomNavigation />
       </div>
     );
@@ -71,7 +73,7 @@ const TaskList = () => {
       <Header title="Today's Tasks" showBackButton={false} />
       
       <div className="flex-1 overflow-y-auto px-4 py-4 bg-gray-50">
-        {tasks.length === 0 ? (
+        {!tasks?.length ? (
           <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
             <p className="text-lg font-medium">No tasks for today!</p>
             <p className="mt-2">Enjoy your break or check again later</p>
@@ -93,9 +95,7 @@ const TaskList = () => {
         )}
       </div>
       
-      {/* Spacer for bottom nav */}
-      <div className="h-16"></div>
-      
+      <div className="h-16" />
       <BottomNavigation />
     </div>
   );
