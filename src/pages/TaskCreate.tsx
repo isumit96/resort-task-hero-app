@@ -39,7 +39,7 @@ const TaskCreate = () => {
     },
   });
 
-  // Fetch employees on mount
+  // Updated fetch to only get employees
   useEffect(() => {
     const fetchEmployees = async () => {
       const { data, error } = await supabase
@@ -56,7 +56,7 @@ const TaskCreate = () => {
         return;
       }
       
-      setEmployees(data);
+      setEmployees(data || []);
     };
 
     fetchEmployees();
