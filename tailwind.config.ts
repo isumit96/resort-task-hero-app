@@ -52,6 +52,11 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				status: {
+					pending: '#1EAEDB',    // Blue for pending tasks
+					inprogress: '#FEF7CD', // Soft Yellow for in-progress tasks
+					completed: '#F2FCE2',  // Soft Green for completed tasks
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
