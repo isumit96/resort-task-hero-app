@@ -66,17 +66,23 @@ const TaskCreate = () => {
         
         console.log("Fetched employees:", data);
         
-        // If no employees found, let's create a fallback for testing
+        // If no employees found, let's create a fallback for testing with proper UUIDs
         if (!data || data.length === 0) {
-          // For testing - add a fallback employee
+          // Generate valid UUIDs for test employees
           setEmployees([
-            { id: 'test-employee-1', username: 'Test Employee 1' },
-            { id: 'test-employee-2', username: 'Test Employee 2' }
+            { 
+              id: '00000000-0000-4000-a000-000000000001', 
+              username: 'Test Employee 1' 
+            },
+            { 
+              id: '00000000-0000-4000-a000-000000000002', 
+              username: 'Test Employee 2' 
+            }
           ]);
           
           toast({
             title: "Notice",
-            description: "Using test employees as no actual employees found in database",
+            description: "Using test employees with valid UUIDs as no actual employees found in database",
           });
         } else {
           setEmployees(data);
@@ -89,10 +95,16 @@ const TaskCreate = () => {
           variant: "destructive",
         });
         
-        // For testing - add a fallback employee
+        // For testing - add a fallback employee with proper UUIDs
         setEmployees([
-          { id: 'test-employee-1', username: 'Test Employee 1' },
-          { id: 'test-employee-2', username: 'Test Employee 2' }
+          { 
+            id: '00000000-0000-4000-a000-000000000001', 
+            username: 'Test Employee 1' 
+          },
+          { 
+            id: '00000000-0000-4000-a000-000000000002', 
+            username: 'Test Employee 2' 
+          }
         ]);
       } finally {
         setIsLoading(false);
@@ -105,6 +117,8 @@ const TaskCreate = () => {
   const onSubmit = async (data: TaskFormData) => {
     setIsSubmitting(true);
     try {
+      console.log("Submitting task with data:", data);
+      
       // Insert task
       const { data: task, error: taskError } = await supabase
         .from("tasks")
@@ -119,7 +133,12 @@ const TaskCreate = () => {
         .select()
         .single();
 
-      if (taskError) throw taskError;
+      if (taskError) {
+        console.error("Error creating task:", taskError);
+        throw taskError;
+      }
+
+      console.log("Task created successfully:", task);
 
       // Insert steps
       const { error: stepsError } = await supabase
@@ -133,7 +152,10 @@ const TaskCreate = () => {
           }))
         );
 
-      if (stepsError) throw stepsError;
+      if (stepsError) {
+        console.error("Error creating task steps:", stepsError);
+        throw stepsError;
+      }
 
       toast({
         title: "Success",
@@ -142,6 +164,7 @@ const TaskCreate = () => {
 
       navigate("/manager");
     } catch (error) {
+      console.error("Error in task creation:", error);
       toast({
         title: "Error",
         description: "Failed to create task",
@@ -313,6 +336,20 @@ const TaskCreate = () => {
                       )}
                     />
                   </div>
+
+                  {index > 0 && (
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => {
+                        const currentSteps = form.getValues("steps");
+                        form.setValue("steps", currentSteps.filter((_, i) => i !== index));
+                      }}
+                      className="text-red-500 hover:bg-red-50 hover:text-red-600 border-red-200"
+                    >
+                      Remove Step
+                    </Button>
+                  )}
                 </div>
               ))}
 
