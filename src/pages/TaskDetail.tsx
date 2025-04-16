@@ -9,6 +9,8 @@ import TaskHeader from "@/components/TaskHeader";
 import TaskStepsList from "@/components/TaskStepsList";
 import TaskStatus from "@/components/TaskStatus";
 import { useTaskOperations } from "@/hooks/useTaskOperations";
+import LoadingState from "@/components/LoadingState";
+import ErrorState from "@/components/ErrorState";
 import type { Task } from "@/types";
 
 const TaskDetail = () => {
@@ -76,28 +78,11 @@ const TaskDetail = () => {
   }, [task?.steps, task?.status]);
 
   if (error) {
-    return (
-      <div className="h-screen flex flex-col">
-        <Header showBackButton title="Task Details" />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center text-red-600">
-            <p>Error loading task</p>
-            <p className="text-sm">{error.message}</p>
-          </div>
-        </div>
-      </div>
-    );
+    return <ErrorState error={error} title="Task Details" />;
   }
 
   if (!task) {
-    return (
-      <div className="h-screen flex flex-col">
-        <Header showBackButton title="Task Details" />
-        <div className="flex-1 flex items-center justify-center">
-          <p>Loading task details...</p>
-        </div>
-      </div>
-    );
+    return <LoadingState title="Task Details" />;
   }
 
   const completedSteps = task.steps.filter(s => s.isCompleted).length;
