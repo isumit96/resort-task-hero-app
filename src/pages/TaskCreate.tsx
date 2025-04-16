@@ -51,13 +51,11 @@ const TaskCreate = () => {
     const fetchEmployees = async () => {
       setIsLoading(true);
       try {
-        // Log what we're trying to fetch for debugging
         console.log("Attempting to fetch employees with role=employee");
         
         const { data, error } = await supabase
           .from("profiles")
-          .select("id, username")
-          .eq("role", "employee");
+          .select("id, username");
         
         if (error) {
           console.error("Supabase error:", error);
@@ -228,7 +226,7 @@ const TaskCreate = () => {
                         <SelectValue placeholder="Select employee" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="bg-white">
+                    <SelectContent className="bg-white z-50">
                       {isLoading ? (
                         <SelectItem value="loading" disabled>
                           Loading employees...
@@ -240,7 +238,7 @@ const TaskCreate = () => {
                       ) : (
                         employees.map(employee => (
                           <SelectItem key={employee.id} value={employee.id}>
-                            {employee.username}
+                            {employee.username || 'Unnamed Employee'}
                           </SelectItem>
                         ))
                       )}
