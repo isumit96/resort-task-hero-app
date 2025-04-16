@@ -55,18 +55,21 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          role: Database["public"]["Enums"]["user_role"]
           updated_at: string | null
           username: string | null
         }
         Insert: {
           created_at?: string | null
           id: string
+          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
           username?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
+          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
           username?: string | null
         }
@@ -135,6 +138,7 @@ export type Database = {
           created_at: string | null
           id: string
           is_completed: boolean | null
+          is_optional: boolean
           photo_url: string | null
           requires_photo: boolean | null
           task_id: string | null
@@ -145,6 +149,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_completed?: boolean | null
+          is_optional?: boolean
           photo_url?: string | null
           requires_photo?: boolean | null
           task_id?: string | null
@@ -155,6 +160,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_completed?: boolean | null
+          is_optional?: boolean
           photo_url?: string | null
           requires_photo?: boolean | null
           task_id?: string | null
@@ -175,6 +181,7 @@ export type Database = {
           assigned_to: string
           completed_at: string | null
           created_at: string | null
+          deadline: string | null
           due_time: string
           id: string
           location: string
@@ -185,6 +192,7 @@ export type Database = {
           assigned_to: string
           completed_at?: string | null
           created_at?: string | null
+          deadline?: string | null
           due_time: string
           id?: string
           location: string
@@ -195,6 +203,7 @@ export type Database = {
           assigned_to?: string
           completed_at?: string | null
           created_at?: string | null
+          deadline?: string | null
           due_time?: string
           id?: string
           location?: string
@@ -220,6 +229,7 @@ export type Database = {
     }
     Enums: {
       task_status: "pending" | "inprogress" | "completed"
+      user_role: "employee" | "manager"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -336,6 +346,7 @@ export const Constants = {
   public: {
     Enums: {
       task_status: ["pending", "inprogress", "completed"],
+      user_role: ["employee", "manager"],
     },
   },
 } as const

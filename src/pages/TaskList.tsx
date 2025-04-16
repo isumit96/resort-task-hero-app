@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useUser } from "@/context/UserContext";
 import { useNavigate } from "react-router-dom";
@@ -8,9 +7,11 @@ import BottomNavigation from "@/components/BottomNavigation";
 import { useToast } from "@/hooks/use-toast";
 import { Loader } from "lucide-react";
 import { useTasks } from "@/hooks/useTasks";
+import { useRole } from "@/hooks/useRole";
 
 const TaskList = () => {
   const { isAuthenticated } = useUser();
+  const { isManager } = useRole();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: tasks, isLoading, error } = useTasks();
@@ -21,6 +22,11 @@ const TaskList = () => {
       return;
     }
     
+    if (isManager) {
+      navigate("/manager");
+      return;
+    }
+
     // Show notification if there are tasks due soon
     if (tasks?.length) {
       const urgentTasks = tasks.filter(task => 
@@ -35,7 +41,7 @@ const TaskList = () => {
         });
       }
     }
-  }, [tasks, isAuthenticated, navigate, toast]);
+  }, [tasks, isAuthenticated, isManager, navigate, toast]);
 
   if (error) {
     return (
