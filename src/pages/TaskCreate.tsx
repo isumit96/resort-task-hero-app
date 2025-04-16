@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,7 +40,7 @@ const TaskCreate = () => {
   });
 
   // Fetch employees on mount
-  useState(() => {
+  useEffect(() => {
     const fetchEmployees = async () => {
       const { data, error } = await supabase
         .from("profiles")
