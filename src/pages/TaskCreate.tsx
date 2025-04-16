@@ -47,11 +47,14 @@ const TaskCreate = () => {
     },
   });
 
-  // Updated fetch to only get employees with better error handling
+  // Improved employee fetch function with better debugging
   useEffect(() => {
     const fetchEmployees = async () => {
       setIsLoading(true);
       try {
+        // For testing, let's add a manual delay to ensure data loading state is handled correctly
+        // await new Promise(resolve => setTimeout(resolve, 1000));
+        
         const { data, error } = await supabase
           .from("profiles")
           .select("id, username")
@@ -62,7 +65,22 @@ const TaskCreate = () => {
         }
         
         console.log("Fetched employees:", data);
-        setEmployees(data || []);
+        
+        // If no employees found, let's create a fallback for testing
+        if (!data || data.length === 0) {
+          // For testing - add a fallback employee
+          setEmployees([
+            { id: 'test-employee-1', username: 'Test Employee 1' },
+            { id: 'test-employee-2', username: 'Test Employee 2' }
+          ]);
+          
+          toast({
+            title: "Notice",
+            description: "Using test employees as no actual employees found in database",
+          });
+        } else {
+          setEmployees(data);
+        }
       } catch (error) {
         console.error("Error fetching employees:", error);
         toast({
@@ -70,6 +88,12 @@ const TaskCreate = () => {
           description: "Failed to fetch employees",
           variant: "destructive",
         });
+        
+        // For testing - add a fallback employee
+        setEmployees([
+          { id: 'test-employee-1', username: 'Test Employee 1' },
+          { id: 'test-employee-2', username: 'Test Employee 2' }
+        ]);
       } finally {
         setIsLoading(false);
       }
@@ -149,6 +173,7 @@ const TaskCreate = () => {
               )}
             />
 
+            {/* Location field */}
             <FormField
               control={form.control}
               name="location"
@@ -163,6 +188,7 @@ const TaskCreate = () => {
               )}
             />
 
+            {/* Due time field */}
             <FormField
               control={form.control}
               name="dueTime"
@@ -177,6 +203,7 @@ const TaskCreate = () => {
               )}
             />
 
+            {/* Deadline field */}
             <FormField
               control={form.control}
               name="deadline"
@@ -191,6 +218,7 @@ const TaskCreate = () => {
               )}
             />
 
+            {/* Assign To field with improved handling */}
             <FormField
               control={form.control}
               name="assignedTo"
@@ -203,12 +231,16 @@ const TaskCreate = () => {
                     disabled={isLoading}
                   >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select employee" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
-                      {employees.length === 0 && !isLoading ? (
+                    <SelectContent className="bg-white">
+                      {isLoading ? (
+                        <SelectItem value="loading" disabled>
+                          Loading employees...
+                        </SelectItem>
+                      ) : employees.length === 0 ? (
                         <SelectItem value="no-employees" disabled>
                           No employees found
                         </SelectItem>
