@@ -2,36 +2,45 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
-import { authenticateUser } from "@/data/mockData";
 import { Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const Login = () => {
-  const [credential, setCredential] = useState("");
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useUser();
+  const { login, signup } = useUser();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // Simulate network delay
-    setTimeout(() => {
-      const userId = authenticateUser(credential);
-      if (userId) {
-        login(userId);
+
+    try {
+      if (isLogin) {
+        await login(email, password);
         navigate("/tasks");
       } else {
+        await signup(email, password);
         toast({
-          title: "Login Failed",
-          description: "Invalid employee code or phone number",
-          variant: "destructive",
+          title: "Account created",
+          description: "Please check your email to verify your account",
         });
       }
+    } catch (error: any) {
+      toast({
+        title: isLogin ? "Login Failed" : "Signup Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -43,43 +52,64 @@ const Login = () => {
               <Lock size={40} className="text-blue-600" />
             </div>
           </div>
-          <h1 className="mt-6 text-2xl font-bold text-gray-900">Resort Staff Login</h1>
+          <h1 className="mt-6 text-2xl font-bold text-gray-900">
+            {isLogin ? "Welcome Back" : "Create Account"}
+          </h1>
           <p className="mt-2 text-gray-600">
-            Enter your employee code or phone number to access your tasks
+            {isLogin
+              ? "Sign in to access your account"
+              : "Sign up to get started"}
           </p>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="credential" className="block text-sm font-medium text-gray-700">
-              Employee Code or Phone Number
-            </label>
-            <input
-              id="credential"
-              type="text"
-              value={credential}
-              onChange={(e) => setCredential(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-3 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 text-lg"
-              placeholder="123456 or +1234567890"
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
               required
             />
           </div>
-          
-          <button
+
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+            />
+          </div>
+
+          <Button
             type="submit"
-            className={`w-full flex justify-center rounded-md border border-transparent px-4 py-3 text-base font-medium text-white shadow-sm ${
-              isLoading
-                ? "bg-blue-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700"
-            }`}
+            className="w-full"
             disabled={isLoading}
           >
-            {isLoading ? "Logging in..." : "Log In"}
-          </button>
+            {isLoading
+              ? "Loading..."
+              : isLogin
+              ? "Sign In"
+              : "Create Account"}
+          </Button>
         </form>
-        
-        <div className="mt-8 text-center text-sm text-gray-600">
-          <p>For demo purposes, enter any value to login</p>
+
+        <div className="mt-4 text-center">
+          <button
+            type="button"
+            onClick={() => setIsLogin(!isLogin)}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            {isLogin
+              ? "Need an account? Sign up"
+              : "Already have an account? Sign in"}
+          </button>
         </div>
       </div>
     </div>
