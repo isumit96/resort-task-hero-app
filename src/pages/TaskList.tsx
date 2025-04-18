@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useUser } from "@/context/UserContext";
 import { useNavigate } from "react-router-dom";
@@ -33,6 +32,35 @@ const TaskList = () => {
     navigate("/tasks/create");
   };
 
+  // Helper function to parse dates
+  const parseDate = (dateString: string | undefined): Date | null => {
+    if (!dateString) return null;
+    
+    try {
+      return new Date(dateString);
+    } catch (e) {
+      console.error("Error parsing date:", e);
+      return null;
+    }
+  };
+  
+  // Split tasks logic
+  const now = new Date();
+  const taskArray = Array.isArray(tasks) ? tasks : [];
+  
+  const activeTasks = taskArray.filter(task => task.status !== 'completed') || [];
+  const completedTasks = taskArray.filter(task => task.status === 'completed') || [];
+  
+  const overdueTasks = activeTasks.filter(task => {
+    const deadlineDate = parseDate(task.deadline);
+    return deadlineDate !== null && deadlineDate < now;
+  });
+
+  const upcomingTasks = activeTasks.filter(task => {
+    const deadlineDate = parseDate(task.deadline);
+    return deadlineDate === null || deadlineDate >= now;
+  });
+
   if (error) {
     return (
       <div className="h-screen flex flex-col bg-gray-50">
@@ -63,42 +91,6 @@ const TaskList = () => {
       </div>
     );
   }
-
-  // Filter tasks into different categories
-  const now = new Date();
-  
-  console.log("Filtering tasks. Current tasks array:", tasks);
-  console.log("Current date for comparison:", now);
-  
-  // Make sure tasks is an array before filtering
-  const taskArray = Array.isArray(tasks) ? tasks : [];
-  
-  // Updated logic to filter active vs completed tasks
-  const activeTasks = taskArray.filter(task => task.status !== 'completed') || [];
-  const completedTasks = taskArray.filter(task => task.status === 'completed') || [];
-  
-  // Helper function to safely parse dates
-  const parseDate = (dateString: string | undefined): Date | null => {
-    if (!dateString) return null;
-    
-    try {
-      return new Date(dateString);
-    } catch (e) {
-      console.error("Error parsing date:", e);
-      return null;
-    }
-  };
-  
-  // Split active tasks into overdue and upcoming
-  const overdueTasks = activeTasks.filter(task => {
-    const deadlineDate = parseDate(task.deadline);
-    return deadlineDate !== null && deadlineDate < now;
-  });
-
-  const upcomingTasks = activeTasks.filter(task => {
-    const deadlineDate = parseDate(task.deadline);
-    return deadlineDate === null || deadlineDate >= now;
-  });
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
