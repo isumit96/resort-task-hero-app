@@ -1,14 +1,17 @@
+
 import { useEffect } from "react";
 import { useUser } from "@/context/UserContext";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
-import { Loader, Plus } from "lucide-react";
+import { Loader, Plus, CalendarClock, Clock, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useTasks } from "@/hooks/useTasks";
 import { Button } from "@/components/ui/button";
 import TaskCard from "@/components/TaskCard";
 import { useRole } from "@/hooks/useRole";
 import { formatDistanceToNow } from "date-fns";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 const TaskList = () => {
   const { user, isAuthenticated } = useUser();
@@ -59,14 +62,35 @@ const TaskList = () => {
     return deadlineDate === null || deadlineDate >= now;
   });
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
   if (error) {
     return (
-      <div className="h-screen flex flex-col bg-gray-50">
+      <div className="min-h-screen flex flex-col bg-background">
         <Header showBackButton={false} />
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-center text-red-600">
-            <p>Error loading tasks</p>
-            <p className="text-sm">{error.message}</p>
+          <div className="text-center p-4 max-w-md">
+            <div className="mb-4 bg-red-100 dark:bg-red-900/30 rounded-full w-16 h-16 flex items-center justify-center mx-auto">
+              <AlertTriangle className="h-8 w-8 text-red-600 dark:text-red-400" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Error Loading Tasks</h2>
+            <p className="text-muted-foreground mb-4">{error.message}</p>
+            <Button onClick={() => window.location.reload()}>
+              Try Again
+            </Button>
           </div>
         </div>
         <BottomNavigation />
@@ -76,12 +100,12 @@ const TaskList = () => {
   
   if (isLoading) {
     return (
-      <div className="h-screen flex flex-col bg-gray-50">
+      <div className="min-h-screen flex flex-col bg-background">
         <Header showBackButton={false} />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <Loader className="mx-auto h-8 w-8 animate-spin text-gray-400" />
-            <p className="mt-2 text-gray-600">Loading tasks...</p>
+            <Loader className="mx-auto h-10 w-10 animate-spin text-primary" />
+            <p className="mt-4 text-muted-foreground">Loading your tasks...</p>
           </div>
         </div>
         <div className="h-16" />
@@ -91,15 +115,16 @@ const TaskList = () => {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-background">
       <Header showBackButton={false} />
       
-      <div className="flex-1 overflow-y-auto px-4 py-4 pb-20">
+      <div className="flex-1 overflow-y-auto px-4 py-6 pb-20 max-w-2xl mx-auto w-full">
         {isManager && (
-          <div className="mb-6">
+          <div className="mb-8">
             <Button 
               onClick={handleCreateTask}
-              className="w-full bg-blue-600 hover:bg-blue-700"
+              className="w-full bg-primary hover:bg-primary/90 shadow-lg hover:shadow-primary/25 transition-all duration-300"
+              size="lg"
             >
               <Plus className="h-4 w-4 mr-2" />
               Create New Task
@@ -108,52 +133,68 @@ const TaskList = () => {
         )}
 
         {(!activeTasks.length) ? (
-          <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
-            <p className="text-lg font-medium">No tasks for today!</p>
-            <p className="mt-2">Enjoy your break or check again later</p>
+          <div className="flex flex-col items-center justify-center h-64 text-center">
+            <div className="bg-primary/10 p-5 rounded-full mb-4">
+              <CheckCircle2 size={40} className="text-primary" />
+            </div>
+            <p className="text-xl font-medium text-foreground">All caught up!</p>
+            <p className="mt-2 text-muted-foreground max-w-xs">
+              You've completed all your tasks. Check back later or enjoy your break!
+            </p>
           </div>
         ) : (
-          <div className="space-y-6">
-            {overdueTasks.length > 0 && (
-              <div>
-                <div className="flex items-center mb-3">
-                  <h2 className="text-base font-semibold">Overdue Tasks</h2>
-                  <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs font-medium rounded-full">
-                    {overdueTasks.length}
-                  </span>
+          <AnimatePresence>
+            <motion.div 
+              className="space-y-6"
+              variants={container}
+              initial="hidden"
+              animate="show"
+            >
+              {overdueTasks.length > 0 && (
+                <div>
+                  <div className="flex items-center mb-4">
+                    <CalendarClock size={20} className="text-destructive mr-2" />
+                    <h2 className="text-lg font-semibold text-foreground">Overdue Tasks</h2>
+                    <span className="ml-2 px-2 py-0.5 bg-destructive/10 text-destructive text-xs font-medium rounded-full">
+                      {overdueTasks.length}
+                    </span>
+                  </div>
+                  <motion.div className="space-y-3" variants={container}>
+                    {overdueTasks.map(task => (
+                      <motion.div key={task.id} variants={item}>
+                        <TaskCard 
+                          task={task} 
+                          showAssignee={isManager}
+                        />
+                      </motion.div>
+                    ))}
+                  </motion.div>
                 </div>
-                <div className="space-y-3">
-                  {overdueTasks.map(task => (
-                    <TaskCard 
-                      key={task.id} 
-                      task={task} 
-                      showAssignee={isManager}
-                    />
-                  ))}
+              )}
+              
+              {upcomingTasks.length > 0 && (
+                <div>
+                  <div className="flex items-center mb-4">
+                    <Clock size={20} className="text-primary mr-2" />
+                    <h2 className="text-lg font-semibold text-foreground">Upcoming Tasks</h2>
+                    <span className="ml-2 px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded-full">
+                      {upcomingTasks.length}
+                    </span>
+                  </div>
+                  <motion.div className="space-y-3" variants={container}>
+                    {upcomingTasks.map(task => (
+                      <motion.div key={task.id} variants={item}>
+                        <TaskCard 
+                          task={task}
+                          showAssignee={isManager}
+                        />
+                      </motion.div>
+                    ))}
+                  </motion.div>
                 </div>
-              </div>
-            )}
-            
-            {upcomingTasks.length > 0 && (
-              <div>
-                <div className="flex items-center mb-3">
-                  <h2 className="text-base font-semibold">Upcoming tasks</h2>
-                  <span className="ml-2 px-2 py-0.5 bg-gray-200 text-gray-800 text-xs font-medium rounded-full">
-                    {upcomingTasks.length}
-                  </span>
-                </div>
-                <div className="space-y-3">
-                  {upcomingTasks.map(task => (
-                    <TaskCard 
-                      key={task.id} 
-                      task={task}
-                      showAssignee={isManager}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
         )}
       </div>
       

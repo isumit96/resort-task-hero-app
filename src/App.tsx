@@ -27,8 +27,16 @@ const queryClient = new QueryClient({
 
 // Protected route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated } = useUser();
+  const { isAuthenticated, isLoading } = useUser();
   const location = useLocation();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     // Redirect to login but remember where the user was trying to go
@@ -59,9 +67,11 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <UserProvider>
       <BrowserRouter>
-        <Toaster />
-        <Sonner />
-        <AppRoutes />
+        <div className="bg-background min-h-screen text-foreground">
+          <Toaster />
+          <Sonner />
+          <AppRoutes />
+        </div>
       </BrowserRouter>
     </UserProvider>
   </QueryClientProvider>

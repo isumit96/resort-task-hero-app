@@ -1,6 +1,9 @@
-import { ArrowLeft, Settings } from "lucide-react";
+
+import { ArrowLeft, Settings, Menu } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 interface HeaderProps {
   title?: string;
@@ -12,6 +15,7 @@ const Header = ({ title, showBackButton = false, showSettings = true }: HeaderPr
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useUser();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleBack = () => {
     navigate(-1);
@@ -41,30 +45,53 @@ const Header = ({ title, showBackButton = false, showSettings = true }: HeaderPr
     }
   };
 
+  const isTasksPage = location.pathname === "/tasks";
+  const paths = location.pathname.split('/').filter(Boolean);
+
   return (
-    <header className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
-      <div className="px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center">
+    <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-md shadow-sm border-b border-border/40">
+      <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
           {showBackButton && (
             <button 
               onClick={handleBack}
-              className="mr-3 p-1 rounded-full hover:bg-gray-100"
+              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Go back"
             >
-              <ArrowLeft size={24} />
+              <ArrowLeft className="h-5 w-5 text-gray-700 dark:text-gray-300" />
             </button>
           )}
-          <h1 className="text-xl font-semibold">{getPageTitle()}</h1>
+          
+          <div>
+            <h1 className="font-semibold text-xl text-foreground">{getPageTitle()}</h1>
+            {paths.length > 1 && (
+              <div className="hidden md:flex text-sm text-muted-foreground space-x-1 mt-0.5">
+                {paths.map((path, i) => (
+                  <div key={i} className="flex items-center">
+                    {i > 0 && <span className="mx-1 text-muted-foreground/60">/</span>}
+                    <span className={cn(
+                      i === paths.length - 1 ? "font-medium text-accent-foreground" : "text-muted-foreground"
+                    )}>
+                      {path.charAt(0).toUpperCase() + path.slice(1)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         
-        {showSettings && location.pathname === "/tasks" && (
-          <button 
-            onClick={handleSettings}
-            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600"
-            aria-label="Settings"
-          >
-            <Settings size={20} />
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          {showSettings && isTasksPage && (
+            <button 
+              onClick={handleSettings}
+              className="p-2 rounded-full bg-secondary hover:bg-secondary/80 text-secondary-foreground transition-colors"
+              aria-label="Settings"
+            >
+              <Settings size={20} />
+            </button>
+          )}
+        </div>
       </div>
     </header>
   );
