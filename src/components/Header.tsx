@@ -1,7 +1,6 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Settings } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
-import { Settings } from "lucide-react";
 
 interface HeaderProps {
   title?: string;
@@ -54,15 +53,7 @@ const Header = ({ title, showBackButton = false, showSettings = true }: HeaderPr
               <ArrowLeft size={24} />
             </button>
           )}
-          {location.pathname === "/tasks" && user && (
-            <div>
-              <h1 className="text-xl font-semibold">Hello, {user.email?.split('@')[0] || "User"}</h1>
-              <p className="text-sm text-gray-500">{new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long' })}, {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric' })}</p>
-            </div>
-          )}
-          {location.pathname !== "/tasks" && (
-            <h1 className="text-xl font-semibold">{getPageTitle()}</h1>
-          )}
+          <h1 className="text-xl font-semibold">{getPageTitle()}</h1>
         </div>
         
         {showSettings && location.pathname === "/tasks" && (

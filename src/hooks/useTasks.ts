@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Task, TaskStep } from "@/types";
+import type { Task } from "@/types";
 import { useUser } from "@/context/UserContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -56,7 +56,7 @@ export const useTasks = (isManager: boolean = false) => {
         createdAt: task.created_at,
         completedAt: task.completed_at,
         deadline: task.deadline,
-        steps: (task.steps || []).map((step: any): TaskStep => ({
+        steps: (task.steps || []).map((step: any) => ({
           id: step.id,
           title: step.title,
           isCompleted: step.is_completed,
