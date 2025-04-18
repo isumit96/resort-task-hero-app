@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -53,19 +52,7 @@ const TaskCreate = () => {
       try {
         console.log("Attempting to fetch employees");
         
-        // First, let's debug database connection by checking schema and tables
-        const { data: tables, error: tablesError } = await supabase
-          .from('pg_catalog.pg_tables')
-          .select('schemaname, tablename')
-          .eq('schemaname', 'public');
-          
-        if (tablesError) {
-          console.error("Error checking tables:", tablesError);
-        } else {
-          console.log("Available tables:", tables);
-        }
-        
-        // Now check how many profiles exist using a direct count
+        // Check how many profiles exist using a direct count
         const { count, error: countError } = await supabase
           .from("profiles")
           .select('*', { count: 'exact', head: true });
@@ -76,7 +63,8 @@ const TaskCreate = () => {
           console.log("Total profiles count:", count);
         }
         
-        // Now fetch ALL profiles with no filters
+        // The key query - fetch ALL profiles without any filters
+        // Using .from("profiles") and not applying any filters should return all profiles
         const { data: allProfiles, error: profilesError } = await supabase
           .from("profiles")
           .select("id, username, role");
