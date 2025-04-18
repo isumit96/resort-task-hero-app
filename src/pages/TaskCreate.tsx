@@ -51,7 +51,7 @@ const TaskCreate = () => {
     const fetchEmployees = async () => {
       setIsLoading(true);
       try {
-        console.log("Attempting to fetch employees with role=employee");
+        console.log("Attempting to fetch employees");
         
         const { data, error } = await supabase
           .from("profiles")
@@ -62,7 +62,8 @@ const TaskCreate = () => {
           throw error;
         }
         
-        console.log("Fetched employees:", data);
+        console.log("Fetched employees raw data:", data);
+        console.log("Number of fetched employees:", data?.length);
         
         if (!data || data.length === 0) {
           toast({
