@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
 import { Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -13,10 +13,14 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { login, signup } = useUser();
+  const { login, signup, isAuthenticated } = useUser();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
+  // Get the redirect location from state, or default to /tasks
+  const from = location.state?.from?.pathname || "/tasks";
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -24,7 +28,7 @@ const Login = () => {
     try {
       if (isLogin) {
         await login(email, password);
-        navigate("/tasks");
+        navigate(from, { replace: true });
       } else {
         await signup(email, password);
         toast({
@@ -42,6 +46,12 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+
+  // If already authenticated, redirect to tasks
+  if (isAuthenticated) {
+    navigate("/tasks", { replace: true });
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex flex-col justify-center px-6">
