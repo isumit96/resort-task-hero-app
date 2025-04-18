@@ -87,6 +87,8 @@ export type Database = {
           features: string | null
           id: number
           ideal_for: string | null
+          "interior-photo": string | null
+          "interior-photo-2": string | null
           inventory: string | null
           occupancy: string | null
           photo: string | null
@@ -105,6 +107,8 @@ export type Database = {
           features?: string | null
           id: number
           ideal_for?: string | null
+          "interior-photo"?: string | null
+          "interior-photo-2"?: string | null
           inventory?: string | null
           occupancy?: string | null
           photo?: string | null
@@ -123,6 +127,8 @@ export type Database = {
           features?: string | null
           id?: number
           ideal_for?: string | null
+          "interior-photo"?: string | null
+          "interior-photo-2"?: string | null
           inventory?: string | null
           occupancy?: string | null
           photo?: string | null

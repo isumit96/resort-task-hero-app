@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -7,15 +8,24 @@ import Header from "@/components/Header";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { 
+import { Calendar } from "@/components/ui/calendar";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { format } from "date-fns";
+import { CalendarIcon, Clock } from "lucide-react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { cn } from "@/lib/utils";
 
 const taskSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -38,6 +48,8 @@ const TaskCreate = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [employees, setEmployees] = useState<Array<{ id: string; username: string; role: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [selectedTime, setSelectedTime] = useState<string>("");
 
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
@@ -167,9 +179,17 @@ const TaskCreate = () => {
     }
   };
 
+  // Generate time options in 30-minute intervals
+  const timeOptions = Array.from({ length: 48 }, (_, i) => {
+    const hour = Math.floor(i / 2);
+    const minute = (i % 2) * 30;
+    const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+    return time;
+  });
+
   return (
     <div className="h-screen flex flex-col">
-      <Header title="Create Task" />
+      <Header title="Create Task" showBackButton={true} />
       
       <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
         <Form {...form}>
@@ -208,9 +228,48 @@ const TaskCreate = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Due Time</FormLabel>
-                  <FormControl>
-                    <Input type="datetime-local" {...field} />
-                  </FormControl>
+                  <div className="flex gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "justify-start text-left font-normal",
+                            !selectedDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={setSelectedDate}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+
+                    <Select 
+                      value={selectedTime} 
+                      onValueChange={setSelectedTime}
+                    >
+                      <SelectTrigger className="w-[140px]">
+                        <Clock className="mr-2 h-4 w-4" />
+                        {selectedTime || "Select time"}
+                      </SelectTrigger>
+                      <SelectContent>
+                        {timeOptions.map((time) => (
+                          <SelectItem key={time} value={time}>
+                            {time}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -222,9 +281,45 @@ const TaskCreate = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Deadline (Optional)</FormLabel>
-                  <FormControl>
-                    <Input type="datetime-local" {...field} />
-                  </FormControl>
+                  <div className="flex gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "justify-start text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {field.value ? format(new Date(field.value), "PPP") : <span>Pick a date</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value ? new Date(field.value) : undefined}
+                          onSelect={field.onChange}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+
+                    <Select>
+                      <SelectTrigger className="w-[140px]">
+                        <Clock className="mr-2 h-4 w-4" />
+                        Select time
+                      </SelectTrigger>
+                      <SelectContent>
+                        {timeOptions.map((time) => (
+                          <SelectItem key={time} value={time}>
+                            {time}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -256,14 +351,11 @@ const TaskCreate = () => {
                           No employees found
                         </SelectItem>
                       ) : (
-                        employees.map((employee, index) => {
-                          console.log(`Rendering employee ${index}:`, employee);
-                          return (
-                            <SelectItem key={employee.id} value={employee.id}>
-                              {employee.username || 'Unnamed'} ({employee.role})
-                            </SelectItem>
-                          );
-                        })
+                        employees.map((employee) => (
+                          <SelectItem key={employee.id} value={employee.id}>
+                            {employee.username || 'Unnamed'} ({employee.role})
+                          </SelectItem>
+                        ))
                       )}
                     </SelectContent>
                   </Select>
@@ -359,18 +451,13 @@ const TaskCreate = () => {
               </Button>
             </div>
 
-            <div className="flex justify-end gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate("/manager")}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create Task"}
-              </Button>
-            </div>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="w-full px-4"
+            >
+              {isSubmitting ? "Creating..." : "Create Task"}
+            </Button>
           </form>
         </Form>
       </div>
