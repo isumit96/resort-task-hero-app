@@ -51,6 +51,24 @@ export type Database = {
         }
         Relationships: []
       }
+      locations: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -143,6 +161,9 @@ export type Database = {
           comment: string | null
           created_at: string | null
           id: string
+          interaction_type:
+            | Database["public"]["Enums"]["step_interaction_type"]
+            | null
           is_completed: boolean | null
           is_optional: boolean
           photo_url: string | null
@@ -154,6 +175,9 @@ export type Database = {
           comment?: string | null
           created_at?: string | null
           id?: string
+          interaction_type?:
+            | Database["public"]["Enums"]["step_interaction_type"]
+            | null
           is_completed?: boolean | null
           is_optional?: boolean
           photo_url?: string | null
@@ -165,6 +189,9 @@ export type Database = {
           comment?: string | null
           created_at?: string | null
           id?: string
+          interaction_type?:
+            | Database["public"]["Enums"]["step_interaction_type"]
+            | null
           is_completed?: boolean | null
           is_optional?: boolean
           photo_url?: string | null
@@ -182,39 +209,83 @@ export type Database = {
           },
         ]
       }
+      task_templates: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          location: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          location?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          location?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           assigned_to: string
           completed_at: string | null
           created_at: string | null
           deadline: string | null
+          description: string | null
           due_time: string
           id: string
           location: string
+          photo_url: string | null
           status: Database["public"]["Enums"]["task_status"] | null
           title: string
+          video_url: string | null
         }
         Insert: {
           assigned_to: string
           completed_at?: string | null
           created_at?: string | null
           deadline?: string | null
+          description?: string | null
           due_time: string
           id?: string
           location: string
+          photo_url?: string | null
           status?: Database["public"]["Enums"]["task_status"] | null
           title: string
+          video_url?: string | null
         }
         Update: {
           assigned_to?: string
           completed_at?: string | null
           created_at?: string | null
           deadline?: string | null
+          description?: string | null
           due_time?: string
           id?: string
           location?: string
+          photo_url?: string | null
           status?: Database["public"]["Enums"]["task_status"] | null
           title?: string
+          video_url?: string | null
         }
         Relationships: [
           {
@@ -222,6 +293,50 @@ export type Database = {
             columns: ["assigned_to"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      template_steps: {
+        Row: {
+          id: string
+          interaction_type:
+            | Database["public"]["Enums"]["step_interaction_type"]
+            | null
+          is_optional: boolean | null
+          position: number
+          requires_photo: boolean | null
+          template_id: string | null
+          title: string
+        }
+        Insert: {
+          id?: string
+          interaction_type?:
+            | Database["public"]["Enums"]["step_interaction_type"]
+            | null
+          is_optional?: boolean | null
+          position: number
+          requires_photo?: boolean | null
+          template_id?: string | null
+          title: string
+        }
+        Update: {
+          id?: string
+          interaction_type?:
+            | Database["public"]["Enums"]["step_interaction_type"]
+            | null
+          is_optional?: boolean | null
+          position?: number
+          requires_photo?: boolean | null
+          template_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_steps_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "task_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -234,6 +349,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      step_interaction_type: "checkbox" | "yes_no"
       task_status: "pending" | "inprogress" | "completed"
       user_role: "employee" | "manager"
     }
@@ -351,6 +467,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      step_interaction_type: ["checkbox", "yes_no"],
       task_status: ["pending", "inprogress", "completed"],
       user_role: ["employee", "manager"],
     },

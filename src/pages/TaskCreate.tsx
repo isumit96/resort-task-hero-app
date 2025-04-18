@@ -4,27 +4,16 @@ import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { format } from "date-fns";
-import { CalendarIcon, Clock } from "lucide-react";
-import { z } from "zod";
+import { format, formatRelative } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { cn } from "@/lib/utils";
+import TaskDescription from "@/components/TaskDescription";
+import LocationSelect from "@/components/LocationSelect";
+import TaskStepInput from "@/components/TaskStepInput";
+import { SaveAll } from "lucide-react";
 
 const taskSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -36,7 +25,9 @@ const taskSchema = z.object({
     title: z.string().min(1, "Step title is required"),
     requiresPhoto: z.boolean().default(false),
     isOptional: z.boolean().default(false),
+    interactionType: z.string().default('checkbox')
   })).min(1, "At least one step is required"),
+  description: z.string().optional(),
 });
 
 type TaskFormData = z.infer<typeof taskSchema>;
@@ -45,15 +36,22 @@ const TaskCreate = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [employees, setEmployees] = useState<Array<{ id: string; username: string; role: string }>>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedTime, setSelectedTime] = useState<string>("");
+  const [photoUrl, setPhotoUrl] = useState<string>();
+  const [videoUrl, setVideoUrl] = useState<string>();
 
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
-      steps: [{ title: "", requiresPhoto: false, isOptional: false }],
+      description: "",
+      steps: [{ 
+        title: "", 
+        requiresPhoto: false, 
+        isOptional: false,
+        interactionType: 'checkbox' 
+      }],
     },
   });
 
@@ -63,7 +61,6 @@ const TaskCreate = () => {
       try {
         console.log("Attempting to fetch employees");
         
-        // Check how many profiles exist using a direct count
         const { count, error: countError } = await supabase
           .from("profiles")
           .select('*', { count: 'exact', head: true });
@@ -74,7 +71,6 @@ const TaskCreate = () => {
           console.log("Total profiles count:", count);
         }
         
-        // The key query - fetch ALL profiles without any filters
         const { data: allProfiles, error: profilesError } = await supabase
           .from("profiles")
           .select("id, username, role");
@@ -88,7 +84,6 @@ const TaskCreate = () => {
         console.log("Number of profiles fetched:", allProfiles?.length || 0);
         
         if (allProfiles && allProfiles.length > 0) {
-          // Convert the Supabase result to the expected array type with proper type casting
           const formattedProfiles = allProfiles.map((profile: any) => ({
             id: profile.id,
             username: profile.username || '',
@@ -120,6 +115,96 @@ const TaskCreate = () => {
     fetchEmployees();
   }, [toast]);
 
+  const handlePhotoUpload = async (file: File) => {
+    const { data, error } = await supabase.storage
+      .from('task-attachments')
+      .upload(`photos/${Date.now()}-${file.name}`, file);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to upload photo",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('task-attachments')
+      .getPublicUrl(data.path);
+
+    setPhotoUrl(publicUrl);
+  };
+
+  const handleVideoUpload = async (file: File) => {
+    const { data, error } = await supabase.storage
+      .from('task-attachments')
+      .upload(`videos/${Date.now()}-${file.name}`, file);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to upload video",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('task-attachments')
+      .getPublicUrl(data.path);
+
+    setVideoUrl(publicUrl);
+  };
+
+  const saveAsTemplate = async (data: TaskFormData) => {
+    try {
+      setIsSavingTemplate(true);
+      
+      const { data: template, error: templateError } = await supabase
+        .from('task_templates')
+        .insert({
+          title: data.title,
+          description: data.description,
+          location: data.location,
+        })
+        .select()
+        .single();
+
+      if (templateError) throw templateError;
+
+      const templateSteps = data.steps.map((step, index) => ({
+        template_id: template.id,
+        title: step.title,
+        requires_photo: step.requiresPhoto,
+        is_optional: step.isOptional,
+        interaction_type: step.interactionType,
+        position: index,
+      }));
+
+      const { error: stepsError } = await supabase
+        .from('template_steps')
+        .insert(templateSteps);
+
+      if (stepsError) throw stepsError;
+
+      toast({
+        title: "Success",
+        description: "Task template saved successfully",
+      });
+
+    } catch (error) {
+      console.error("Error saving template:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save template",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingTemplate(false);
+    }
+  };
+
   const onSubmit = async (data: TaskFormData) => {
     setIsSubmitting(true);
     try {
@@ -129,10 +214,13 @@ const TaskCreate = () => {
         .from("tasks")
         .insert({
           title: data.title,
+          description: data.description,
           location: data.location,
           due_time: data.dueTime,
           assigned_to: data.assignedTo,
           deadline: data.deadline || null,
+          photo_url: photoUrl,
+          video_url: videoUrl,
           status: "pending",
         })
         .select()
@@ -179,7 +267,6 @@ const TaskCreate = () => {
     }
   };
 
-  // Generate time options in 30-minute intervals
   const timeOptions = Array.from({ length: 48 }, (_, i) => {
     const hour = Math.floor(i / 2);
     const minute = (i % 2) * 30;
@@ -188,10 +275,10 @@ const TaskCreate = () => {
   });
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col dark:bg-background">
       <Header title="Create Task" showBackButton={true} />
       
-      <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+      <div className="flex-1 overflow-y-auto p-4 space-y-6 max-w-3xl mx-auto w-full">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
@@ -215,7 +302,7 @@ const TaskCreate = () => {
                 <FormItem>
                   <FormLabel>Location</FormLabel>
                   <FormControl>
-                    <Input placeholder="Task location" {...field} />
+                    <LocationSelect value={field.value} onChange={field.onChange} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -364,75 +451,44 @@ const TaskCreate = () => {
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <TaskDescription
+                    description={field.value}
+                    onDescriptionChange={field.onChange}
+                    onPhotoUpload={handlePhotoUpload}
+                    onVideoUpload={handleVideoUpload}
+                    photoUrl={photoUrl}
+                    videoUrl={videoUrl}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="space-y-4">
               <h3 className="font-medium">Steps</h3>
               {form.watch("steps").map((_, index) => (
                 <div key={index} className="space-y-4 p-4 border rounded-lg">
                   <FormField
                     control={form.control}
-                    name={`steps.${index}.title`}
+                    name={`steps.${index}`}
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Step Title</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Step description" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                      <TaskStepInput
+                        title={field.value.title}
+                        onTitleChange={(value) => form.setValue(`steps.${index}.title`, value)}
+                        requiresPhoto={field.value.requiresPhoto}
+                        onRequiresPhotoChange={(value) => form.setValue(`steps.${index}.requiresPhoto`, value)}
+                        isOptional={field.value.isOptional}
+                        onIsOptionalChange={(value) => form.setValue(`steps.${index}.isOptional`, value)}
+                        interactionType={field.value.interactionType}
+                        onInteractionTypeChange={(value) => form.setValue(`steps.${index}.interactionType`, value)}
+                      />
                     )}
                   />
-
-                  <div className="flex gap-4">
-                    <FormField
-                      control={form.control}
-                      name={`steps.${index}.requiresPhoto`}
-                      render={({ field }) => (
-                        <FormItem className="flex items-center gap-2">
-                          <FormControl>
-                            <input
-                              type="checkbox"
-                              checked={field.value}
-                              onChange={field.onChange}
-                              className="h-4 w-4"
-                            />
-                          </FormControl>
-                          <FormLabel className="!mt-0">Requires Photo</FormLabel>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name={`steps.${index}.isOptional`}
-                      render={({ field }) => (
-                        <FormItem className="flex items-center gap-2">
-                          <FormControl>
-                            <input
-                              type="checkbox"
-                              checked={field.value}
-                              onChange={field.onChange}
-                              className="h-4 w-4"
-                            />
-                          </FormControl>
-                          <FormLabel className="!mt-0">Optional Step</FormLabel>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  {index > 0 && (
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => {
-                        const currentSteps = form.getValues("steps");
-                        form.setValue("steps", currentSteps.filter((_, i) => i !== index));
-                      }}
-                      className="text-red-500 hover:bg-red-50 hover:text-red-600 border-red-200"
-                    >
-                      Remove Step
-                    </Button>
-                  )}
                 </div>
               ))}
 
@@ -443,7 +499,7 @@ const TaskCreate = () => {
                   const currentSteps = form.getValues("steps");
                   form.setValue("steps", [
                     ...currentSteps,
-                    { title: "", requiresPhoto: false, isOptional: false },
+                    { title: "", requiresPhoto: false, isOptional: false, interactionType: 'checkbox' },
                   ]);
                 }}
               >
@@ -451,13 +507,26 @@ const TaskCreate = () => {
               </Button>
             </div>
 
-            <Button 
-              type="submit" 
-              disabled={isSubmitting}
-              className="w-full px-4"
-            >
-              {isSubmitting ? "Creating..." : "Create Task"}
-            </Button>
+            <div className="flex gap-3">
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="flex-1"
+              >
+                {isSubmitting ? "Creating..." : "Create Task"}
+              </Button>
+              
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isSavingTemplate}
+                onClick={() => form.getValues() && saveAsTemplate(form.getValues())}
+                className="flex items-center gap-2"
+              >
+                <SaveAll className="h-4 w-4" />
+                {isSavingTemplate ? "Saving..." : "Save as Template"}
+              </Button>
+            </div>
           </form>
         </Form>
       </div>
