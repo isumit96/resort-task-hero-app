@@ -53,44 +53,60 @@ const TaskCreate = () => {
       try {
         console.log("Attempting to fetch employees");
         
-        // First, let's check how many total profiles exist
-        const countQuery = await supabase
+        // First, let's debug database connection by checking schema and tables
+        const { data: tables, error: tablesError } = await supabase
+          .from('pg_catalog.pg_tables')
+          .select('schemaname, tablename')
+          .eq('schemaname', 'public');
+          
+        if (tablesError) {
+          console.error("Error checking tables:", tablesError);
+        } else {
+          console.log("Available tables:", tables);
+        }
+        
+        // Now check how many profiles exist using a direct count
+        const { count, error: countError } = await supabase
           .from("profiles")
-          .select("*", { count: "exact", head: true });
+          .select('*', { count: 'exact', head: true });
+          
+        if (countError) {
+          console.error("Error counting profiles:", countError);
+        } else {
+          console.log("Total profiles count:", count);
+        }
         
-        console.log("Total profiles in database:", countQuery.count);
-        
-        // Now fetch all profiles regardless of role
-        const { data, error } = await supabase
+        // Now fetch ALL profiles with no filters
+        const { data: allProfiles, error: profilesError } = await supabase
           .from("profiles")
           .select("id, username, role");
         
-        if (error) {
-          console.error("Supabase error:", error);
-          throw error;
+        if (profilesError) {
+          console.error("Error fetching profiles:", profilesError);
+          throw profilesError;
         }
         
-        console.log("Fetched profiles raw data:", data);
-        console.log("Number of fetched profiles:", data?.length);
+        console.log("All fetched profiles:", allProfiles);
+        console.log("Number of profiles fetched:", allProfiles?.length || 0);
         
-        if (data && data.length > 0) {
-          for (let i = 0; i < data.length; i++) {
-            console.log(`Profile ${i}:`, data[i]);
-          }
-        }
-        
-        if (!data || data.length === 0) {
+        if (allProfiles && allProfiles.length > 0) {
+          // Log each profile individually for debugging
+          allProfiles.forEach((profile, index) => {
+            console.log(`Profile ${index}:`, profile);
+          });
+          
+          setEmployees(allProfiles);
+          console.log("Employees state after update:", allProfiles);
+        } else {
+          console.log("No profiles returned from query");
           toast({
             title: "No Profiles",
             description: "No profiles found in the database.",
             variant: "destructive"
           });
-        } else {
-          setEmployees(data);
-          console.log("Employees state after update:", data);
         }
       } catch (error) {
-        console.error("Error fetching employees:", error);
+        console.error("Error in fetchEmployees:", error);
         toast({
           title: "Error",
           description: "Failed to fetch profiles",
@@ -254,7 +270,6 @@ const TaskCreate = () => {
                       ) : (
                         employees.map((employee, index) => {
                           console.log(`Rendering employee ${index}:`, employee);
-                          // Show user role next to name for clarity
                           return (
                             <SelectItem key={employee.id} value={employee.id}>
                               {employee.username || 'Unnamed'} ({employee.role})
