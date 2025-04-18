@@ -37,7 +37,7 @@ const TaskCreate = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [employees, setEmployees] = useState<Array<{ id: string; username: string }>>([]);
+  const [employees, setEmployees] = useState<Array<{ id: string; username: string; role: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const form = useForm<TaskFormData>({
@@ -60,30 +60,29 @@ const TaskCreate = () => {
         
         console.log("Total profiles in database:", countQuery.count);
         
-        // Now let's fetch with detailed logging
+        // Now fetch all profiles regardless of role
         const { data, error } = await supabase
           .from("profiles")
-          .select("id, username");
+          .select("id, username, role");
         
         if (error) {
           console.error("Supabase error:", error);
           throw error;
         }
         
-        console.log("Fetched employees raw data:", data);
-        console.log("Number of fetched employees:", data?.length);
+        console.log("Fetched profiles raw data:", data);
+        console.log("Number of fetched profiles:", data?.length);
         
         if (data && data.length > 0) {
-          console.log("First employee:", data[0]);
-          if (data.length > 1) {
-            console.log("Second employee:", data[1]);
+          for (let i = 0; i < data.length; i++) {
+            console.log(`Profile ${i}:`, data[i]);
           }
         }
         
         if (!data || data.length === 0) {
           toast({
-            title: "No Employees",
-            description: "No employees found in the database. Please add employees first.",
+            title: "No Profiles",
+            description: "No profiles found in the database.",
             variant: "destructive"
           });
         } else {
@@ -94,7 +93,7 @@ const TaskCreate = () => {
         console.error("Error fetching employees:", error);
         toast({
           title: "Error",
-          description: "Failed to fetch employees",
+          description: "Failed to fetch profiles",
           variant: "destructive",
         });
       } finally {
@@ -255,9 +254,10 @@ const TaskCreate = () => {
                       ) : (
                         employees.map((employee, index) => {
                           console.log(`Rendering employee ${index}:`, employee);
+                          // Show user role next to name for clarity
                           return (
                             <SelectItem key={employee.id} value={employee.id}>
-                              {employee.username || 'Unnamed Employee'}
+                              {employee.username || 'Unnamed'} ({employee.role})
                             </SelectItem>
                           );
                         })
