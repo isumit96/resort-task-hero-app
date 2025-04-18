@@ -2,17 +2,23 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Task, TaskStep } from "@/types";
+import { useUser } from "@/context/UserContext";
 
 export const useTasks = () => {
+  const { user } = useUser();
+  
   return useQuery({
-    queryKey: ["tasks"],
+    queryKey: ["tasks", user?.id],
     queryFn: async (): Promise<Task[]> => {
+      if (!user) return [];
+      
       const { data: tasks, error } = await supabase
         .from("tasks")
         .select(`
           *,
           steps:task_steps(*)
         `)
+        .eq('assigned_to', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -37,6 +43,7 @@ export const useTasks = () => {
           isOptional: step.is_optional
         }))
       }));
-    }
+    },
+    enabled: !!user?.id
   });
 };
