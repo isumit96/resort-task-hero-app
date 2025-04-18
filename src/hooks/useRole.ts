@@ -6,10 +6,13 @@ import { supabase } from "@/integrations/supabase/client";
 export const useRole = () => {
   const { userId } = useUser();
 
-  const { data: role } = useQuery({
+  const { data: role, isLoading } = useQuery({
     queryKey: ["userRole", userId],
     queryFn: async () => {
-      if (!userId) return null;
+      if (!userId) {
+        console.warn("No user ID found for role check");
+        return null;
+      }
       
       console.log("Fetching role for user:", userId);
       
@@ -32,5 +35,5 @@ export const useRole = () => {
 
   console.log("Current user role:", role);
   const isManager = role === "manager";
-  return { role, isManager };
+  return { role, isManager, isLoading };
 };
