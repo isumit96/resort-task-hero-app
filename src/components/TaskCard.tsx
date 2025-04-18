@@ -3,6 +3,7 @@ import { Task } from "@/types";
 import { Clock, MapPin, ChevronRight, User } from "lucide-react";
 import TaskStatusBadge from "./TaskStatusBadge";
 import { useNavigate } from "react-router-dom";
+import { formatDistanceToNow } from "date-fns";
 
 interface TaskCardProps {
   task: Task;
@@ -14,6 +15,15 @@ const TaskCard = ({ task, showAssignee = true }: TaskCardProps) => {
   
   const handleClick = () => {
     navigate(`/task/${task.id}`);
+  };
+
+  const getRelativeTime = (dateString: string) => {
+    try {
+      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return dateString;
+    }
   };
 
   return (
@@ -28,7 +38,7 @@ const TaskCard = ({ task, showAssignee = true }: TaskCardProps) => {
           <div className="mt-2 flex flex-wrap gap-y-2 gap-x-4">
             <div className="flex items-center text-gray-600 text-sm">
               <Clock size={14} className="mr-1" />
-              <span>Due {task.dueTime}</span>
+              <span>Due {getRelativeTime(task.dueTime)}</span>
             </div>
             
             <div className="flex items-center text-gray-600 text-sm">

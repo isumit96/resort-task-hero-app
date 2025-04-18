@@ -8,13 +8,14 @@ import { useTasks } from "@/hooks/useTasks";
 import { Button } from "@/components/ui/button";
 import TaskCard from "@/components/TaskCard";
 import { useRole } from "@/hooks/useRole";
+import { formatDistanceToNow } from "date-fns";
 
 const TaskList = () => {
   const { user, isAuthenticated } = useUser();
   const { isManager } = useRole();
   const navigate = useNavigate();
-  const { data: tasks, isLoading, error } = useTasks(isManager); // Pass isManager to useTasks
-  
+  const { data: tasks, isLoading, error } = useTasks(isManager);
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/");
@@ -32,7 +33,6 @@ const TaskList = () => {
     navigate("/tasks/create");
   };
 
-  // Helper function to parse dates
   const parseDate = (dateString: string | undefined): Date | null => {
     if (!dateString) return null;
     
@@ -44,7 +44,6 @@ const TaskList = () => {
     }
   };
   
-  // Split tasks logic
   const now = new Date();
   const taskArray = Array.isArray(tasks) ? tasks : [];
   
@@ -115,7 +114,6 @@ const TaskList = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Overdue Tasks Section */}
             {overdueTasks.length > 0 && (
               <div>
                 <div className="flex items-center mb-3">
@@ -136,7 +134,6 @@ const TaskList = () => {
               </div>
             )}
             
-            {/* Upcoming Tasks Section */}
             {upcomingTasks.length > 0 && (
               <div>
                 <div className="flex items-center mb-3">
