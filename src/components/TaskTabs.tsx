@@ -1,0 +1,53 @@
+
+import { Task } from "@/types";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { History, ListTodo } from "lucide-react";
+import TaskSection from "./TaskSection";
+
+interface TaskTabsProps {
+  pendingTasks: Task[];
+  delayedTasks: Task[];
+  completedTasks: Task[];
+}
+
+const TaskTabs = ({ pendingTasks, delayedTasks, completedTasks }: TaskTabsProps) => {
+  return (
+    <Tabs defaultValue="active" className="space-y-4">
+      <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
+        <TabsTrigger value="active" className="flex items-center gap-2">
+          <ListTodo className="h-4 w-4" />
+          Active Tasks
+        </TabsTrigger>
+        <TabsTrigger value="history" className="flex items-center gap-2">
+          <History className="h-4 w-4" />
+          Task History
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="active" className="space-y-4">
+        <div className="grid gap-6 md:grid-cols-2">
+          <TaskSection 
+            title="Pending Tasks" 
+            tasks={pendingTasks}
+            badgeColor="yellow"
+          />
+          <TaskSection 
+            title="Delayed Tasks" 
+            tasks={delayedTasks}
+            badgeColor={delayedTasks.length > 0 ? "red" : "gray"}
+          />
+        </div>
+      </TabsContent>
+
+      <TabsContent value="history" className="space-y-4">
+        <TaskSection 
+          title="Completed Tasks" 
+          tasks={completedTasks}
+          badgeColor="green"
+        />
+      </TabsContent>
+    </Tabs>
+  );
+};
+
+export default TaskTabs;
