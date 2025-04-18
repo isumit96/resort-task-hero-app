@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 
+type StepInteractionType = 'checkbox' | 'yes_no';
+
 interface TaskStepInputProps {
   title: string;
   onTitleChange: (value: string) => void;
@@ -17,8 +19,8 @@ interface TaskStepInputProps {
   onRequiresPhotoChange: (value: boolean) => void;
   isOptional: boolean;
   onIsOptionalChange: (value: boolean) => void;
-  interactionType: 'checkbox' | 'yes_no';
-  onInteractionTypeChange: (value: 'checkbox' | 'yes_no') => void;
+  interactionType: StepInteractionType;
+  onInteractionTypeChange: (value: StepInteractionType) => void;
 }
 
 const TaskStepInput = ({
@@ -62,7 +64,7 @@ const TaskStepInput = ({
 
         <div className="flex items-center gap-2">
           <Label>Input Type</Label>
-          <Select value={interactionType} onValueChange={onInteractionTypeChange}>
+          <Select value={interactionType} onValueChange={onInteractionTypeChange as (value: string) => void}>
             <SelectTrigger className="w-[140px]">
               <SelectValue />
             </SelectTrigger>

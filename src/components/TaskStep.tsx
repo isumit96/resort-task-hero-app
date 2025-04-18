@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { TaskStep as TaskStepType } from "@/types";
-import { Camera, X } from "lucide-react";
+import { Camera, X, CheckCircle, XCircle } from "lucide-react";
 
 interface TaskStepProps {
   step: TaskStepType;
@@ -17,6 +17,10 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
 
   const handleCheck = (e: React.ChangeEvent<HTMLInputElement>) => {
     onComplete(step.id, e.target.checked);
+  };
+  
+  const handleYesNoResponse = (isYes: boolean) => {
+    onComplete(step.id, isYes);
   };
 
   const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -54,12 +58,33 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
   return (
     <div className="py-3 border-b border-gray-200 last:border-b-0">
       <div className="flex items-start">
-        <input
-          type="checkbox"
-          checked={step.isCompleted}
-          onChange={handleCheck}
-          className="mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
-        />
+        {step.interactionType === 'yes_no' ? (
+          <div className="flex flex-col gap-2">
+            <button 
+              onClick={() => handleYesNoResponse(true)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md ${step.isCompleted ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}
+            >
+              <CheckCircle size={16} />
+              <span>Yes</span>
+            </button>
+            
+            <button 
+              onClick={() => handleYesNoResponse(false)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md ${step.isCompleted === false ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-700'}`}
+            >
+              <XCircle size={16} />
+              <span>No</span>
+            </button>
+          </div>
+        ) : (
+          <input
+            type="checkbox"
+            checked={step.isCompleted}
+            onChange={handleCheck}
+            className="mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
+          />
+        )}
+        
         <div className="ml-3 w-full">
           <div className="flex justify-between items-start">
             <label className={`text-base ${step.isCompleted ? 'line-through text-gray-500' : ''}`}>

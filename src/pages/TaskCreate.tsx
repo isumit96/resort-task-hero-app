@@ -30,6 +30,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { StepInteractionType } from "@/types";
 
 const taskSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -41,7 +42,7 @@ const taskSchema = z.object({
     title: z.string().min(1, "Step title is required"),
     requiresPhoto: z.boolean().default(false),
     isOptional: z.boolean().default(false),
-    interactionType: z.string().default('checkbox')
+    interactionType: z.enum(["checkbox", "yes_no"]).default("checkbox")
   })).min(1, "At least one step is required"),
   description: z.string().optional(),
 });
@@ -68,7 +69,7 @@ const TaskCreate = () => {
         title: "", 
         requiresPhoto: false, 
         isOptional: false,
-        interactionType: 'checkbox' 
+        interactionType: "checkbox" as StepInteractionType
       }],
     },
   });
@@ -251,17 +252,17 @@ const TaskCreate = () => {
 
       console.log("Task created successfully:", task);
 
+      const taskSteps = data.steps.map(step => ({
+        task_id: task.id,
+        title: step.title,
+        requires_photo: step.requiresPhoto,
+        is_optional: step.isOptional,
+        interaction_type: step.interactionType,
+      }));
+
       const { error: stepsError } = await supabase
         .from("task_steps")
-        .insert(
-          data.steps.map(step => ({
-            task_id: task.id,
-            title: step.title,
-            requires_photo: step.requiresPhoto,
-            is_optional: step.isOptional,
-            interaction_type: step.interactionType,
-          }))
-        );
+        .insert(taskSteps);
 
       if (stepsError) {
         console.error("Error creating task steps:", stepsError);
@@ -504,7 +505,7 @@ const TaskCreate = () => {
                         isOptional={field.value.isOptional}
                         onIsOptionalChange={(value) => form.setValue(`steps.${index}.isOptional`, value)}
                         interactionType={field.value.interactionType}
-                        onInteractionTypeChange={(value) => form.setValue(`steps.${index}.interactionType`, value)}
+                        onInteractionTypeChange={(value) => form.setValue(`steps.${index}.interactionType`, value as StepInteractionType)}
                       />
                     )}
                   />
@@ -518,7 +519,7 @@ const TaskCreate = () => {
                   const currentSteps = form.getValues("steps");
                   form.setValue("steps", [
                     ...currentSteps,
-                    { title: "", requiresPhoto: false, isOptional: false, interactionType: 'checkbox' },
+                    { title: "", requiresPhoto: false, isOptional: false, interactionType: "checkbox" as StepInteractionType },
                   ]);
                 }}
               >
