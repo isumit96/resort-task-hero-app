@@ -4,17 +4,17 @@ import { useUser } from "@/context/UserContext";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
-import { useToast } from "@/hooks/use-toast";
-import { Loader, Clock, MapPin } from "lucide-react";
+import { Loader, Plus } from "lucide-react";
 import { useTasks } from "@/hooks/useTasks";
 import { Button } from "@/components/ui/button";
 import TaskCard from "@/components/TaskCard";
+import { useRole } from "@/hooks/useRole";
 
 const TaskList = () => {
   const { user, isAuthenticated } = useUser();
+  const { isManager } = useRole();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { data: tasks, isLoading, error } = useTasks();
+  const { data: tasks, isLoading, error } = useTasks(isManager); // Pass isManager to useTasks
   
   useEffect(() => {
     if (!isAuthenticated) {
@@ -28,9 +28,9 @@ const TaskList = () => {
   useEffect(() => {
     console.log("Tasks data in TaskList:", tasks);
   }, [tasks]);
-
-  const handleOpenTask = (taskId: string) => {
-    navigate(`/task/${taskId}`);
+  
+  const handleCreateTask = () => {
+    navigate("/tasks/create");
   };
 
   if (error) {
@@ -82,7 +82,6 @@ const TaskList = () => {
     if (!dateString) return null;
     
     try {
-      // Handle both Date objects and string formats
       return new Date(dateString);
     } catch (e) {
       console.error("Error parsing date:", e);
@@ -100,16 +99,24 @@ const TaskList = () => {
     const deadlineDate = parseDate(task.deadline);
     return deadlineDate === null || deadlineDate >= now;
   });
-  
-  console.log("Overdue tasks:", overdueTasks);
-  console.log("Upcoming tasks:", upcomingTasks);
-  console.log("Completed tasks:", completedTasks);
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       <Header showBackButton={false} />
       
       <div className="flex-1 overflow-y-auto px-4 py-4 pb-20">
+        {isManager && (
+          <div className="mb-6">
+            <Button 
+              onClick={handleCreateTask}
+              className="w-full bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create New Task
+            </Button>
+          </div>
+        )}
+
         {(!taskArray.length) ? (
           <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
             <p className="text-lg font-medium">No tasks for today!</p>
@@ -126,30 +133,13 @@ const TaskList = () => {
                     {overdueTasks.length}
                   </span>
                 </div>
-                
                 <div className="space-y-3">
                   {overdueTasks.map(task => (
-                    <div key={task.id} className="rounded-lg border border-red-200 bg-white overflow-hidden shadow-sm">
-                      <div className="p-4">
-                        <h3 className="font-medium text-lg">{task.title}</h3>
-                        <div className="mt-2 flex items-center text-red-500 text-sm">
-                          <Clock size={14} className="mr-1" />
-                          <span>Deadline crossed {getTimeAgo(task.deadline || '')}</span>
-                        </div>
-                        <div className="mt-1 flex items-center text-gray-500 text-sm">
-                          <MapPin size={14} className="mr-1" />
-                          <span>{task.location}</span>
-                        </div>
-                      </div>
-                      <div className="p-3 bg-white border-t">
-                        <Button 
-                          className="w-full bg-blue-500 hover:bg-blue-600"
-                          onClick={() => handleOpenTask(task.id)}
-                        >
-                          Open Task
-                        </Button>
-                      </div>
-                    </div>
+                    <TaskCard 
+                      key={task.id} 
+                      task={task} 
+                      showAssignee={isManager}
+                    />
                   ))}
                 </div>
               </div>
@@ -164,31 +154,13 @@ const TaskList = () => {
                     {upcomingTasks.length}
                   </span>
                 </div>
-                
                 <div className="space-y-3">
                   {upcomingTasks.map(task => (
-                    <div key={task.id} className="rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm">
-                      <div className="p-4">
-                        <h3 className="font-medium text-lg">{task.title}</h3>
-                        <div className="mt-2 flex items-center text-gray-600 text-sm">
-                          <Clock size={14} className="mr-1" />
-                          <span>{getTaskDueText(task.dueTime)}</span>
-                        </div>
-                        <div className="mt-1 flex items-center text-gray-500 text-sm">
-                          <MapPin size={14} className="mr-1" />
-                          <span>{task.location}</span>
-                        </div>
-                      </div>
-                      <div className="p-3 bg-gray-50 border-t">
-                        <Button 
-                          variant="outline"
-                          className="w-full bg-blue-50 text-blue-500 border-blue-100 hover:bg-blue-100"
-                          onClick={() => handleOpenTask(task.id)}
-                        >
-                          Open Task
-                        </Button>
-                      </div>
-                    </div>
+                    <TaskCard 
+                      key={task.id} 
+                      task={task}
+                      showAssignee={isManager}
+                    />
                   ))}
                 </div>
               </div>
@@ -203,31 +175,13 @@ const TaskList = () => {
                     {completedTasks.length}
                   </span>
                 </div>
-                
                 <div className="space-y-3">
                   {completedTasks.map(task => (
-                    <div key={task.id} className="rounded-lg border border-green-100 bg-white overflow-hidden shadow-sm">
-                      <div className="p-4">
-                        <h3 className="font-medium text-lg">{task.title}</h3>
-                        <div className="mt-2 flex items-center text-green-600 text-sm">
-                          <Clock size={14} className="mr-1" />
-                          <span>Completed {task.completedAt ? getTimeAgo(task.completedAt) : ''}</span>
-                        </div>
-                        <div className="mt-1 flex items-center text-gray-500 text-sm">
-                          <MapPin size={14} className="mr-1" />
-                          <span>{task.location}</span>
-                        </div>
-                      </div>
-                      <div className="p-3 bg-gray-50 border-t">
-                        <Button 
-                          variant="outline"
-                          className="w-full bg-green-50 text-green-700 border-green-100 hover:bg-green-100"
-                          onClick={() => handleOpenTask(task.id)}
-                        >
-                          View Details
-                        </Button>
-                      </div>
-                    </div>
+                    <TaskCard 
+                      key={task.id} 
+                      task={task}
+                      showAssignee={isManager}
+                    />
                   ))}
                 </div>
               </div>
@@ -240,46 +194,6 @@ const TaskList = () => {
       <BottomNavigation />
     </div>
   );
-};
-
-// Helper function to format time ago
-const getTimeAgo = (dateString: string) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.round(diffMs / (1000 * 60));
-  
-  if (diffMins < 60) {
-    return `${diffMins} minutes ago`;
-  }
-  
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) {
-    return `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
-  }
-  
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
-};
-
-// Helper function for due time text
-const getTaskDueText = (dueTime: string) => {
-  if (dueTime.includes('Today')) {
-    return dueTime;
-  }
-  
-  const now = new Date();
-  const dueDate = new Date(dueTime);
-  
-  const diffMs = dueDate.getTime() - now.getTime();
-  const diffMins = Math.round(diffMs / (1000 * 60));
-  
-  if (diffMins < 60) {
-    return `Due in ${diffMins} minutes`;
-  }
-  
-  return dueTime;
 };
 
 export default TaskList;

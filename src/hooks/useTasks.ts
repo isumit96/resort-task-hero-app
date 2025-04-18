@@ -5,25 +5,32 @@ import type { Task, TaskStep } from "@/types";
 import { useUser } from "@/context/UserContext";
 import { useToast } from "@/hooks/use-toast";
 
-export const useTasks = () => {
+export const useTasks = (isManager: boolean = false) => {
   const { user } = useUser();
   const { toast } = useToast();
   
   return useQuery({
-    queryKey: ["tasks", user?.id],
+    queryKey: ["tasks", user?.id, isManager],
     queryFn: async (): Promise<Task[]> => {
       if (!user) return [];
       
       console.log("Fetching tasks for user:", user.id);
       
-      const { data: tasks, error } = await supabase
+      let query = supabase
         .from("tasks")
         .select(`
           *,
-          steps:task_steps(*)
+          steps:task_steps(*),
+          profiles:assigned_to(username)
         `)
-        .eq('assigned_to', user.id)
         .order('created_at', { ascending: false });
+
+      // If not a manager, only fetch tasks assigned to the user
+      if (!isManager) {
+        query = query.eq('assigned_to', user.id);
+      }
+
+      const { data: tasks, error } = await query;
 
       if (error) {
         console.error("Error fetching tasks:", error);
@@ -45,6 +52,7 @@ export const useTasks = () => {
         location: task.location || '',
         status: task.status,
         assignedTo: task.assigned_to,
+        assigneeName: task.profiles?.username || 'Unassigned',
         createdAt: task.created_at,
         completedAt: task.completed_at,
         deadline: task.deadline,
