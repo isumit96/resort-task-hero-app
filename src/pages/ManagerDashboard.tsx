@@ -22,14 +22,18 @@ const ManagerDashboard = () => {
 
   useEffect(() => {
     if (!isAuthenticated) {
+      console.log("Not authenticated, redirecting to login");
       navigate("/");
       return;
     }
 
     if (!isManager) {
+      console.log("Not a manager, redirecting to tasks page");
       navigate("/tasks");
       return;
     }
+    
+    console.log("Manager authenticated and authorized");
   }, [isAuthenticated, isManager, navigate]);
 
   const { data: tasks, error, isLoading } = useQuery({
@@ -51,9 +55,10 @@ const ManagerDashboard = () => {
         throw error;
       }
       
-      console.log("Tasks fetched successfully:", tasks);
+      console.log("Tasks fetched successfully for manager:", tasks);
       
-      return tasks.map((task: any): Task => ({
+      // Transform the data to match our Task type
+      const transformedTasks = tasks.map((task: any): Task => ({
         id: task.id,
         title: task.title,
         dueTime: new Date(task.due_time).toLocaleString(),
@@ -74,6 +79,10 @@ const ManagerDashboard = () => {
           isOptional: step.is_optional || false
         }))
       }));
+      
+      console.log("Transformed tasks for manager view:", transformedTasks);
+      
+      return transformedTasks;
     }
   });
 

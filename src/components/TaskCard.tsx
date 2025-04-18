@@ -9,7 +9,7 @@ interface TaskCardProps {
   showAssignee?: boolean;
 }
 
-const TaskCard = ({ task, showAssignee = false }: TaskCardProps) => {
+const TaskCard = ({ task, showAssignee = true }: TaskCardProps) => {
   const navigate = useNavigate();
   
   const handleClick = () => {
