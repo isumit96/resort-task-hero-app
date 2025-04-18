@@ -14,6 +14,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import BottomNavigation from "@/components/BottomNavigation";
+import TaskCard from "@/components/TaskCard";
 
 const ManagerDashboard = () => {
   const { isAuthenticated } = useUser();
@@ -80,10 +81,6 @@ const ManagerDashboard = () => {
   const completedTasks = tasks?.filter(task => task.status === 'completed') || [];
   const pendingTasks = tasks?.filter(task => task.status !== 'completed' && !delayedTasks.includes(task)) || [];
 
-  const handleOpenTask = (taskId: string) => {
-    navigate(`/task/${taskId}`);
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Header title="Manager Dashboard" showBackButton={false} />
@@ -133,28 +130,7 @@ const ManagerDashboard = () => {
                 
                 <div className="space-y-3">
                   {pendingTasks.map(task => (
-                    <div key={task.id} className="rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm">
-                      <div className="p-4">
-                        <h3 className="font-medium text-lg">{task.title}</h3>
-                        <div className="mt-2 flex items-center text-gray-600 text-sm">
-                          <Clock size={14} className="mr-1" />
-                          <span>Due {task.dueTime}</span>
-                        </div>
-                        <div className="mt-1 flex items-center text-gray-500 text-sm">
-                          <MapPin size={14} className="mr-1" />
-                          <span>{task.location}</span>
-                        </div>
-                      </div>
-                      <div className="p-3 bg-gray-50 border-t">
-                        <Button 
-                          variant="outline"
-                          className="w-full bg-blue-50 text-blue-500 border-blue-100 hover:bg-blue-100"
-                          onClick={() => handleOpenTask(task.id)}
-                        >
-                          Open Task
-                        </Button>
-                      </div>
-                    </div>
+                    <TaskCard key={task.id} task={task} showAssignee={true} />
                   ))}
                   {pendingTasks.length === 0 && (
                     <p className="text-gray-500 text-center py-4">No pending tasks</p>
@@ -175,27 +151,7 @@ const ManagerDashboard = () => {
                 
                 <div className="space-y-3">
                   {delayedTasks.map(task => (
-                    <div key={task.id} className="rounded-lg border border-red-200 bg-white overflow-hidden shadow-sm">
-                      <div className="p-4">
-                        <h3 className="font-medium text-lg">{task.title}</h3>
-                        <div className="mt-2 flex items-center text-red-500 text-sm">
-                          <Clock size={14} className="mr-1" />
-                          <span>Deadline crossed {getTimeAgo(task.deadline || '')}</span>
-                        </div>
-                        <div className="mt-1 flex items-center text-gray-500 text-sm">
-                          <MapPin size={14} className="mr-1" />
-                          <span>{task.location}</span>
-                        </div>
-                      </div>
-                      <div className="p-3 bg-white border-t">
-                        <Button 
-                          className="w-full bg-blue-500 hover:bg-blue-600"
-                          onClick={() => handleOpenTask(task.id)}
-                        >
-                          Open Task
-                        </Button>
-                      </div>
-                    </div>
+                    <TaskCard key={task.id} task={task} showAssignee={true} />
                   ))}
                   {delayedTasks.length === 0 && (
                     <p className="text-gray-500 text-center py-4">No delayed tasks</p>
@@ -215,35 +171,7 @@ const ManagerDashboard = () => {
             
             <div className="space-y-3">
               {completedTasks.map(task => (
-                <div key={task.id} className="rounded-lg border border-green-100 bg-white overflow-hidden shadow-sm">
-                  <div className="p-4">
-                    <div className="flex justify-between">
-                      <h3 className="font-medium text-lg">{task.title}</h3>
-                      <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">
-                        Completed
-                      </span>
-                    </div>
-                    
-                    <div className="mt-2 flex items-center text-gray-600 text-sm">
-                      <Clock size={14} className="mr-1" />
-                      <span>Completed {formatCompletedDate(task.completedAt || '')}</span>
-                    </div>
-                    
-                    <div className="mt-1 flex items-center text-gray-500 text-sm">
-                      <MapPin size={14} className="mr-1" />
-                      <span>{task.location}</span>
-                    </div>
-                  </div>
-                  <div className="p-3 bg-gray-50 border-t">
-                    <Button 
-                      variant="outline"
-                      className="w-full bg-green-50 text-green-700 border-green-100 hover:bg-green-100"
-                      onClick={() => handleOpenTask(task.id)}
-                    >
-                      View Details
-                    </Button>
-                  </div>
-                </div>
+                <TaskCard key={task.id} task={task} showAssignee={true} />
               ))}
               {completedTasks.length === 0 && (
                 <p className="text-gray-500 text-center py-4">No completed tasks yet</p>
@@ -257,43 +185,6 @@ const ManagerDashboard = () => {
       <BottomNavigation />
     </div>
   );
-};
-
-const getTimeAgo = (dateString: string) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.round(diffMs / (1000 * 60));
-  
-  if (diffMins < 60) {
-    return `${diffMins} minutes ago`;
-  }
-  
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) {
-    return `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
-  }
-  
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
-};
-
-const formatCompletedDate = (dateString: string) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  
-  if (date.toDateString() === now.toDateString()) {
-    return `Today at ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric' })}`;
-  }
-  
-  const yesterday = new Date(now);
-  yesterday.setDate(yesterday.getDate() - 1);
-  if (date.toDateString() === yesterday.toDateString()) {
-    return `Yesterday at ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric' })}`;
-  }
-  
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
 export default ManagerDashboard;
