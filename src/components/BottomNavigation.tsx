@@ -1,5 +1,4 @@
-
-import { Home, ClipboardCheck, Calendar, Bell, Menu } from "lucide-react";
+import { Home, ClipboardCheck, Calendar, Bell, Menu, Settings } from "lucide-react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useUser } from "@/context/UserContext";
@@ -42,11 +41,10 @@ const BottomNavigation = () => {
     {
       name: "Settings",
       path: "/settings",
-      icon: <Menu size={20} />
+      icon: <Settings size={20} />
     }
   ];
 
-  // Filter out manager-only items for non-managers
   const filteredNavItems = navItems.filter(item => !item.isManagerOnly || isManager);
 
   return (
@@ -82,4 +80,3 @@ const BottomNavigation = () => {
 };
 
 export default BottomNavigation;
-

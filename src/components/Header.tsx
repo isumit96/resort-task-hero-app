@@ -1,4 +1,3 @@
-
 import { ArrowLeft, Settings, Menu } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
@@ -79,18 +78,6 @@ const Header = ({ title, showBackButton = false, showSettings = true }: HeaderPr
               </div>
             )}
           </div>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          {showSettings && isTasksPage && (
-            <button 
-              onClick={handleSettings}
-              className="p-2 rounded-full bg-secondary hover:bg-secondary/80 text-secondary-foreground transition-colors"
-              aria-label="Settings"
-            >
-              <Settings size={20} />
-            </button>
-          )}
         </div>
       </div>
     </header>

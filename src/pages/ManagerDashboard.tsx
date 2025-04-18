@@ -110,14 +110,14 @@ const ManagerDashboard = () => {
           animate={{ opacity: 1, y: 0 }} 
           transition={{ duration: 0.3 }}
         >
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div>
               <h1 className="text-2xl font-bold text-foreground">Manager Dashboard</h1>
               <p className="text-muted-foreground">Overview of all operational metrics and tasks</p>
             </div>
             <Button 
               onClick={() => navigate("/tasks/create")}
-              className="bg-primary hover:bg-primary/90 shadow-lg hover:shadow-primary/25 transition-all duration-300"
+              className="w-full sm:w-auto bg-primary hover:bg-primary/90 shadow-lg hover:shadow-primary/25 transition-all duration-300"
             >
               <Plus className="h-4 w-4 mr-2" />
               Create Task
@@ -137,9 +137,9 @@ const ManagerDashboard = () => {
             />
           </motion.div>
           
-          <div className="grid gap-6 lg:grid-cols-12">
+          <div className="grid gap-6 md:grid-cols-12">
             <motion.div 
-              className="lg:col-span-8"
+              className="md:col-span-12 lg:col-span-8"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
@@ -160,7 +160,7 @@ const ManagerDashboard = () => {
             </motion.div>
             
             <motion.div 
-              className="lg:col-span-4"
+              className="md:col-span-12 lg:col-span-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
