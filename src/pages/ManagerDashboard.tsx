@@ -68,7 +68,7 @@ const ManagerDashboard = () => {
           requiresPhoto: step.requires_photo,
           comment: step.comment,
           photoUrl: step.photo_url,
-          isOptional: step.is_optional
+          isOptional: step.is_optional || false
         }))
       }));
     }
