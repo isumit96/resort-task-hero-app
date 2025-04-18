@@ -10,7 +10,7 @@ interface UserContextType {
   signup: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
-  userId: string | null; // Add userId property
+  userId: string | null;  
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -65,7 +65,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     signup,
     logout,
     isAuthenticated: !!user,
-    userId: user?.id || null, // Provide userId from the user object
+    userId: user?.id || null,
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
