@@ -11,18 +11,26 @@ export const useRole = () => {
     queryFn: async () => {
       if (!userId) return null;
       
+      console.log("Fetching role for user:", userId);
+      
       const { data: profile, error } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", userId)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching role:", error);
+        throw error;
+      }
+      
+      console.log("User role data:", profile);
       return profile?.role;
     },
     enabled: !!userId
   });
 
+  console.log("Current user role:", role);
   const isManager = role === "manager";
   return { role, isManager };
 };
