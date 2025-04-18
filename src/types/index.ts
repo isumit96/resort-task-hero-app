@@ -1,14 +1,15 @@
 
-export type TaskStatus = 'pending' | 'inprogress' | 'completed';
+export type TaskStatus = "pending" | "inprogress" | "completed";
+export type UserRole = "employee" | "manager" | "admin";
 
 export interface TaskStep {
   id: string;
   title: string;
   isCompleted: boolean;
   requiresPhoto: boolean;
-  comment?: string;
-  photoUrl?: string;
-  isOptional?: boolean;
+  comment?: string | null;
+  photoUrl?: string | null;
+  isOptional: boolean;
 }
 
 export interface Task {
@@ -18,8 +19,21 @@ export interface Task {
   location: string;
   status: TaskStatus;
   assignedTo: string;
-  steps: TaskStep[];
+  assigneeName?: string;
   createdAt: string;
-  completedAt?: string;
-  deadline?: string;
+  completedAt?: string | null;
+  deadline?: string | null;
+  steps: TaskStep[];
+}
+
+export interface User {
+  id: string;
+  email: string;
+  role: UserRole;
+}
+
+export interface Profile {
+  id: string;
+  username?: string;
+  role: UserRole;
 }

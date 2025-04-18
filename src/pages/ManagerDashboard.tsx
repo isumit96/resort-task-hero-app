@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
@@ -8,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
 import { Button } from "@/components/ui/button";
-import { Plus, AlertCircle, History, ListTodo, Clock, MapPin } from "lucide-react";
+import { Plus, AlertCircle, History, ListTodo } from "lucide-react";
 import type { Task } from "@/types";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -36,16 +37,19 @@ const ManagerDashboard = () => {
   const { data: tasks, error, isLoading } = useQuery({
     queryKey: ["all-tasks"],
     queryFn: async () => {
+      // Fetch all tasks with assigned user information
       const { data: tasks, error } = await supabase
         .from("tasks")
         .select(`
           *,
-          steps:task_steps(*)
+          steps:task_steps(*),
+          profiles:assigned_to(username)
         `)
         .order('deadline', { ascending: true });
 
       if (error) throw error;
       
+      // Enhanced transformation to include assignee name
       return tasks.map((task: any): Task => ({
         id: task.id,
         title: task.title,
@@ -53,6 +57,7 @@ const ManagerDashboard = () => {
         location: task.location,
         status: task.status,
         assignedTo: task.assigned_to,
+        assigneeName: task.profiles?.username || 'Unassigned',
         createdAt: task.created_at,
         completedAt: task.completed_at,
         deadline: task.deadline ? new Date(task.deadline).toLocaleString() : undefined,
