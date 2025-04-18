@@ -37,26 +37,29 @@ export const useTasks = () => {
 
       console.log("Tasks returned from database:", tasks);
 
-      return tasks.map(task => ({
+      // Transform the data to match our Task type
+      const transformedTasks = tasks.map(task => ({
         id: task.id,
         title: task.title,
-        dueTime: new Date(task.due_time).toLocaleString(),
-        location: task.location,
+        dueTime: task.due_time ? new Date(task.due_time).toLocaleString() : '',
+        location: task.location || '',
         status: task.status,
         assignedTo: task.assigned_to,
         createdAt: task.created_at,
         completedAt: task.completed_at,
-        deadline: task.deadline ? new Date(task.deadline).toLocaleString() : undefined,
-        steps: task.steps.map((step: any): TaskStep => ({
+        deadline: task.deadline,
+        steps: (task.steps || []).map((step: any): TaskStep => ({
           id: step.id,
           title: step.title,
           isCompleted: step.is_completed,
           requiresPhoto: step.requires_photo,
           comment: step.comment,
           photoUrl: step.photo_url,
-          isOptional: step.is_optional
+          isOptional: step.is_optional || false
         }))
       }));
+
+      return transformedTasks;
     },
     enabled: !!user?.id
   });

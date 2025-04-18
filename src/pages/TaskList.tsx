@@ -70,18 +70,36 @@ const TaskList = () => {
   console.log("Filtering tasks. Current tasks array:", tasks);
   console.log("Current date for comparison:", now);
   
+  // Make sure tasks is an array before filtering
+  const taskArray = Array.isArray(tasks) ? tasks : [];
+  
   // Updated logic to filter active vs completed tasks
-  const activeTasks = tasks?.filter(task => task.status !== 'completed') || [];
-  const completedTasks = tasks?.filter(task => task.status === 'completed') || [];
+  const activeTasks = taskArray.filter(task => task.status !== 'completed') || [];
+  const completedTasks = taskArray.filter(task => task.status === 'completed') || [];
+  
+  // Helper function to safely parse dates
+  const parseDate = (dateString: string | undefined): Date | null => {
+    if (!dateString) return null;
+    
+    try {
+      // Handle both Date objects and string formats
+      return new Date(dateString);
+    } catch (e) {
+      console.error("Error parsing date:", e);
+      return null;
+    }
+  };
   
   // Split active tasks into overdue and upcoming
-  const overdueTasks = activeTasks.filter(task => 
-    task.deadline && new Date(task.deadline) < now
-  );
+  const overdueTasks = activeTasks.filter(task => {
+    const deadlineDate = parseDate(task.deadline);
+    return deadlineDate !== null && deadlineDate < now;
+  });
 
-  const upcomingTasks = activeTasks.filter(task => 
-    !task.deadline || new Date(task.deadline) >= now
-  );
+  const upcomingTasks = activeTasks.filter(task => {
+    const deadlineDate = parseDate(task.deadline);
+    return deadlineDate === null || deadlineDate >= now;
+  });
   
   console.log("Overdue tasks:", overdueTasks);
   console.log("Upcoming tasks:", upcomingTasks);
@@ -92,7 +110,7 @@ const TaskList = () => {
       <Header showBackButton={false} />
       
       <div className="flex-1 overflow-y-auto px-4 py-4 pb-20">
-        {!tasks?.length ? (
+        {(!taskArray.length) ? (
           <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
             <p className="text-lg font-medium">No tasks for today!</p>
             <p className="mt-2">Enjoy your break or check again later</p>
