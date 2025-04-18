@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useUser } from "@/context/UserContext";
 import { useNavigate } from "react-router-dom";
@@ -63,25 +64,28 @@ const TaskList = () => {
     );
   }
 
-  // Filter tasks into overdue and upcoming
+  // Filter tasks into different categories
   const now = new Date();
   
   console.log("Filtering tasks. Current tasks array:", tasks);
   console.log("Current date for comparison:", now);
   
-  const overdueTasks = tasks?.filter(task => 
-    task.status !== 'completed' && 
-    task.deadline && 
-    new Date(task.deadline) < now
-  ) || [];
+  // Updated logic to filter active vs completed tasks
+  const activeTasks = tasks?.filter(task => task.status !== 'completed') || [];
+  const completedTasks = tasks?.filter(task => task.status === 'completed') || [];
+  
+  // Split active tasks into overdue and upcoming
+  const overdueTasks = activeTasks.filter(task => 
+    task.deadline && new Date(task.deadline) < now
+  );
 
-  const upcomingTasks = tasks?.filter(task => 
-    task.status !== 'completed' && 
-    (!task.deadline || new Date(task.deadline) >= now)
-  ) || [];
+  const upcomingTasks = activeTasks.filter(task => 
+    !task.deadline || new Date(task.deadline) >= now
+  );
   
   console.log("Overdue tasks:", overdueTasks);
   console.log("Upcoming tasks:", upcomingTasks);
+  console.log("Completed tasks:", completedTasks);
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
@@ -164,6 +168,45 @@ const TaskList = () => {
                           onClick={() => handleOpenTask(task.id)}
                         >
                           Open Task
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Completed Tasks Section */}
+            {completedTasks.length > 0 && (
+              <div>
+                <div className="flex items-center mb-3">
+                  <h2 className="text-base font-semibold">Completed tasks</h2>
+                  <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                    {completedTasks.length}
+                  </span>
+                </div>
+                
+                <div className="space-y-3">
+                  {completedTasks.map(task => (
+                    <div key={task.id} className="rounded-lg border border-green-100 bg-white overflow-hidden shadow-sm">
+                      <div className="p-4">
+                        <h3 className="font-medium text-lg">{task.title}</h3>
+                        <div className="mt-2 flex items-center text-green-600 text-sm">
+                          <Clock size={14} className="mr-1" />
+                          <span>Completed {task.completedAt ? getTimeAgo(task.completedAt) : ''}</span>
+                        </div>
+                        <div className="mt-1 flex items-center text-gray-500 text-sm">
+                          <MapPin size={14} className="mr-1" />
+                          <span>{task.location}</span>
+                        </div>
+                      </div>
+                      <div className="p-3 bg-gray-50 border-t">
+                        <Button 
+                          variant="outline"
+                          className="w-full bg-green-50 text-green-700 border-green-100 hover:bg-green-100"
+                          onClick={() => handleOpenTask(task.id)}
+                        >
+                          View Details
                         </Button>
                       </div>
                     </div>
