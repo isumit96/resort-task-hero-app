@@ -9,11 +9,13 @@ import { supabase } from "@/integrations/supabase/client";
 import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, ArrowRight } from "lucide-react";
 import type { Task } from "@/types";
 import BottomNavigation from "@/components/BottomNavigation";
-import DelayedTasksAlert from "@/components/DelayedTasksAlert";
 import TaskTabs from "@/components/TaskTabs";
+import TaskMetricsChart from "@/components/TaskMetricsChart";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { motion } from "framer-motion";
 
 const ManagerDashboard = () => {
   const { isAuthenticated } = useUser();
@@ -102,26 +104,98 @@ const ManagerDashboard = () => {
     <div className="min-h-screen bg-background">
       <Header title="Manager Dashboard" showBackButton={false} />
       
-      <main className="container mx-auto px-4 py-6 pb-20 max-w-5xl">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-foreground">Task Management</h1>
-          <Button 
-            onClick={() => navigate("/tasks/create")}
-            className="bg-primary hover:bg-primary/90"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Create Task
-          </Button>
-        </div>
+      <main className="container mx-auto px-4 py-6 pb-20 max-w-7xl">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.3 }}
+        >
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Manager Dashboard</h1>
+              <p className="text-muted-foreground">Overview of all operational metrics and tasks</p>
+            </div>
+            <Button 
+              onClick={() => navigate("/tasks/create")}
+              className="bg-primary hover:bg-primary/90 shadow-lg hover:shadow-primary/25 transition-all duration-300"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Task
+            </Button>
+          </div>
 
-        <DelayedTasksAlert count={delayedTasks.length} />
-        
-        <TaskTabs 
-          pendingTasks={pendingTasks}
-          delayedTasks={delayedTasks}
-          completedTasks={completedTasks}
-          showAssignee={true}
-        />
+          <motion.div 
+            className="mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+          >
+            <TaskMetricsChart 
+              pendingTasks={pendingTasks} 
+              delayedTasks={delayedTasks}
+              completedTasks={completedTasks}
+            />
+          </motion.div>
+          
+          <div className="grid gap-6 lg:grid-cols-12">
+            <motion.div 
+              className="lg:col-span-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <Card className="overflow-hidden border border-border/50">
+                <CardHeader className="bg-card px-6 py-4 border-b border-border/40">
+                  <CardTitle className="text-lg font-medium">Task Management</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <TaskTabs 
+                    pendingTasks={pendingTasks}
+                    delayedTasks={delayedTasks}
+                    completedTasks={completedTasks}
+                    showAssignee={true}
+                  />
+                </CardContent>
+              </Card>
+            </motion.div>
+            
+            <motion.div 
+              className="lg:col-span-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              <Card className="h-full">
+                <CardHeader>
+                  <CardTitle className="text-lg font-medium">Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Button 
+                    onClick={() => navigate("/tasks/create")} 
+                    variant="outline" 
+                    className="w-full justify-between hover:bg-primary hover:text-white transition-colors"
+                  >
+                    Create New Task
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    onClick={() => navigate("/history")} 
+                    variant="outline" 
+                    className="w-full justify-between hover:bg-primary hover:text-white transition-colors"
+                  >
+                    View Task History
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </CardContent>
+                <CardFooter>
+                  <p className="text-xs text-muted-foreground">
+                    {tasks?.length || 0} total tasks in the system
+                  </p>
+                </CardFooter>
+              </Card>
+            </motion.div>
+          </div>
+        </motion.div>
       </main>
       
       <div className="h-16" />
