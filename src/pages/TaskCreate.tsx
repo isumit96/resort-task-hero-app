@@ -14,6 +14,22 @@ import TaskDescription from "@/components/TaskDescription";
 import LocationSelect from "@/components/LocationSelect";
 import TaskStepInput from "@/components/TaskStepInput";
 import { SaveAll } from "lucide-react";
+import { CalendarIcon, Clock } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 const taskSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -41,6 +57,8 @@ const TaskCreate = () => {
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [photoUrl, setPhotoUrl] = useState<string>();
   const [videoUrl, setVideoUrl] = useState<string>();
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
@@ -241,6 +259,7 @@ const TaskCreate = () => {
             title: step.title,
             requires_photo: step.requiresPhoto,
             is_optional: step.isOptional,
+            interaction_type: step.interactionType,
           }))
         );
 
