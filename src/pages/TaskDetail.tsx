@@ -11,6 +11,7 @@ import TaskStatus from "@/components/TaskStatus";
 import { useTaskOperations } from "@/hooks/useTaskOperations";
 import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
+import BottomNavigation from "@/components/BottomNavigation";
 import type { Task } from "@/types";
 
 const TaskDetail = () => {
@@ -88,10 +89,10 @@ const TaskDetail = () => {
   const completedSteps = task.steps.filter(s => s.isCompleted).length;
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen bg-gray-50">
       <Header showBackButton title={`${task.title} - ${task.location}`} />
       
-      <div className="flex-1 overflow-y-auto pb-6">
+      <div className="flex-1 overflow-y-auto pb-20">
         <TaskHeader task={task} />
         
         <TaskStepsList
@@ -109,6 +110,9 @@ const TaskDetail = () => {
           />
         </div>
       </div>
+      
+      <div className="h-16" />
+      <BottomNavigation />
     </div>
   );
 };

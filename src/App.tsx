@@ -13,6 +13,7 @@ import TaskHistory from "./pages/TaskHistory";
 import ManagerDashboard from "./pages/ManagerDashboard";
 import TaskCreate from "./pages/TaskCreate";
 import NotFound from "./pages/NotFound";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/history" element={<TaskHistory />} />
           <Route path="/manager" element={<ManagerDashboard />} />
           <Route path="/tasks/create" element={<TaskCreate />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

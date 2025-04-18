@@ -1,26 +1,25 @@
 
-import { ArrowLeft, LogOut, ClipboardList, Clock } from "lucide-react";
+import { ArrowLeft, Settings } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
 
 interface HeaderProps {
   title?: string;
   showBackButton?: boolean;
-  showLogout?: boolean;
+  showSettings?: boolean;
 }
 
-const Header = ({ title, showBackButton = false, showLogout = true }: HeaderProps) => {
+const Header = ({ title, showBackButton = false, showSettings = true }: HeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useUser();
+  const { user } = useUser();
 
   const handleBack = () => {
     navigate(-1);
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate("/");
+  const handleSettings = () => {
+    navigate("/settings");
   };
 
   const getPageTitle = (): string => {
@@ -33,6 +32,8 @@ const Header = ({ title, showBackButton = false, showLogout = true }: HeaderProp
         return "Today's Tasks";
       case "/history":
         return "Task History";
+      case "/settings":
+        return "Settings";
       default:
         if (location.pathname.includes("/task/")) {
           return "Task Details";
@@ -53,16 +54,24 @@ const Header = ({ title, showBackButton = false, showLogout = true }: HeaderProp
               <ArrowLeft size={24} />
             </button>
           )}
-          <h1 className="text-xl font-semibold">{getPageTitle()}</h1>
+          {location.pathname === "/tasks" && user && (
+            <div>
+              <h1 className="text-xl font-semibold">Hello, {user.email?.split('@')[0] || "User"}</h1>
+              <p className="text-sm text-gray-500">{new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long' })}, {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric' })}</p>
+            </div>
+          )}
+          {location.pathname !== "/tasks" && (
+            <h1 className="text-xl font-semibold">{getPageTitle()}</h1>
+          )}
         </div>
         
-        {showLogout && (
+        {showSettings && location.pathname === "/tasks" && (
           <button 
-            onClick={handleLogout}
-            className="p-1 rounded-full hover:bg-gray-100 text-gray-600"
-            aria-label="Logout"
+            onClick={handleSettings}
+            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600"
+            aria-label="Settings"
           >
-            <LogOut size={20} />
+            <Settings size={20} />
           </button>
         )}
       </div>
