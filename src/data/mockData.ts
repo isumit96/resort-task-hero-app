@@ -22,30 +22,35 @@ export const mockTasks: Task[] = [
         title: 'Dust window sills and surfaces',
         isCompleted: false,
         requiresPhoto: false,
+        isOptional: false,
       },
       {
         id: generateId(),
         title: 'Vacuum carpet and rugs',
         isCompleted: false,
         requiresPhoto: false,
+        isOptional: false,
       },
       {
         id: generateId(),
         title: 'Mop floor',
         isCompleted: false,
         requiresPhoto: true,
+        isOptional: false,
       },
       {
         id: generateId(),
         title: 'Replace shampoo & handwash',
         isCompleted: false,
         requiresPhoto: false,
+        isOptional: false,
       },
       {
         id: generateId(),
         title: 'Make bed with fresh linens',
         isCompleted: false,
         requiresPhoto: true,
+        isOptional: false,
       }
     ],
   },
@@ -63,24 +68,28 @@ export const mockTasks: Task[] = [
         title: 'Strip bed linens',
         isCompleted: true,
         requiresPhoto: false,
+        isOptional: false,
       },
       {
         id: generateId(),
         title: 'Check for lost items',
         isCompleted: true,
         requiresPhoto: false,
+        isOptional: false,
       },
       {
         id: generateId(),
         title: 'Clean bathroom thoroughly',
         isCompleted: false,
         requiresPhoto: true,
+        isOptional: false,
       },
       {
         id: generateId(),
         title: 'Report any damages',
         isCompleted: false,
         requiresPhoto: true,
+        isOptional: true,
       }
     ],
   },
@@ -98,24 +107,28 @@ export const mockTasks: Task[] = [
         title: 'Clean air conditioning filters',
         isCompleted: false,
         requiresPhoto: true,
+        isOptional: false,
       },
       {
         id: generateId(),
         title: 'Wash curtains',
         isCompleted: false,
         requiresPhoto: false,
+        isOptional: false,
       },
       {
         id: generateId(),
         title: 'Sanitize remote controls',
         isCompleted: false,
         requiresPhoto: false,
+        isOptional: false,
       },
       {
         id: generateId(),
         title: 'Clean inside drawers and wardrobes',
         isCompleted: false,
         requiresPhoto: true,
+        isOptional: false,
       }
     ],
   },
@@ -134,6 +147,7 @@ export const mockTasks: Task[] = [
         title: 'Check for signs of pests',
         isCompleted: true,
         requiresPhoto: false,
+        isOptional: false,
       },
       {
         id: generateId(),
@@ -141,6 +155,7 @@ export const mockTasks: Task[] = [
         isCompleted: true,
         requiresPhoto: true,
         photoUrl: 'https://picsum.photos/200/300', // Placeholder image
+        isOptional: false,
       },
       {
         id: generateId(),
@@ -148,6 +163,7 @@ export const mockTasks: Task[] = [
         isCompleted: true,
         requiresPhoto: false,
         comment: 'Applied standard treatment as per protocol',
+        isOptional: false,
       }
     ],
   },
@@ -166,18 +182,21 @@ export const mockTasks: Task[] = [
         title: 'Replace towels',
         isCompleted: true,
         requiresPhoto: false,
+        isOptional: false,
       },
       {
         id: generateId(),
         title: 'Take out trash',
         isCompleted: true,
         requiresPhoto: false,
+        isOptional: false,
       },
       {
         id: generateId(),
         title: 'Wipe bathroom surfaces',
         isCompleted: true,
         requiresPhoto: false,
+        isOptional: false,
       }
     ],
   }

@@ -52,7 +52,8 @@ const TaskDetail = () => {
           isCompleted: step.is_completed,
           requiresPhoto: step.requires_photo,
           comment: step.comment,
-          photoUrl: step.photo_url
+          photoUrl: step.photo_url,
+          isOptional: step.is_optional || false
         }))
       };
     }
