@@ -10,8 +10,11 @@ import TaskCard from "@/components/TaskCard";
 import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, AlertCircle, History, ListTodo } from "lucide-react";
 import type { Task } from "@/types";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { cn } from "@/lib/utils";
 
 const ManagerDashboard = () => {
   const { isAuthenticated } = useUser();
@@ -75,41 +78,105 @@ const ManagerDashboard = () => {
     new Date(task.deadline) < new Date()
   ) || [];
 
+  const completedTasks = tasks?.filter(task => task.status === 'completed') || [];
+  const pendingTasks = tasks?.filter(task => task.status !== 'completed') || [];
+
   return (
-    <div className="h-screen flex flex-col">
+    <div className="min-h-screen bg-gray-50">
       <Header title="Manager Dashboard" showBackButton={false} />
       
-      <div className="flex-1 overflow-y-auto px-4 py-4 bg-gray-50">
+      <main className="container mx-auto px-4 py-6 max-w-5xl">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-lg font-medium text-gray-900">Task Overview</h2>
-          <Button onClick={() => navigate("/tasks/create")} size="sm">
+          <h1 className="text-2xl font-semibold text-gray-900">Task Management</h1>
+          <Button 
+            onClick={() => navigate("/tasks/create")}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Create Task
           </Button>
         </div>
 
         {delayedTasks.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-red-600 font-medium mb-3">
-              Delayed Tasks ({delayedTasks.length})
-            </h3>
-            <div className="space-y-3">
-              {delayedTasks.map(task => (
-                <TaskCard key={task.id} task={task} />
-              ))}
-            </div>
-          </div>
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              There {delayedTasks.length === 1 ? 'is' : 'are'} {delayedTasks.length} delayed {delayedTasks.length === 1 ? 'task' : 'tasks'} that need attention
+            </AlertDescription>
+          </Alert>
         )}
 
-        <div>
-          <h3 className="font-medium mb-3">All Tasks</h3>
-          <div className="space-y-3">
-            {tasks?.map(task => (
-              <TaskCard key={task.id} task={task} />
-            ))}
-          </div>
-        </div>
-      </div>
+        <Tabs defaultValue="active" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
+            <TabsTrigger value="active" className="flex items-center gap-2">
+              <ListTodo className="h-4 w-4" />
+              Active Tasks
+            </TabsTrigger>
+            <TabsTrigger value="history" className="flex items-center gap-2">
+              <History className="h-4 w-4" />
+              Task History
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="active" className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-medium text-gray-900">Pending Tasks</h2>
+                  <span className="px-2.5 py-0.5 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                    {pendingTasks.length}
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {pendingTasks.map(task => (
+                    <TaskCard key={task.id} task={task} />
+                  ))}
+                  {pendingTasks.length === 0 && (
+                    <p className="text-gray-500 text-center py-4">No pending tasks</p>
+                  )}
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-medium text-gray-900">Delayed Tasks</h2>
+                  <span className={cn(
+                    "px-2.5 py-0.5 rounded-full text-sm font-medium",
+                    delayedTasks.length > 0 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
+                  )}>
+                    {delayedTasks.length}
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {delayedTasks.map(task => (
+                    <TaskCard key={task.id} task={task} />
+                  ))}
+                  {delayedTasks.length === 0 && (
+                    <p className="text-gray-500 text-center py-4">No delayed tasks</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="history" className="space-y-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-medium text-gray-900">Completed Tasks</h2>
+              <span className="px-2.5 py-0.5 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                {completedTasks.length}
+              </span>
+            </div>
+            <div className="space-y-3">
+              {completedTasks.map(task => (
+                <TaskCard key={task.id} task={task} />
+              ))}
+              {completedTasks.length === 0 && (
+                <p className="text-gray-500 text-center py-4">No completed tasks yet</p>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </main>
     </div>
   );
 };
