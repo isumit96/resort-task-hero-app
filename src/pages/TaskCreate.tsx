@@ -53,6 +53,14 @@ const TaskCreate = () => {
       try {
         console.log("Attempting to fetch employees");
         
+        // First, let's check how many total profiles exist
+        const countQuery = await supabase
+          .from("profiles")
+          .select("*", { count: "exact", head: true });
+        
+        console.log("Total profiles in database:", countQuery.count);
+        
+        // Now let's fetch with detailed logging
         const { data, error } = await supabase
           .from("profiles")
           .select("id, username");
@@ -65,6 +73,13 @@ const TaskCreate = () => {
         console.log("Fetched employees raw data:", data);
         console.log("Number of fetched employees:", data?.length);
         
+        if (data && data.length > 0) {
+          console.log("First employee:", data[0]);
+          if (data.length > 1) {
+            console.log("Second employee:", data[1]);
+          }
+        }
+        
         if (!data || data.length === 0) {
           toast({
             title: "No Employees",
@@ -73,6 +88,7 @@ const TaskCreate = () => {
           });
         } else {
           setEmployees(data);
+          console.log("Employees state after update:", data);
         }
       } catch (error) {
         console.error("Error fetching employees:", error);
@@ -237,11 +253,14 @@ const TaskCreate = () => {
                           No employees found
                         </SelectItem>
                       ) : (
-                        employees.map(employee => (
-                          <SelectItem key={employee.id} value={employee.id}>
-                            {employee.username || 'Unnamed Employee'}
-                          </SelectItem>
-                        ))
+                        employees.map((employee, index) => {
+                          console.log(`Rendering employee ${index}:`, employee);
+                          return (
+                            <SelectItem key={employee.id} value={employee.id}>
+                              {employee.username || 'Unnamed Employee'}
+                            </SelectItem>
+                          );
+                        })
                       )}
                     </SelectContent>
                   </Select>
