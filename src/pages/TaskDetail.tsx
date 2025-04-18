@@ -90,7 +90,7 @@ const TaskDetail = () => {
   const completedSteps = task.steps.filter(s => s.isCompleted).length;
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-background">
       <Header showBackButton title={`${task.title} - ${task.location}`} />
       
       <div className="flex-1 overflow-y-auto pb-20">

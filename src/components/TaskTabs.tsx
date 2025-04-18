@@ -19,12 +19,12 @@ const TaskTabs = ({
 }: TaskTabsProps) => {
   return (
     <Tabs defaultValue="active" className="space-y-4">
-      <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
-        <TabsTrigger value="active" className="flex items-center gap-2">
+      <TabsList className="grid w-full grid-cols-2 lg:w-[400px] bg-card">
+        <TabsTrigger value="active" className="flex items-center gap-2 data-[state=active]:bg-muted">
           <ListTodo className="h-4 w-4" />
           Active Tasks
         </TabsTrigger>
-        <TabsTrigger value="history" className="flex items-center gap-2">
+        <TabsTrigger value="history" className="flex items-center gap-2 data-[state=active]:bg-muted">
           <History className="h-4 w-4" />
           Task History
         </TabsTrigger>

@@ -19,19 +19,19 @@ const TaskHeader = ({ task }: TaskHeaderProps) => {
   };
 
   return (
-    <div className="bg-white px-4 py-4 border-b">
+    <div className="bg-card px-4 py-4 border-b border-border">
       <div className="flex justify-between items-start">
-        <h1 className="text-xl font-semibold">{task.title}</h1>
+        <h1 className="text-xl font-semibold text-foreground">{task.title}</h1>
         <TaskStatusBadge status={task.status} />
       </div>
       
       <div className="mt-3 flex flex-wrap gap-y-2 gap-x-4">
-        <div className="flex items-center text-gray-600">
+        <div className="flex items-center text-muted-foreground">
           <Clock size={16} className="mr-1" />
           <span className="text-sm">Due {getRelativeTime(task.dueTime)}</span>
         </div>
         
-        <div className="flex items-center text-gray-600">
+        <div className="flex items-center text-muted-foreground">
           <MapPin size={16} className="mr-1" />
           <span className="text-sm">{task.location}</span>
         </div>

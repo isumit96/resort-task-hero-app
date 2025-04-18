@@ -99,15 +99,15 @@ const ManagerDashboard = () => {
   const pendingTasks = tasks?.filter(task => task.status !== 'completed' && !delayedTasks.includes(task)) || [];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Header title="Manager Dashboard" showBackButton={false} />
       
       <main className="container mx-auto px-4 py-6 pb-20 max-w-5xl">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Task Management</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Task Management</h1>
           <Button 
             onClick={() => navigate("/tasks/create")}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-primary hover:bg-primary/90"
           >
             <Plus className="h-4 w-4 mr-2" />
             Create Task
