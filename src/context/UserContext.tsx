@@ -10,7 +10,8 @@ interface UserContextType {
   signup: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
-  userId: string | null;  
+  userId: string | null;
+  isLoading: boolean;  
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -18,6 +19,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export function UserProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // First set up auth state listener
@@ -26,6 +28,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         console.log("Auth state changed:", event);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
+        setIsLoading(false);
       }
     );
 
@@ -34,29 +37,36 @@ export function UserProvider({ children }: { children: ReactNode }) {
       console.log("Retrieved session:", currentSession ? "Valid session" : "No session");
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
+      setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email: string, password: string) => {
+    setIsLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+    setIsLoading(false);
     if (error) throw error;
   };
 
   const signup = async (email: string, password: string) => {
+    setIsLoading(true);
     const { error } = await supabase.auth.signUp({
       email,
       password,
     });
+    setIsLoading(false);
     if (error) throw error;
   };
 
   const logout = async () => {
+    setIsLoading(true);
     const { error } = await supabase.auth.signOut();
+    setIsLoading(false);
     if (error) throw error;
   };
 
@@ -68,6 +78,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     logout,
     isAuthenticated: !!user,
     userId: user?.id || null,
+    isLoading,
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

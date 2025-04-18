@@ -1,13 +1,13 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
 import { useUser } from "@/context/UserContext";
 import { useNavigate } from "react-router-dom";
-import { Card, CardHeader, CardContent, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, User, Moon, Sun, Star, Mail, Shield, Activity, Settings as SettingsIcon } from "lucide-react";
+import { LogOut, User, Moon, Sun, Mail, Shield } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
@@ -18,6 +18,23 @@ const Settings = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [darkMode, setDarkMode] = useState(false);
+
+  // Initialize dark mode from localStorage or system preference
+  useEffect(() => {
+    // Check if user prefers dark mode
+    const isDarkMode = localStorage.getItem('darkMode') === 'true' || 
+                      (!('darkMode' in localStorage) && 
+                       window.matchMedia('(prefers-color-scheme: dark)').matches);
+    
+    setDarkMode(isDarkMode);
+    
+    // Apply dark mode if needed on initial load
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
 
   const { data: profile } = useQuery({
     queryKey: ["userProfile", user?.id],
@@ -45,27 +62,27 @@ const Settings = () => {
   };
 
   const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    // In a real implementation, we would add dark mode toggle logic here
-  };
-
-  const settingsOptions = [
-    { 
-      icon: <Shield className="h-5 w-5 text-indigo-500" />, 
-      title: "Privacy", 
-      description: "Manage your data privacy settings" 
-    },
-    { 
-      icon: <Bell className="h-5 w-5 text-amber-500" />, 
-      title: "Notifications", 
-      description: "Configure your notification preferences" 
-    },
-    { 
-      icon: <Activity className="h-5 w-5 text-emerald-500" />, 
-      title: "Activity", 
-      description: "View your account activity log" 
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    
+    // Update DOM
+    if (newDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
-  ];
+    
+    // Save preference
+    localStorage.setItem('darkMode', newDarkMode.toString());
+    
+    // Show toast notification
+    toast({
+      title: newDarkMode ? "Dark mode enabled" : "Light mode enabled",
+      description: newDarkMode 
+        ? "The application is now using dark theme" 
+        : "The application is now using light theme"
+    });
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -102,7 +119,7 @@ const Settings = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-2">
-                  <Star className="text-muted-foreground h-5 w-5" />
+                  <Shield className="text-muted-foreground h-5 w-5" />
                   <div>
                     <div className="text-sm font-medium">Account Type</div>
                     <div className="text-sm text-muted-foreground">{profile?.role === 'manager' ? 'Manager' : 'Employee'}</div>
@@ -115,7 +132,11 @@ const Settings = () => {
           <Card className="border-border/40 shadow-card">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <SettingsIcon className="h-5 w-5 text-primary" />
+                {darkMode ? (
+                  <Moon className="h-5 w-5 text-primary" />
+                ) : (
+                  <Sun className="h-5 w-5 text-amber-500" />
+                )}
                 Appearance
               </CardTitle>
             </CardHeader>
@@ -131,28 +152,6 @@ const Settings = () => {
                   className="data-[state=checked]:bg-primary"
                 />
               </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/40 shadow-card">
-            <CardHeader>
-              <CardTitle className="text-lg">Account Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {settingsOptions.map((option, index) => (
-                <button
-                  key={index}
-                  className="flex items-center justify-between w-full p-2 text-left rounded-md hover:bg-secondary transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    {option.icon}
-                    <div>
-                      <div className="font-medium">{option.title}</div>
-                      <div className="text-sm text-muted-foreground">{option.description}</div>
-                    </div>
-                  </div>
-                </button>
-              ))}
             </CardContent>
           </Card>
           
@@ -174,21 +173,3 @@ const Settings = () => {
 };
 
 export default Settings;
-
-function Bell(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-      <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-    </svg>
-  );
-}
