@@ -16,11 +16,12 @@ export const useRole = () => {
       
       console.log("Fetching role for user:", userId);
       
+      // Fix: Use eq('id', userId as string) to specify the correct type
       const { data: profile, error } = await supabase
         .from("profiles")
         .select("role")
-        .eq("id", userId)
-        .single();
+        .eq("id", userId as string)
+        .maybeSingle();
       
       if (error) {
         console.error("Error fetching role:", error);
@@ -28,7 +29,7 @@ export const useRole = () => {
       }
       
       console.log("User role data:", profile);
-      return profile?.role;
+      return profile?.role || null;
     },
     enabled: !!userId
   });
