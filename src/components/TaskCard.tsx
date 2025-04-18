@@ -36,10 +36,10 @@ const TaskCard = ({ task, showAssignee = false }: TaskCardProps) => {
               <span>{task.location}</span>
             </div>
 
-            {showAssignee && (
+            {showAssignee && task.assigneeName && (
               <div className="flex items-center text-gray-600 text-sm">
                 <User size={14} className="mr-1" />
-                <span>Assigned to {task.assigneeName || task.assignedTo}</span>
+                <span>{task.assigneeName}</span>
               </div>
             )}
           </div>

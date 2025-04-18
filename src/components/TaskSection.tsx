@@ -7,9 +7,15 @@ interface TaskSectionProps {
   title: string;
   tasks: Task[];
   badgeColor?: "yellow" | "red" | "green" | "gray";
+  showAssignee?: boolean;
 }
 
-const TaskSection = ({ title, tasks, badgeColor = "gray" }: TaskSectionProps) => {
+const TaskSection = ({ 
+  title, 
+  tasks, 
+  badgeColor = "gray",
+  showAssignee = true 
+}: TaskSectionProps) => {
   const getBadgeClasses = () => {
     switch (badgeColor) {
       case "yellow":
@@ -37,7 +43,7 @@ const TaskSection = ({ title, tasks, badgeColor = "gray" }: TaskSectionProps) =>
       
       <div className="space-y-3">
         {tasks.map(task => (
-          <TaskCard key={task.id} task={task} showAssignee={true} />
+          <TaskCard key={task.id} task={task} showAssignee={showAssignee} />
         ))}
         {tasks.length === 0 && (
           <p className="text-gray-500 text-center py-4">No {title.toLowerCase()}</p>

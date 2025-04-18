@@ -8,9 +8,15 @@ interface TaskTabsProps {
   pendingTasks: Task[];
   delayedTasks: Task[];
   completedTasks: Task[];
+  showAssignee?: boolean;
 }
 
-const TaskTabs = ({ pendingTasks, delayedTasks, completedTasks }: TaskTabsProps) => {
+const TaskTabs = ({ 
+  pendingTasks, 
+  delayedTasks, 
+  completedTasks,
+  showAssignee = true 
+}: TaskTabsProps) => {
   return (
     <Tabs defaultValue="active" className="space-y-4">
       <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
@@ -30,11 +36,13 @@ const TaskTabs = ({ pendingTasks, delayedTasks, completedTasks }: TaskTabsProps)
             title="Pending Tasks" 
             tasks={pendingTasks}
             badgeColor="yellow"
+            showAssignee={showAssignee}
           />
           <TaskSection 
             title="Delayed Tasks" 
             tasks={delayedTasks}
             badgeColor={delayedTasks.length > 0 ? "red" : "gray"}
+            showAssignee={showAssignee}
           />
         </div>
       </TabsContent>
@@ -44,6 +52,7 @@ const TaskTabs = ({ pendingTasks, delayedTasks, completedTasks }: TaskTabsProps)
           title="Completed Tasks" 
           tasks={completedTasks}
           badgeColor="green"
+          showAssignee={showAssignee}
         />
       </TabsContent>
     </Tabs>

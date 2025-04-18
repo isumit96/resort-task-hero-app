@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
@@ -34,22 +35,29 @@ const ManagerDashboard = () => {
   const { data: tasks, error, isLoading } = useQuery({
     queryKey: ["all-tasks"],
     queryFn: async () => {
+      console.log("Fetching all tasks for manager view");
+      
       const { data: tasks, error } = await supabase
         .from("tasks")
         .select(`
           *,
           steps:task_steps(*),
-          profiles:assigned_to(username)
+          profiles:assigned_to(username, role)
         `)
         .order('deadline', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching tasks:", error);
+        throw error;
+      }
+      
+      console.log("Tasks fetched successfully:", tasks);
       
       return tasks.map((task: any): Task => ({
         id: task.id,
         title: task.title,
         dueTime: new Date(task.due_time).toLocaleString(),
-        location: task.location,
+        location: task.location || '',
         status: task.status,
         assignedTo: task.assigned_to,
         assigneeName: task.profiles?.username || 'Unassigned',
@@ -103,6 +111,7 @@ const ManagerDashboard = () => {
           pendingTasks={pendingTasks}
           delayedTasks={delayedTasks}
           completedTasks={completedTasks}
+          showAssignee={true}
         />
       </main>
       
