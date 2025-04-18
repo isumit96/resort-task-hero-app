@@ -27,11 +27,10 @@ export const useTasks = (isManager: boolean = false) => {
 
       // If not a manager, only fetch tasks assigned to the user
       if (!isManager) {
-        // Fix: Cast user.id to any to bypass type checking
         query = query.eq('assigned_to', user.id as any);
       }
 
-      const { data: tasks, error } = await query;
+      const { data, error } = await query;
 
       if (error) {
         console.error("Error fetching tasks:", error);
@@ -43,16 +42,16 @@ export const useTasks = (isManager: boolean = false) => {
         throw error;
       }
 
-      console.log("Tasks returned from database:", tasks);
+      console.log("Tasks returned from database:", data);
 
-      // Fix: Add type guard to ensure tasks is an array
-      if (!Array.isArray(tasks)) {
-        console.error("Expected tasks to be an array but got:", tasks);
+      // Ensure data is an array and handle the case where it might not be
+      if (!data || !Array.isArray(data)) {
+        console.error("Expected data to be an array but got:", data);
         return [];
       }
 
-      // Transform the data to match our Task type
-      const transformedTasks = tasks.map(task => ({
+      // Transform the data to match our Task type with proper type safety
+      const transformedTasks = data.map((task: any) => ({
         id: task.id,
         title: task.title,
         dueTime: task.due_time ? new Date(task.due_time).toLocaleString() : '',

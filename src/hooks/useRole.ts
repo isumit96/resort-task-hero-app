@@ -16,7 +16,6 @@ export const useRole = () => {
       
       console.log("Fetching role for user:", userId);
       
-      // Fix: Use eq('id', userId as string) to specify the correct type
       const { data: profile, error } = await supabase
         .from("profiles")
         .select("role")

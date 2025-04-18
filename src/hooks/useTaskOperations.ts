@@ -13,7 +13,6 @@ export const useTaskOperations = (taskId: string | undefined) => {
     if (!taskId) return;
     
     try {
-      // Fix: Cast fields to any to bypass type checking
       const { error: stepError } = await supabase
         .from('task_steps')
         .update({ is_completed: isCompleted } as any)
@@ -38,7 +37,6 @@ export const useTaskOperations = (taskId: string | undefined) => {
     if (!taskId) return;
     
     try {
-      // Fix: Cast fields to any to bypass type checking
       const { error } = await supabase
         .from('task_steps')
         .update({ comment } as any)
@@ -66,7 +64,6 @@ export const useTaskOperations = (taskId: string | undefined) => {
     if (!taskId) return;
     
     try {
-      // Fix: Cast fields to any to bypass type checking
       const { error } = await supabase
         .from('task_steps')
         .update({ photo_url: photoUrl } as any)
@@ -98,7 +95,6 @@ export const useTaskOperations = (taskId: string | undefined) => {
         ? { status: newStatus, completed_at: new Date().toISOString() }
         : { status: newStatus };
 
-      // Fix: Cast fields to any to bypass type checking
       const { error } = await supabase
         .from('tasks')
         .update(updateData as any)

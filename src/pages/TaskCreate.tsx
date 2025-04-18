@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -76,7 +75,6 @@ const TaskCreate = () => {
         }
         
         // The key query - fetch ALL profiles without any filters
-        // Using .from("profiles") and not applying any filters should return all profiles
         const { data: allProfiles, error: profilesError } = await supabase
           .from("profiles")
           .select("id, username, role");
@@ -90,13 +88,15 @@ const TaskCreate = () => {
         console.log("Number of profiles fetched:", allProfiles?.length || 0);
         
         if (allProfiles && allProfiles.length > 0) {
-          // Log each profile individually for debugging
-          allProfiles.forEach((profile, index) => {
-            console.log(`Profile ${index}:`, profile);
-          });
+          // Convert the Supabase result to the expected array type with proper type casting
+          const formattedProfiles = allProfiles.map((profile: any) => ({
+            id: profile.id,
+            username: profile.username || '',
+            role: profile.role || ''
+          }));
           
-          setEmployees(allProfiles);
-          console.log("Employees state after update:", allProfiles);
+          setEmployees(formattedProfiles);
+          console.log("Employees state after update:", formattedProfiles);
         } else {
           console.log("No profiles returned from query");
           toast({

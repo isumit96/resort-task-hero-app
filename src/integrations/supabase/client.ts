@@ -12,7 +12,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storageKey: 'auth-storage',
     storage: localStorage,
     detectSessionInUrl: true,
-    flowType: 'pkce',
-    sessionExpiryMargin: 60 * 60 * 24 * 180 // 180 days (6 months) in seconds
+    flowType: 'pkce'
+    // Removed sessionExpiryMargin as it's not supported in the type
   }
 });

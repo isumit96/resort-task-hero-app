@@ -23,8 +23,8 @@ const Settings = () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", user.id)
-        .single();
+        .eq("id", user.id as any)
+        .maybeSingle();
 
       if (error) throw error;
       return data;
@@ -56,7 +56,7 @@ const Settings = () => {
                 <UserCircle className="text-gray-500" size={24} />
                 <div>
                   <span className="font-medium">{profile?.username || 'Not set'}</span>
-                  <p className="text-sm text-gray-500">{profile?.role}</p>
+                  <p className="text-sm text-gray-500">{profile?.role || 'No role'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
