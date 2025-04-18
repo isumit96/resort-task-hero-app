@@ -7,14 +7,30 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, User, Bell, Shield, HelpCircle } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { LogOut, User, UserCircle, Mail, Phone, Calendar } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Settings = () => {
   const { user, logout } = useUser();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [notifications, setNotifications] = useState(true);
+
+  const { data: profile } = useQuery({
+    queryKey: ["userProfile", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user
+  });
 
   const handleLogout = async () => {
     await logout();
@@ -25,14 +41,6 @@ const Settings = () => {
     navigate("/");
   };
 
-  const toggleNotifications = () => {
-    setNotifications(!notifications);
-    toast({
-      title: notifications ? "Notifications disabled" : "Notifications enabled",
-      description: notifications ? "You will not receive notifications" : "You will now receive notifications"
-    });
-  };
-
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       <Header title="Settings" showBackButton showSettings={false} />
@@ -41,47 +49,23 @@ const Settings = () => {
         {user && (
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle className="text-lg">Account</CardTitle>
+              <CardTitle className="text-lg">Personal Information</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col gap-2">
+            <CardContent className="space-y-4">
               <div className="flex items-center gap-3">
-                <User className="text-gray-500" size={20} />
+                <UserCircle className="text-gray-500" size={24} />
+                <div>
+                  <span className="font-medium">{profile?.username || 'Not set'}</span>
+                  <p className="text-sm text-gray-500">{profile?.role}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Mail className="text-gray-500" size={20} />
                 <span>{user.email}</span>
               </div>
             </CardContent>
           </Card>
         )}
-        
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg">Preferences</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Bell className="text-gray-500" size={20} />
-                <span>Notifications</span>
-              </div>
-              <Switch checked={notifications} onCheckedChange={toggleNotifications} />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg">Support</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-3">
-              <HelpCircle className="text-gray-500" size={20} />
-              <span>Help Center</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Shield className="text-gray-500" size={20} />
-              <span>Privacy Policy</span>
-            </div>
-          </CardContent>
-        </Card>
         
         <Button 
           variant="destructive" 

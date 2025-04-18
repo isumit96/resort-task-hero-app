@@ -1,7 +1,7 @@
-
-import { ArrowLeft, Settings } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
+import { Settings } from "lucide-react";
 
 interface HeaderProps {
   title?: string;

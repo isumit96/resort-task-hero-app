@@ -1,5 +1,5 @@
 
-import { Home, ClipboardCheck, Settings } from "lucide-react";
+import { Home, ClipboardCheck } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 
 const BottomNavigation = () => {
@@ -19,11 +19,6 @@ const BottomNavigation = () => {
       name: "History",
       path: "/history",
       icon: <ClipboardCheck size={20} />
-    },
-    {
-      name: "Settings",
-      path: "/settings",
-      icon: <Settings size={20} />
     }
   ];
 

@@ -59,7 +59,6 @@ const TaskHistory = () => {
     }
   });
   
-  // Group tasks by completion date
   const groupTasksByDate = () => {
     if (!tasks) return [];
     
@@ -131,23 +130,21 @@ const TaskHistory = () => {
                   <div className="space-y-3">
                     {group.tasks.map(task => (
                       <div key={task.id} className="rounded-lg border border-green-100 bg-white overflow-hidden shadow-sm">
-                        <div className="p-4">
-                          <div className="flex justify-between">
-                            <h3 className="font-medium text-lg">{task.title}</h3>
-                            <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">
-                              Completed
-                            </span>
-                          </div>
-                          
-                          <div className="mt-2 flex items-center text-gray-600 text-sm">
-                            <Clock size={14} className="mr-1" />
-                            <span>Completed {formatCompletedDate(task.completedAt || '')}</span>
-                          </div>
-                          
-                          <div className="mt-1 flex items-center text-gray-500 text-sm">
-                            <MapPin size={14} className="mr-1" />
-                            <span>{task.location}</span>
-                          </div>
+                        <div className="p-4 flex items-center justify-between">
+                          <h3 className="font-medium text-lg">{task.title}</h3>
+                          <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full self-center">
+                            Completed
+                          </span>
+                        </div>
+                        
+                        <div className="px-4 py-2 flex items-center text-gray-600 text-sm">
+                          <Clock size={14} className="mr-1" />
+                          <span>Completed {formatCompletedDate(task.completedAt || '')}</span>
+                        </div>
+                        
+                        <div className="px-4 py-2 flex items-center text-gray-500 text-sm">
+                          <MapPin size={14} className="mr-1" />
+                          <span>{task.location}</span>
                         </div>
                         <div className="p-3 bg-gray-50 border-t">
                           <Button 
@@ -179,19 +176,16 @@ const formatCompletedDate = (dateString: string) => {
   const date = new Date(dateString);
   const now = new Date();
   
-  // If completed today, show "Today at HH:MM"
   if (date.toDateString() === now.toDateString()) {
     return `Today at ${format(date, 'h:mm a')}`;
   }
   
-  // If completed yesterday, show "Yesterday at HH:MM"
   const yesterday = new Date(now);
   yesterday.setDate(yesterday.getDate() - 1);
   if (date.toDateString() === yesterday.toDateString()) {
     return `Yesterday at ${format(date, 'h:mm a')}`;
   }
   
-  // Otherwise show "MMM d at HH:MM"
   return format(date, 'MMM d, yyyy');
 };
 
