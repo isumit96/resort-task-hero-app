@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useUser } from "@/context/UserContext";
 import { useNavigate } from "react-router-dom";
@@ -8,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader, Clock, MapPin } from "lucide-react";
 import { useTasks } from "@/hooks/useTasks";
 import { Button } from "@/components/ui/button";
+import TaskCard from "@/components/TaskCard";
 
 const TaskList = () => {
   const { user, isAuthenticated } = useUser();
@@ -20,7 +20,13 @@ const TaskList = () => {
       navigate("/");
       return;
     }
-  }, [isAuthenticated, navigate]);
+    
+    console.log("Current user in TaskList:", user);
+  }, [isAuthenticated, navigate, user]);
+
+  useEffect(() => {
+    console.log("Tasks data in TaskList:", tasks);
+  }, [tasks]);
 
   const handleOpenTask = (taskId: string) => {
     navigate(`/task/${taskId}`);
@@ -59,6 +65,10 @@ const TaskList = () => {
 
   // Filter tasks into overdue and upcoming
   const now = new Date();
+  
+  console.log("Filtering tasks. Current tasks array:", tasks);
+  console.log("Current date for comparison:", now);
+  
   const overdueTasks = tasks?.filter(task => 
     task.status !== 'completed' && 
     task.deadline && 
@@ -70,6 +80,9 @@ const TaskList = () => {
     (!task.deadline || new Date(task.deadline) >= now)
   ) || [];
   
+  console.log("Overdue tasks:", overdueTasks);
+  console.log("Upcoming tasks:", upcomingTasks);
+
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       <Header showBackButton={false} />
