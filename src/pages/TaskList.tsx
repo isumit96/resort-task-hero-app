@@ -49,7 +49,6 @@ const TaskList = () => {
   const taskArray = Array.isArray(tasks) ? tasks : [];
   
   const activeTasks = taskArray.filter(task => task.status !== 'completed') || [];
-  const completedTasks = taskArray.filter(task => task.status === 'completed') || [];
   
   const overdueTasks = activeTasks.filter(task => {
     const deadlineDate = parseDate(task.deadline);
@@ -109,7 +108,7 @@ const TaskList = () => {
           </div>
         )}
 
-        {(!taskArray.length) ? (
+        {(!activeTasks.length) ? (
           <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
             <p className="text-lg font-medium">No tasks for today!</p>
             <p className="mt-2">Enjoy your break or check again later</p>
@@ -148,27 +147,6 @@ const TaskList = () => {
                 </div>
                 <div className="space-y-3">
                   {upcomingTasks.map(task => (
-                    <TaskCard 
-                      key={task.id} 
-                      task={task}
-                      showAssignee={isManager}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Completed Tasks Section */}
-            {completedTasks.length > 0 && (
-              <div>
-                <div className="flex items-center mb-3">
-                  <h2 className="text-base font-semibold">Completed tasks</h2>
-                  <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-800 text-xs font-medium rounded-full">
-                    {completedTasks.length}
-                  </span>
-                </div>
-                <div className="space-y-3">
-                  {completedTasks.map(task => (
                     <TaskCard 
                       key={task.id} 
                       task={task}

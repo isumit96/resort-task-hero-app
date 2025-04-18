@@ -1,11 +1,10 @@
-
 import { useEffect } from "react";
 import { Task } from "@/types";
 import { useUser } from "@/context/UserContext";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, formatDistanceToNow } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import TaskCard from "@/components/TaskCard";
@@ -77,11 +76,15 @@ const TaskHistory = () => {
     
     return Object.entries(grouped)
       .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
-      .map(([date, tasks]) => ({
-        date,
-        formattedDate: format(parseISO(date), 'MMMM d, yyyy'),
-        tasks
-      }));
+      .map(([date, tasks]) => {
+        const firstDate = parseISO(date);
+        const relativeDate = formatDistanceToNow(firstDate, { addSuffix: true });
+        return {
+          date,
+          formattedDate: relativeDate,
+          tasks
+        };
+      });
   };
   
   const groupedTasks = groupTasksByDate();
@@ -121,7 +124,7 @@ const TaskHistory = () => {
                     <TaskCard 
                       key={task.id} 
                       task={task}
-                      showAssignee={true}
+                      showAssignee={false}
                     />
                   ))}
                 </div>
