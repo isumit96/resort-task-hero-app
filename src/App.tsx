@@ -1,84 +1,53 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { UserProvider, useUser } from "./context/UserContext";
-import { useEffect } from "react";
-
-// Pages
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Index from "./pages/Index";
+import Settings from "./pages/Settings";
 import Login from "./pages/Login";
+import NotFound from "./pages/NotFound";
 import TaskList from "./pages/TaskList";
 import TaskDetail from "./pages/TaskDetail";
-import TaskHistory from "./pages/TaskHistory";
-import ManagerDashboard from "./pages/ManagerDashboard";
 import TaskCreate from "./pages/TaskCreate";
-import NotFound from "./pages/NotFound";
-import Settings from "./pages/Settings";
+import TaskHistory from "./pages/TaskHistory";
 import TemplateList from "./pages/TemplateList";
 import TemplateDetail from "./pages/TemplateDetail";
+import TemplateEdit from "./pages/TemplateEdit";
+import ManagerDashboard from "./pages/ManagerDashboard";
+import { UserProvider } from "./context/UserContext";
+import { Toaster } from "./components/ui/toaster";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      retry: 1
-    }
-  }
+    },
+  },
 });
 
-// Protected route wrapper
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, isLoading } = useUser();
-  const location = useLocation();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    // Redirect to login but remember where the user was trying to go
-    return <Navigate to="/" state={{ from: location }} replace />;
-  }
-
-  return <>{children}</>;
-};
-
-const AppRoutes = () => {
-  const { isAuthenticated } = useUser();
-
+function App() {
   return (
-    <Routes>
-      <Route path="/" element={isAuthenticated ? <Navigate to="/tasks" /> : <Login />} />
-      <Route path="/tasks" element={<ProtectedRoute><TaskList /></ProtectedRoute>} />
-      <Route path="/task/:taskId" element={<ProtectedRoute><TaskDetail /></ProtectedRoute>} />
-      <Route path="/history" element={<ProtectedRoute><TaskHistory /></ProtectedRoute>} />
-      <Route path="/manager" element={<ProtectedRoute><ManagerDashboard /></ProtectedRoute>} />
-      <Route path="/tasks/create" element={<ProtectedRoute><TaskCreate /></ProtectedRoute>} />
-      <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-      <Route path="/templates" element={<ProtectedRoute><TemplateList /></ProtectedRoute>} />
-      <Route path="/templates/:templateId" element={<ProtectedRoute><TemplateDetail /></ProtectedRoute>} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <QueryClientProvider client={queryClient}>
+      <UserProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/tasks" element={<TaskList />} />
+            <Route path="/tasks/:taskId" element={<TaskDetail />} />
+            <Route path="/tasks/create" element={<TaskCreate />} />
+            <Route path="/history" element={<TaskHistory />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/templates" element={<TemplateList />} />
+            <Route path="/templates/:templateId" element={<TemplateDetail />} />
+            <Route path="/templates/edit/:templateId" element={<TemplateEdit />} />
+            <Route path="/manager" element={<ManagerDashboard />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+        <Toaster />
+      </UserProvider>
+    </QueryClientProvider>
   );
-};
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <UserProvider>
-      <BrowserRouter>
-        <div className="bg-background min-h-screen text-foreground">
-          <Toaster />
-          <Sonner />
-          <AppRoutes />
-        </div>
-      </BrowserRouter>
-    </UserProvider>
-  </QueryClientProvider>
-);
+}
 
 export default App;

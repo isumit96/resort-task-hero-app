@@ -1,5 +1,5 @@
 
-import { Settings, ListChecks, History, ClipboardEdit, FileEdit } from "lucide-react";
+import { Settings, ListChecks, History, ClipboardEdit } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
 import { useRole } from "@/hooks/useRole";
@@ -48,21 +48,6 @@ const BottomNavigation = () => {
         >
           <ClipboardEdit className="h-5 w-5" />
           <span>Dashboard</span>
-        </NavLink>
-      )}
-      
-      {isManager && (
-        <NavLink
-          to="/templates"
-          className={({ isActive }) =>
-            cn(
-              "flex flex-col items-center justify-center space-y-1 text-sm",
-              isActive ? "text-primary" : "text-muted-foreground"
-            )
-          }
-        >
-          <FileEdit className="h-5 w-5" />
-          <span>Templates</span>
         </NavLink>
       )}
       
