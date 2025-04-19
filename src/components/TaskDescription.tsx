@@ -2,7 +2,6 @@
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Camera, Video } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface TaskDescriptionProps {
@@ -41,14 +40,14 @@ const TaskDescription = ({
         <Label htmlFor="description">Description</Label>
         <Textarea
           id="description"
-          value={description}
+          value={description || ""} // Ensure value is never undefined
           onChange={(e) => onDescriptionChange(e.target.value)}
           placeholder="Add task description..."
           className="mt-1.5"
         />
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <div>
           <Label className="mb-1.5 block">Photo</Label>
           <label className="cursor-pointer">

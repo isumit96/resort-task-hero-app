@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Loader } from "lucide-react";
 
 interface Location {
   id: string;
@@ -39,11 +40,22 @@ const LocationSelect = ({ value, onChange }: LocationSelectProps) => {
         <SelectValue placeholder="Select location" />
       </SelectTrigger>
       <SelectContent>
-        {!isLoading && locations?.map((location) => (
-          <SelectItem key={location.id} value={location.name || "unknown-location"}>
-            {location.name || "Unknown Location"}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-2">
+            <Loader className="h-4 w-4 animate-spin mr-2" />
+            <span>Loading locations...</span>
+          </div>
+        ) : locations && locations.length > 0 ? (
+          locations.map((location) => (
+            <SelectItem key={location.id} value={location.name || "unknown-location"}>
+              {location.name || "Unknown Location"}
+            </SelectItem>
+          ))
+        ) : (
+          <SelectItem value="no-locations" disabled>
+            No locations available
           </SelectItem>
-        ))}
+        )}
       </SelectContent>
     </Select>
   );

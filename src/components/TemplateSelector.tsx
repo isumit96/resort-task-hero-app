@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
 import { FileSearch, Loader } from "lucide-react";
+import { DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 interface Template {
   id: string;
@@ -87,6 +88,10 @@ const TemplateSelector = ({ onSelectTemplate }: TemplateSelectorProps) => {
       </Button>
       <CommandDialog open={isOpen} onOpenChange={setIsOpen}>
         <Command className="rounded-lg border shadow-md">
+          <DialogTitle className="sr-only">Search Templates</DialogTitle>
+          <DialogDescription className="sr-only">
+            Search and select a task template to use
+          </DialogDescription>
           <CommandInput placeholder="Search templates..." />
           <CommandList>
             <CommandEmpty>No templates found.</CommandEmpty>

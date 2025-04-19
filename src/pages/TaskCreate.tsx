@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -6,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
@@ -240,12 +241,13 @@ const TaskCreate = () => {
 
       if (templateError) throw templateError;
 
+      // Convert interactionType from string to the proper enum type
       const templateSteps = data.steps.map((step, index) => ({
         template_id: template.id,
         title: step.title,
-        requiresPhoto: step.requiresPhoto,
-        isOptional: step.isOptional,
-        interactionType: step.interactionType as StepInteractionType,
+        requires_photo: step.requiresPhoto,
+        is_optional: step.isOptional,
+        interaction_type: step.interactionType,
         position: index,
       }));
 
@@ -271,6 +273,16 @@ const TaskCreate = () => {
       setIsSavingTemplate(false);
     }
   };
+
+  // Update date and time handling
+  useEffect(() => {
+    if (selectedDate && selectedTime) {
+      // Combine date and time into a single string
+      const dateString = format(selectedDate, 'yyyy-MM-dd');
+      const combinedDateTime = `${dateString}T${selectedTime}:00`;
+      form.setValue('dueTime', combinedDateTime);
+    }
+  }, [selectedDate, selectedTime, form]);
 
   const onSubmit = async (data: TaskFormData) => {
     setIsSubmitting(true);
@@ -305,7 +317,7 @@ const TaskCreate = () => {
         title: step.title,
         requires_photo: step.requiresPhoto,
         is_optional: step.isOptional,
-        interaction_type: step.interactionType as StepInteractionType,
+        interaction_type: step.interactionType,
       }));
 
       const { error: stepsError } = await supabase
@@ -465,14 +477,28 @@ const TaskCreate = () => {
                           )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? format(new Date(field.value), "PPP") : <span>Pick a date</span>}
+                          {field.value ? 
+                            (
+                              // Only try to format if it's a valid date string
+                              (() => {
+                                try {
+                                  const date = parseISO(field.value);
+                                  return format(date, "PPP");
+                                } catch (e) {
+                                  console.error("Error formatting date:", e);
+                                  return <span>Pick a date</span>;
+                                }
+                              })()
+                            ) : 
+                            <span>Pick a date</span>
+                          }
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="single"
                           selected={field.value ? new Date(field.value) : undefined}
-                          onSelect={field.onChange}
+                          onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
                           initialFocus
                           className={cn("p-3 pointer-events-auto")}
                         />
@@ -514,19 +540,19 @@ const TaskCreate = () => {
                         <SelectValue placeholder="Select employee" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="bg-white z-50">
+                    <SelectContent className="bg-popover">
                       {isLoading ? (
-                        <SelectItem value="loading" disabled>
+                        <SelectItem value="loading-placeholder" disabled>
                           Loading employees...
                         </SelectItem>
                       ) : employees.length === 0 ? (
-                        <SelectItem value="no-employees" disabled>
+                        <SelectItem value="no-employees-placeholder" disabled>
                           No employees found
                         </SelectItem>
                       ) : (
                         employees.map((employee) => (
-                          <SelectItem key={employee.id} value={employee.id}>
-                            {employee.username || 'Unnamed'} ({employee.role})
+                          <SelectItem key={employee.id} value={employee.id || "unknown-employee"}>
+                            {employee.username || 'Unnamed'} ({employee.role || 'No role'})
                           </SelectItem>
                         ))
                       )}
@@ -543,7 +569,7 @@ const TaskCreate = () => {
               render={({ field }) => (
                 <FormItem>
                   <TaskDescription
-                    description={field.value}
+                    description={field.value || ""}
                     onDescriptionChange={field.onChange}
                     onPhotoUpload={handlePhotoUpload}
                     onVideoUpload={handleVideoUpload}

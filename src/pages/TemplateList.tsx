@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,13 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader, PlusCircle, Search, FileEdit, CopyPlus, Trash2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import TemplateCard from "@/components/TemplateCard";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -236,7 +237,7 @@ const TemplateList = () => {
   // Filter templates based on search query and location
   const filteredTemplates = templates?.filter(template => 
     template.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-    (!locationFilter || (template.location && template.location === locationFilter))
+    (!locationFilter || locationFilter === "all-locations" || (template.location && template.location === locationFilter))
   );
 
   const handleEditTemplate = (templateId: string) => {
@@ -482,11 +483,13 @@ const TemplateList = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Assign Task</DialogTitle>
+            <DialogDescription>
+              Select an employee to assign this task to.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="py-4">
             <p className="mb-2 font-medium">Template: {selectedTemplate?.title}</p>
-            <p className="mb-4 text-sm text-muted-foreground">Select an employee to assign this task to:</p>
             
             <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
               <SelectTrigger>
