@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -475,8 +474,10 @@ const TaskCreate = () => {
                     </Popover>
 
                     <Select 
-                      value={selectedTime} 
-                      onValueChange={setSelectedTime}
+                      value={selectedTime}
+                      onValueChange={(value) => {
+                        setSelectedTime(value);
+                      }}
                     >
                       <SelectTrigger className="w-[140px]">
                         <Clock className="mr-2 h-4 w-4" />
@@ -541,10 +542,21 @@ const TaskCreate = () => {
                       </PopoverContent>
                     </Popover>
 
-                    <Select>
+                    <Select
+                      onValueChange={(timeValue) => {
+                        if (field.value) {
+                          // If there's a date, combine it with the time
+                          const dateString = field.value.split("T")[0];
+                          field.onChange(`${dateString}T${timeValue}:00`);
+                        }
+                      }}
+                    >
                       <SelectTrigger className="w-[140px]">
                         <Clock className="mr-2 h-4 w-4" />
-                        Select time
+                        {field.value && field.value.includes("T") 
+                          ? field.value.split("T")[1].substring(0, 5)
+                          : "Select time"
+                        }
                       </SelectTrigger>
                       <SelectContent>
                         {timeOptions.map((time) => (
