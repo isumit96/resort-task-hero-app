@@ -53,7 +53,7 @@ const TemplateSelector = ({ onSelectTemplate }: TemplateSelectorProps) => {
       const formattedTemplates = data.map((template: any) => ({
         id: template.id,
         title: template.title,
-        location: template.location,
+        location: template.location || "No location", // Provide default value for null locations
         step_count: template.template_steps[0]?.count || 0
       }));
 

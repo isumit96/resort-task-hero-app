@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -354,9 +353,11 @@ const TemplateList = () => {
                 <SelectValue placeholder="Filter by location" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Locations</SelectItem>
+                <SelectItem value="all-locations">All Locations</SelectItem>
                 {locations.map(location => (
-                  <SelectItem key={location} value={location}>{location}</SelectItem>
+                  <SelectItem key={location} value={location || "no-location"}>
+                    {location || "No Location"}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -493,8 +494,8 @@ const TemplateList = () => {
               </SelectTrigger>
               <SelectContent>
                 {employees.map((employee) => (
-                  <SelectItem key={employee.id} value={employee.id}>
-                    {employee.username || 'Unnamed'} ({employee.role})
+                  <SelectItem key={employee.id} value={employee.id || "unknown-employee"}>
+                    {employee.username || 'Unnamed'} ({employee.role || 'No role'})
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -40,8 +40,8 @@ const LocationSelect = ({ value, onChange }: LocationSelectProps) => {
       </SelectTrigger>
       <SelectContent>
         {!isLoading && locations?.map((location) => (
-          <SelectItem key={location.id} value={location.name}>
-            {location.name}
+          <SelectItem key={location.id} value={location.name || "unknown-location"}>
+            {location.name || "Unknown Location"}
           </SelectItem>
         ))}
       </SelectContent>
