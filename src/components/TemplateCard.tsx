@@ -47,7 +47,7 @@ const TemplateCard = ({
         )}
       </div>
       
-      <div className="flex mt-4 gap-2">
+      <div className="flex mt-4 gap-2 items-center">
         <Button 
           onClick={() => onUse(template.id)}
           className="flex-1"
@@ -64,11 +64,11 @@ const TemplateCard = ({
           Quick Assign
         </Button>
         
-        <div className="flex">
+        <div className="flex items-center space-x-1">
           <Button
             variant="ghost"
             size="sm"
-            className="h-9 w-9 p-0"
+            className="h-8 w-8 p-0"
             onClick={() => onEdit(template.id)}
           >
             <FileEdit className="h-4 w-4" />
@@ -78,7 +78,7 @@ const TemplateCard = ({
           <Button
             variant="ghost"
             size="sm"
-            className="h-9 w-9 p-0"
+            className="h-8 w-8 p-0"
             onClick={() => onDuplicate(template.id)}
           >
             <CopyPlus className="h-4 w-4" />
@@ -90,7 +90,7 @@ const TemplateCard = ({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-9 w-9 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
               >
                 <Trash2 className="h-4 w-4" />
                 <span className="sr-only">Delete</span>
