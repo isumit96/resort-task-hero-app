@@ -33,6 +33,9 @@ import {
 } from "@/components/ui/popover";
 import TemplateSelector from "@/components/TemplateSelector";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import TaskStepDraggable from "@/components/TaskStepDraggable";
 
 const taskSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -61,6 +64,8 @@ const TaskCreate = () => {
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedTime, setSelectedTime] = useState<string>("");
+  const [deadlineDate, setDeadlineDate] = useState<Date | undefined>();
+  const [deadlineTime, setDeadlineTime] = useState<string>("");
   const [photoUrl, setPhotoUrl] = useState<string>();
   const [videoUrl, setVideoUrl] = useState<string>();
   const [employees, setEmployees] = useState<any[]>([]);
@@ -149,11 +154,14 @@ const TaskCreate = () => {
       if (stepsError) throw stepsError;
 
       form.setValue("title", template.title);
+      form.clearErrors("title");
+      
       if (template.description) {
         form.setValue("description", template.description);
       }
       if (template.location) {
         form.setValue("location", template.location);
+        form.clearErrors("location");
       }
 
       if (steps && steps.length > 0) {
@@ -163,6 +171,7 @@ const TaskCreate = () => {
           isOptional: step.is_optional || false,
           interactionType: (step.interaction_type as StepInteractionType) || "checkbox"
         }));
+        // Replace all existing steps with template steps
         form.setValue("steps", formattedSteps);
       }
 
@@ -277,12 +286,52 @@ const TaskCreate = () => {
   // Update date and time handling
   useEffect(() => {
     if (selectedDate && selectedTime) {
-      // Combine date and time into a single string
-      const dateString = format(selectedDate, 'yyyy-MM-dd');
-      const combinedDateTime = `${dateString}T${selectedTime}:00`;
-      form.setValue('dueTime', combinedDateTime);
+      try {
+        // Parse the selected date
+        const dateObj = new Date(selectedDate);
+        // Extract hours and minutes from the time string (format "HH:MM")
+        const [hours, minutes] = selectedTime.split(':').map(Number);
+        
+        // Set hours and minutes to the date
+        dateObj.setHours(hours, minutes);
+        
+        // Format the date to ISO string and set it in the form
+        form.setValue('dueTime', dateObj.toISOString());
+        form.clearErrors('dueTime');
+      } catch (err) {
+        console.error("Error combining date and time:", err);
+      }
     }
   }, [selectedDate, selectedTime, form]);
+
+  // Update deadline handling
+  useEffect(() => {
+    if (deadlineDate && deadlineTime) {
+      try {
+        // Parse the selected date
+        const dateObj = new Date(deadlineDate);
+        // Extract hours and minutes from the time string (format "HH:MM")
+        const [hours, minutes] = deadlineTime.split(':').map(Number);
+        
+        // Set hours and minutes to the date
+        dateObj.setHours(hours, minutes);
+        
+        // Format the date to ISO string and set it in the form
+        form.setValue('deadline', dateObj.toISOString());
+      } catch (err) {
+        console.error("Error combining deadline date and time:", err);
+      }
+    } else if (deadlineDate) {
+      // If we have only a date but no time, set the time to end of day
+      try {
+        const dateObj = new Date(deadlineDate);
+        dateObj.setHours(23, 59, 59, 999);
+        form.setValue('deadline', dateObj.toISOString());
+      } catch (err) {
+        console.error("Error setting deadline with default time:", err);
+      }
+    }
+  }, [deadlineDate, deadlineTime, form]);
 
   const onSubmit = async (data: TaskFormData) => {
     setIsSubmitting(true);
@@ -312,12 +361,13 @@ const TaskCreate = () => {
 
       console.log("Task created successfully:", task);
 
-      const taskSteps = data.steps.map(step => ({
+      const taskSteps = data.steps.map((step, index) => ({
         task_id: task.id,
         title: step.title,
         requires_photo: step.requiresPhoto,
         is_optional: step.isOptional,
         interaction_type: step.interactionType,
+        position: index,
       }));
 
       const { error: stepsError } = await supabase
@@ -357,6 +407,18 @@ const TaskCreate = () => {
     const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
     return time;
   });
+
+  const moveStep = (dragIndex: number, hoverIndex: number) => {
+    const steps = [...form.getValues().steps];
+    const draggedStep = steps[dragIndex];
+    
+    // Remove the dragged item
+    steps.splice(dragIndex, 1);
+    // Add it at the new position
+    steps.splice(hoverIndex, 0, draggedStep);
+    
+    form.setValue('steps', steps);
+  };
 
   return (
     <div className="min-h-screen flex flex-col dark:bg-background">
@@ -419,7 +481,7 @@ const TaskCreate = () => {
                         <Button
                           variant="outline"
                           className={cn(
-                            "justify-start text-left font-normal",
+                            "justify-start text-left font-normal flex-1",
                             !selectedDate && "text-muted-foreground"
                           )}
                         >
@@ -472,43 +534,32 @@ const TaskCreate = () => {
                         <Button
                           variant="outline"
                           className={cn(
-                            "justify-start text-left font-normal",
-                            !field.value && "text-muted-foreground"
+                            "justify-start text-left font-normal flex-1",
+                            !deadlineDate && "text-muted-foreground"
                           )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? 
-                            (
-                              // Only try to format if it's a valid date string
-                              (() => {
-                                try {
-                                  const date = parseISO(field.value);
-                                  return format(date, "PPP");
-                                } catch (e) {
-                                  console.error("Error formatting date:", e);
-                                  return <span>Pick a date</span>;
-                                }
-                              })()
-                            ) : 
-                            <span>Pick a date</span>
-                          }
+                          {deadlineDate ? format(deadlineDate, "PPP") : <span>Pick a date</span>}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="single"
-                          selected={field.value ? new Date(field.value) : undefined}
-                          onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
+                          selected={deadlineDate}
+                          onSelect={setDeadlineDate}
                           initialFocus
                           className={cn("p-3 pointer-events-auto")}
                         />
                       </PopoverContent>
                     </Popover>
 
-                    <Select>
+                    <Select 
+                      value={deadlineTime} 
+                      onValueChange={setDeadlineTime}
+                    >
                       <SelectTrigger className="w-[140px]">
                         <Clock className="mr-2 h-4 w-4" />
-                        Select time
+                        {deadlineTime || "Select time"}
                       </SelectTrigger>
                       <SelectContent>
                         {timeOptions.map((time) => (
@@ -583,41 +634,43 @@ const TaskCreate = () => {
 
             <div className="space-y-4">
               <h3 className="font-medium">Steps</h3>
-              {form.watch("steps").map((_, index) => (
-                <div key={index} className="space-y-4 p-4 border rounded-lg">
-                  <FormField
-                    control={form.control}
-                    name={`steps.${index}`}
-                    render={({ field }) => (
-                      <TaskStepInput
-                        title={field.value.title}
-                        onTitleChange={(value) => form.setValue(`steps.${index}.title`, value)}
-                        requiresPhoto={field.value.requiresPhoto}
-                        onRequiresPhotoChange={(value) => form.setValue(`steps.${index}.requiresPhoto`, value)}
-                        isOptional={field.value.isOptional}
-                        onIsOptionalChange={(value) => form.setValue(`steps.${index}.isOptional`, value)}
-                        interactionType={field.value.interactionType}
-                        onInteractionTypeChange={(value) => form.setValue(`steps.${index}.interactionType`, value as StepInteractionType)}
-                      />
-                    )}
-                  />
-
-                  {form.watch("steps").length > 1 && (
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => {
-                        const currentSteps = form.getValues("steps");
-                        form.setValue("steps", currentSteps.filter((_, i) => i !== index));
-                      }}
+              <DndProvider backend={HTML5Backend}>
+                <div className="space-y-4">
+                  {form.watch("steps").map((_, index) => (
+                    <TaskStepDraggable
+                      key={index}
+                      index={index}
+                      moveStep={moveStep}
+                      onRemove={
+                        form.watch("steps").length > 1 
+                          ? () => {
+                              const currentSteps = form.getValues("steps");
+                              form.setValue("steps", currentSteps.filter((_, i) => i !== index));
+                            }
+                          : undefined
+                      }
                     >
-                      Remove Step
-                    </Button>
-                  )}
+                      <FormField
+                        control={form.control}
+                        name={`steps.${index}`}
+                        render={({ field }) => (
+                          <TaskStepInput
+                            title={field.value.title}
+                            onTitleChange={(value) => form.setValue(`steps.${index}.title`, value)}
+                            requiresPhoto={field.value.requiresPhoto}
+                            onRequiresPhotoChange={(value) => form.setValue(`steps.${index}.requiresPhoto`, value)}
+                            isOptional={field.value.isOptional}
+                            onIsOptionalChange={(value) => form.setValue(`steps.${index}.isOptional`, value)}
+                            interactionType={field.value.interactionType}
+                            onInteractionTypeChange={(value) => form.setValue(`steps.${index}.interactionType`, value as StepInteractionType)}
+                          />
+                        )}
+                      />
+                    </TaskStepDraggable>
+                  ))}
                 </div>
-              ))}
-
+              </DndProvider>
+              
               <Button
                 type="button"
                 variant="outline"

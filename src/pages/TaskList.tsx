@@ -4,12 +4,11 @@ import { useUser } from "@/context/UserContext";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
-import { Loader, Plus, CalendarClock, Clock, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Loader, Plus, CalendarClock, Clock, AlertTriangle, CheckCircle2, FileEdit } from "lucide-react";
 import { useTasks } from "@/hooks/useTasks";
 import { Button } from "@/components/ui/button";
 import TaskCard from "@/components/TaskCard";
 import { useRole } from "@/hooks/useRole";
-import { formatDistanceToNow } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +33,10 @@ const TaskList = () => {
   
   const handleCreateTask = () => {
     navigate("/tasks/create");
+  };
+  
+  const handleViewTemplates = () => {
+    navigate("/templates");
   };
 
   const parseDate = (dateString: string | undefined): Date | null => {
@@ -120,7 +123,7 @@ const TaskList = () => {
       
       <div className="flex-1 overflow-y-auto px-4 py-6 pb-20 max-w-2xl mx-auto w-full">
         {isManager && (
-          <div className="mb-8">
+          <div className="mb-8 space-y-3">
             <Button 
               onClick={handleCreateTask}
               className="w-full bg-primary hover:bg-primary/90 shadow-lg hover:shadow-primary/25 transition-all duration-300"
@@ -128,6 +131,16 @@ const TaskList = () => {
             >
               <Plus className="h-4 w-4 mr-2" />
               Create New Task
+            </Button>
+            
+            <Button 
+              onClick={handleViewTemplates}
+              className="w-full"
+              variant="outline"
+              size="lg"
+            >
+              <FileEdit className="h-4 w-4 mr-2" />
+              View Templates
             </Button>
           </div>
         )}

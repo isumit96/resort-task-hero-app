@@ -62,7 +62,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
           <div className="flex flex-col gap-2">
             <button 
               onClick={() => handleYesNoResponse(true)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md ${step.isCompleted ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md ${step.isCompleted === true ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}
             >
               <CheckCircle size={16} />
               <span>Yes</span>
@@ -79,7 +79,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
         ) : (
           <input
             type="checkbox"
-            checked={step.isCompleted}
+            checked={!!step.isCompleted}
             onChange={handleCheck}
             className="mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
           />
@@ -90,6 +90,11 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
             <label className={`text-base ${step.isCompleted ? 'line-through text-gray-500' : ''}`}>
               {step.title}
             </label>
+            {step.isOptional && (
+              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                Optional
+              </span>
+            )}
           </div>
 
           {/* Photo upload option */}
