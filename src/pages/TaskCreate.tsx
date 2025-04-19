@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -69,10 +70,6 @@ const TaskCreate = () => {
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
-      title: "",
-      location: "",
-      dueTime: "",
-      assignedTo: "",
       description: "",
       steps: [{ 
         title: "", 
@@ -151,37 +148,24 @@ const TaskCreate = () => {
 
       if (stepsError) throw stepsError;
 
-      // Reset the form fields to ensure no old data remains
-      form.reset({
-        title: template.title || "",
-        location: template.location || "",
-        dueTime: form.getValues("dueTime"),
-        assignedTo: form.getValues("assignedTo"),
-        deadline: form.getValues("deadline"),
-        description: template.description || "",
-        steps: []  // Start with an empty array, will be populated below
-      });
+      form.setValue("title", template.title);
+      if (template.description) {
+        form.setValue("description", template.description);
+      }
+      if (template.location) {
+        form.setValue("location", template.location);
+      }
 
       if (steps && steps.length > 0) {
         const formattedSteps = steps.map((step) => ({
-          title: step.title || "",
+          title: step.title,
           requiresPhoto: step.requires_photo || false,
           isOptional: step.is_optional || false,
           interactionType: (step.interaction_type as StepInteractionType) || "checkbox"
         }));
         form.setValue("steps", formattedSteps);
-      } else {
-        // If no steps, add a default empty step
-        form.setValue("steps", [{
-          title: "",
-          requiresPhoto: false,
-          isOptional: false,
-          interactionType: "checkbox"
-        }]);
       }
 
-      // Force re-validation after setting values
-      form.trigger();
       setTemplateApplied(true);
       toast({
         title: "Template Applied",
@@ -293,31 +277,12 @@ const TaskCreate = () => {
   // Update date and time handling
   useEffect(() => {
     if (selectedDate && selectedTime) {
-      try {
-        // Combine date and time into a single string
-        const dateString = format(selectedDate, 'yyyy-MM-dd');
-        const combinedDateTime = `${dateString}T${selectedTime}:00`;
-        form.setValue('dueTime', combinedDateTime);
-        form.trigger('dueTime'); // Trigger validation after setting the value
-      } catch (error) {
-        console.error("Error formatting date and time:", error);
-      }
+      // Combine date and time into a single string
+      const dateString = format(selectedDate, 'yyyy-MM-dd');
+      const combinedDateTime = `${dateString}T${selectedTime}:00`;
+      form.setValue('dueTime', combinedDateTime);
     }
   }, [selectedDate, selectedTime, form]);
-
-  // Move a step to a new position in the array
-  const moveStep = (dragIndex: number, hoverIndex: number) => {
-    const currentSteps = [...form.getValues('steps')];
-    const dragStep = currentSteps[dragIndex];
-    
-    // Remove the step from its original position
-    currentSteps.splice(dragIndex, 1);
-    // Insert the step at the new position
-    currentSteps.splice(hoverIndex, 0, dragStep);
-    
-    // Update the form with the reordered steps
-    form.setValue('steps', currentSteps);
-  };
 
   const onSubmit = async (data: TaskFormData) => {
     setIsSubmitting(true);
@@ -474,10 +439,8 @@ const TaskCreate = () => {
                     </Popover>
 
                     <Select 
-                      value={selectedTime}
-                      onValueChange={(value) => {
-                        setSelectedTime(value);
-                      }}
+                      value={selectedTime} 
+                      onValueChange={setSelectedTime}
                     >
                       <SelectTrigger className="w-[140px]">
                         <Clock className="mr-2 h-4 w-4" />
@@ -534,7 +497,7 @@ const TaskCreate = () => {
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="single"
-                          selected={field.value ? parseISO(field.value) : undefined}
+                          selected={field.value ? new Date(field.value) : undefined}
                           onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
                           initialFocus
                           className={cn("p-3 pointer-events-auto")}
@@ -542,21 +505,10 @@ const TaskCreate = () => {
                       </PopoverContent>
                     </Popover>
 
-                    <Select
-                      onValueChange={(timeValue) => {
-                        if (field.value) {
-                          // If there's a date, combine it with the time
-                          const dateString = field.value.split("T")[0];
-                          field.onChange(`${dateString}T${timeValue}:00`);
-                        }
-                      }}
-                    >
+                    <Select>
                       <SelectTrigger className="w-[140px]">
                         <Clock className="mr-2 h-4 w-4" />
-                        {field.value && field.value.includes("T") 
-                          ? field.value.split("T")[1].substring(0, 5)
-                          : "Select time"
-                        }
+                        Select time
                       </SelectTrigger>
                       <SelectContent>
                         {timeOptions.map((time) => (
@@ -646,9 +598,6 @@ const TaskCreate = () => {
                         onIsOptionalChange={(value) => form.setValue(`steps.${index}.isOptional`, value)}
                         interactionType={field.value.interactionType}
                         onInteractionTypeChange={(value) => form.setValue(`steps.${index}.interactionType`, value as StepInteractionType)}
-                        index={index}
-                        moveStep={moveStep}
-                        totalSteps={form.watch("steps").length}
                       />
                     )}
                   />
