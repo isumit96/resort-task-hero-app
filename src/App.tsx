@@ -15,6 +15,8 @@ import ManagerDashboard from "./pages/ManagerDashboard";
 import TaskCreate from "./pages/TaskCreate";
 import NotFound from "./pages/NotFound";
 import Settings from "./pages/Settings";
+import TemplateList from "./pages/TemplateList";
+import TemplateDetail from "./pages/TemplateDetail";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -58,6 +60,8 @@ const AppRoutes = () => {
       <Route path="/manager" element={<ProtectedRoute><ManagerDashboard /></ProtectedRoute>} />
       <Route path="/tasks/create" element={<ProtectedRoute><TaskCreate /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+      <Route path="/templates" element={<ProtectedRoute><TemplateList /></ProtectedRoute>} />
+      <Route path="/templates/:templateId" element={<ProtectedRoute><TemplateDetail /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

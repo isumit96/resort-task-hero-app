@@ -1,80 +1,83 @@
-import { Home, ClipboardCheck, Calendar, Bell, Menu, Settings } from "lucide-react";
-import { useLocation, Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+
+import { Settings, ListChecks, History, ClipboardEdit, FileEdit } from "lucide-react";
+import { NavLink } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
 import { useRole } from "@/hooks/useRole";
 import { cn } from "@/lib/utils";
 
 const BottomNavigation = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
   const { isManager } = useRole();
-  const { user } = useUser();
-
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
-
-  const handleManagerRedirect = () => {
-    if (isManager) {
-      navigate("/manager");
-    }
-  };
-
-  const navItems = [
-    {
-      name: "Tasks",
-      path: "/tasks",
-      icon: <Home size={20} />
-    },
-    {
-      name: "History",
-      path: "/history",
-      icon: <ClipboardCheck size={20} />
-    },
-    {
-      name: "Dashboard",
-      path: "/manager",
-      icon: <Calendar size={20} />,
-      isManagerOnly: true
-    },
-    {
-      name: "Settings",
-      path: "/settings",
-      icon: <Settings size={20} />
-    }
-  ];
-
-  const filteredNavItems = navItems.filter(item => !item.isManagerOnly || isManager);
-
+  
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-md border-t border-border/40 shadow-lg">
-      <div className="max-w-2xl mx-auto flex justify-around">
-        {filteredNavItems.map(item => (
-          <Link
-            key={item.path}
-            to={item.path}
-            className={cn(
-              "relative flex flex-col items-center py-3 px-6 transition-colors",
-              isActive(item.path) 
-                ? "text-primary" 
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <div className="relative">
-              {item.icon}
-              {isActive(item.path) && (
-                <motion.div
-                  layoutId="indicator"
-                  className="absolute inset-0 bg-primary/20 rounded-full -m-1.5 p-1.5"
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                />
-              )}
-            </div>
-            <span className="text-xs mt-1 font-medium">{item.name}</span>
-          </Link>
-        ))}
-      </div>
+    <div className="fixed bottom-0 left-0 right-0 h-16 border-t bg-background flex items-center justify-around px-4 z-10">
+      <NavLink
+        to="/tasks"
+        className={({ isActive }) =>
+          cn(
+            "flex flex-col items-center justify-center space-y-1 text-sm",
+            isActive ? "text-primary" : "text-muted-foreground"
+          )
+        }
+      >
+        <ListChecks className="h-5 w-5" />
+        <span>Tasks</span>
+      </NavLink>
+      
+      <NavLink
+        to="/history"
+        className={({ isActive }) =>
+          cn(
+            "flex flex-col items-center justify-center space-y-1 text-sm",
+            isActive ? "text-primary" : "text-muted-foreground"
+          )
+        }
+      >
+        <History className="h-5 w-5" />
+        <span>History</span>
+      </NavLink>
+      
+      {isManager && (
+        <NavLink
+          to="/manager"
+          className={({ isActive }) =>
+            cn(
+              "flex flex-col items-center justify-center space-y-1 text-sm",
+              isActive ? "text-primary" : "text-muted-foreground"
+            )
+          }
+        >
+          <ClipboardEdit className="h-5 w-5" />
+          <span>Dashboard</span>
+        </NavLink>
+      )}
+      
+      {isManager && (
+        <NavLink
+          to="/templates"
+          className={({ isActive }) =>
+            cn(
+              "flex flex-col items-center justify-center space-y-1 text-sm",
+              isActive ? "text-primary" : "text-muted-foreground"
+            )
+          }
+        >
+          <FileEdit className="h-5 w-5" />
+          <span>Templates</span>
+        </NavLink>
+      )}
+      
+      <NavLink
+        to="/settings"
+        className={({ isActive }) =>
+          cn(
+            "flex flex-col items-center justify-center space-y-1 text-sm",
+            isActive ? "text-primary" : "text-muted-foreground"
+          )
+        }
+      >
+        <Settings className="h-5 w-5" />
+        <span>Settings</span>
+      </NavLink>
     </div>
   );
 };

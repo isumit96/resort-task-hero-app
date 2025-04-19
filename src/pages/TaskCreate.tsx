@@ -1,23 +1,23 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { format, formatRelative } from "date-fns";
+import { format } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
 import TaskDescription from "@/components/TaskDescription";
 import LocationSelect from "@/components/LocationSelect";
 import TaskStepInput from "@/components/TaskStepInput";
-import { SaveAll } from "lucide-react";
+import { SaveAll, AlertCircle } from "lucide-react";
 import { CalendarIcon, Clock } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
-import { useQuery } from "@tanstack/react-query";
+import { StepInteractionType } from "@/types";
 import {
   Select,
   SelectContent,
@@ -30,7 +30,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { StepInteractionType } from "@/types";
+import TemplateSelector from "@/components/TemplateSelector";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const taskSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -42,7 +43,7 @@ const taskSchema = z.object({
     title: z.string().min(1, "Step title is required"),
     requiresPhoto: z.boolean().default(false),
     isOptional: z.boolean().default(false),
-    interactionType: z.enum(["checkbox", "yes_no"]).default("checkbox")
+    interactionType: z.enum(["checkbox", "yes_no"] as const).default("checkbox")
   })).min(1, "At least one step is required"),
   description: z.string().optional(),
 });
@@ -52,6 +53,9 @@ type TaskFormData = z.infer<typeof taskSchema>;
 const TaskCreate = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const templateId = searchParams.get('template');
+  const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -59,7 +63,8 @@ const TaskCreate = () => {
   const [photoUrl, setPhotoUrl] = useState<string>();
   const [videoUrl, setVideoUrl] = useState<string>();
   const [employees, setEmployees] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingTemplate, setIsLoadingTemplate] = useState(false);
+  const [templateApplied, setTemplateApplied] = useState(false);
 
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
@@ -78,18 +83,6 @@ const TaskCreate = () => {
     const fetchEmployees = async () => {
       setIsLoading(true);
       try {
-        console.log("Attempting to fetch employees");
-        
-        const { count, error: countError } = await supabase
-          .from("profiles")
-          .select('*', { count: 'exact', head: true });
-          
-        if (countError) {
-          console.error("Error counting profiles:", countError);
-        } else {
-          console.log("Total profiles count:", count);
-        }
-        
         const { data: allProfiles, error: profilesError } = await supabase
           .from("profiles")
           .select("id, username, role");
@@ -99,9 +92,6 @@ const TaskCreate = () => {
           throw profilesError;
         }
         
-        console.log("All fetched profiles:", allProfiles);
-        console.log("Number of profiles fetched:", allProfiles?.length || 0);
-        
         if (allProfiles && allProfiles.length > 0) {
           const formattedProfiles = allProfiles.map((profile: any) => ({
             id: profile.id,
@@ -110,9 +100,7 @@ const TaskCreate = () => {
           }));
           
           setEmployees(formattedProfiles);
-          console.log("Employees state after update:", formattedProfiles);
         } else {
-          console.log("No profiles returned from query");
           toast({
             title: "No Profiles",
             description: "No profiles found in the database.",
@@ -133,6 +121,66 @@ const TaskCreate = () => {
 
     fetchEmployees();
   }, [toast]);
+
+  useEffect(() => {
+    if (templateId) {
+      loadTemplateData(templateId);
+    }
+  }, [templateId]);
+
+  const loadTemplateData = async (templateId: string) => {
+    setIsLoadingTemplate(true);
+    try {
+      const { data: template, error: templateError } = await supabase
+        .from("task_templates")
+        .select("*")
+        .eq("id", templateId)
+        .single();
+
+      if (templateError) throw templateError;
+
+      const { data: steps, error: stepsError } = await supabase
+        .from("template_steps")
+        .select("*")
+        .eq("template_id", templateId)
+        .order("position", { ascending: true });
+
+      if (stepsError) throw stepsError;
+
+      form.setValue("title", template.title);
+      if (template.description) {
+        form.setValue("description", template.description);
+      }
+      if (template.location) {
+        form.setValue("location", template.location);
+      }
+
+      if (steps && steps.length > 0) {
+        const formattedSteps = steps.map((step) => ({
+          title: step.title,
+          requiresPhoto: step.requires_photo || false,
+          isOptional: step.is_optional || false,
+          interactionType: (step.interaction_type as StepInteractionType) || "checkbox"
+        }));
+        form.setValue("steps", formattedSteps);
+      }
+
+      setTemplateApplied(true);
+      toast({
+        title: "Template Applied",
+        description: "The template has been loaded successfully."
+      });
+    } catch (error) {
+      console.error("Error loading template:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load template data.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoadingTemplate(false);
+    }
+  };
 
   const handlePhotoUpload = async (file: File) => {
     const { data, error } = await supabase.storage
@@ -195,9 +243,9 @@ const TaskCreate = () => {
       const templateSteps = data.steps.map((step, index) => ({
         template_id: template.id,
         title: step.title,
-        requires_photo: step.requiresPhoto,
-        is_optional: step.isOptional,
-        interaction_type: step.interactionType,
+        requiresPhoto: step.requiresPhoto,
+        isOptional: step.isOptional,
+        interactionType: step.interactionType as StepInteractionType,
         position: index,
       }));
 
@@ -257,7 +305,7 @@ const TaskCreate = () => {
         title: step.title,
         requires_photo: step.requiresPhoto,
         is_optional: step.isOptional,
-        interaction_type: step.interactionType,
+        interaction_type: step.interactionType as StepInteractionType,
       }));
 
       const { error: stepsError } = await supabase
@@ -287,6 +335,10 @@ const TaskCreate = () => {
     }
   };
 
+  const handleSelectTemplate = (templateId: string) => {
+    loadTemplateData(templateId);
+  };
+
   const timeOptions = Array.from({ length: 48 }, (_, i) => {
     const hour = Math.floor(i / 2);
     const minute = (i % 2) * 30;
@@ -299,8 +351,22 @@ const TaskCreate = () => {
       <Header title="Create Task" showBackButton={true} />
       
       <div className="flex-1 overflow-y-auto p-4 space-y-6 max-w-3xl mx-auto w-full">
+        {templateApplied && (
+          <Alert className="bg-primary/10 border-primary/20">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Template applied</AlertTitle>
+            <AlertDescription>
+              The task details have been pre-filled from the selected template.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="mb-6">
+              <TemplateSelector onSelectTemplate={handleSelectTemplate} />
+            </div>
+
             <FormField
               control={form.control}
               name="title"
@@ -509,6 +575,20 @@ const TaskCreate = () => {
                       />
                     )}
                   />
+
+                  {form.watch("steps").length > 1 && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        const currentSteps = form.getValues("steps");
+                        form.setValue("steps", currentSteps.filter((_, i) => i !== index));
+                      }}
+                    >
+                      Remove Step
+                    </Button>
+                  )}
                 </div>
               ))}
 
