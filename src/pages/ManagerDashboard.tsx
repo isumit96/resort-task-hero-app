@@ -1,12 +1,9 @@
 
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useUser } from "@/context/UserContext";
 import { useRole } from "@/hooks/useRole";
 import Header from "@/components/Header";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
 import { Button } from "@/components/ui/button";
 import { Plus, ArrowRight } from "lucide-react";
@@ -18,25 +15,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { motion } from "framer-motion";
 
 const ManagerDashboard = () => {
-  const { isAuthenticated } = useUser();
   const { isManager } = useRole();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      console.log("Not authenticated, redirecting to login");
-      navigate("/");
-      return;
-    }
-
-    if (!isManager) {
-      console.log("Not a manager, redirecting to tasks page");
-      navigate("/tasks");
-      return;
-    }
-    
-    console.log("Manager authenticated and authorized");
-  }, [isAuthenticated, isManager, navigate]);
 
   const { data: tasks, error, isLoading } = useQuery({
     queryKey: ["all-tasks"],
@@ -82,15 +62,19 @@ const ManagerDashboard = () => {
         }))
       }));
       
-      console.log("Transformed tasks for manager view:", transformedTasks);
-      
       return transformedTasks;
     }
   });
 
-  if (error) return <ErrorState error={error} title="Manager Dashboard" />;
-  if (isLoading) return <LoadingState title="Manager Dashboard" />;
+  // Redirect unauthorized users immediately
+  if (!isManager) {
+    navigate("/tasks");
+    return null;
+  }
 
+  if (error) return <ErrorState error={error} title="Manager Dashboard" />;
+  
+  // Use skeleton loading state instead of blank page
   const delayedTasks = tasks?.filter(task => 
     task.status !== 'completed' && 
     task.deadline && 
@@ -115,13 +99,16 @@ const ManagerDashboard = () => {
               <h1 className="text-2xl font-bold text-foreground">Manager Dashboard</h1>
               <p className="text-muted-foreground">Overview of all operational metrics and tasks</p>
             </div>
-            <Button 
-              onClick={() => navigate("/tasks/create")}
-              className="w-full sm:w-auto bg-primary hover:bg-primary/90 shadow-lg hover:shadow-primary/25 transition-all duration-300"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Create Task
-            </Button>
+            
+            {!isLoading && (
+              <Button 
+                onClick={() => navigate("/tasks/create")}
+                className="w-full sm:w-auto bg-primary hover:bg-primary/90 shadow-lg hover:shadow-primary/25 transition-all duration-300"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create Task
+              </Button>
+            )}
           </div>
 
           <motion.div 
@@ -130,11 +117,15 @@ const ManagerDashboard = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
           >
-            <TaskMetricsChart 
-              pendingTasks={pendingTasks} 
-              delayedTasks={delayedTasks}
-              completedTasks={completedTasks}
-            />
+            {isLoading ? (
+              <div className="h-64 w-full bg-gray-100 dark:bg-gray-800 animate-pulse rounded-lg" />
+            ) : (
+              <TaskMetricsChart 
+                pendingTasks={pendingTasks} 
+                delayedTasks={delayedTasks}
+                completedTasks={completedTasks}
+              />
+            )}
           </motion.div>
           
           <div className="grid gap-6 md:grid-cols-12">
@@ -149,12 +140,20 @@ const ManagerDashboard = () => {
                   <CardTitle className="text-lg font-medium">Task Management</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <TaskTabs 
-                    pendingTasks={pendingTasks}
-                    delayedTasks={delayedTasks}
-                    completedTasks={completedTasks}
-                    showAssignee={true}
-                  />
+                  {isLoading ? (
+                    <div className="p-6 space-y-4">
+                      <div className="h-8 w-3/4 bg-gray-100 dark:bg-gray-800 animate-pulse rounded" />
+                      <div className="h-20 w-full bg-gray-100 dark:bg-gray-800 animate-pulse rounded" />
+                      <div className="h-20 w-full bg-gray-100 dark:bg-gray-800 animate-pulse rounded" />
+                    </div>
+                  ) : (
+                    <TaskTabs 
+                      pendingTasks={pendingTasks}
+                      delayedTasks={delayedTasks}
+                      completedTasks={completedTasks}
+                      showAssignee={true}
+                    />
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
@@ -174,6 +173,7 @@ const ManagerDashboard = () => {
                     onClick={() => navigate("/tasks/create")} 
                     variant="outline" 
                     className="w-full justify-between hover:bg-primary hover:text-white transition-colors"
+                    disabled={isLoading}
                   >
                     Create New Task
                     <ArrowRight className="h-4 w-4" />
@@ -182,6 +182,7 @@ const ManagerDashboard = () => {
                     onClick={() => navigate("/history")} 
                     variant="outline" 
                     className="w-full justify-between hover:bg-primary hover:text-white transition-colors"
+                    disabled={isLoading}
                   >
                     View Task History
                     <ArrowRight className="h-4 w-4" />
@@ -189,7 +190,7 @@ const ManagerDashboard = () => {
                 </CardContent>
                 <CardFooter>
                   <p className="text-xs text-muted-foreground">
-                    {tasks?.length || 0} total tasks in the system
+                    {!isLoading ? `${tasks?.length || 0} total tasks in the system` : "Loading tasks..."}
                   </p>
                 </CardFooter>
               </Card>
