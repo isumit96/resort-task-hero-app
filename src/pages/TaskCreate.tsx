@@ -30,10 +30,16 @@ const TaskCreate = () => {
   const templateId = searchParams.get('template');
   const [photoUrl, setPhotoUrl] = useState<string>();
   const [videoUrl, setVideoUrl] = useState<string>();
+  const { toast } = useToast();
+  const [formErrors, setFormErrors] = useState<string[]>([]);
 
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
+      title: "",
+      location: "",
+      dueTime: "",
+      assignedTo: "",
       description: "",
       steps: [{ 
         title: "", 
@@ -42,6 +48,7 @@ const TaskCreate = () => {
         interactionType: "checkbox"
       }],
     },
+    mode: "onChange"
   });
 
   const { employees, isLoading: isLoadingEmployees } = useEmployees();
@@ -68,12 +75,57 @@ const TaskCreate = () => {
     form.setValue('steps', steps);
   };
 
+  const onSubmit = async (data: TaskFormData) => {
+    // Validate step titles
+    const emptySteps = data.steps.filter(step => !step.title.trim());
+    if (emptySteps.length > 0) {
+      toast({
+        title: "Validation Error",
+        description: "All step titles must be filled in",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check for duplicate step titles
+    const titles = data.steps.map(step => step.title.trim());
+    const uniqueTitles = new Set(titles);
+    if (uniqueTitles.size !== titles.length) {
+      toast({
+        title: "Validation Error",
+        description: "Step titles must be unique",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    await handleSubmit(data);
+  };
+
   // Load template data if templateId is present
   useEffect(() => {
     if (templateId) {
       loadTemplateData(templateId);
     }
   }, [templateId, loadTemplateData]);
+
+  // Monitor form errors
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      const errors = Object.entries(form.formState.errors)
+        .map(([key, value]) => {
+          if (key === 'steps') {
+            return value.message as string;
+          }
+          return value?.message as string;
+        })
+        .filter(Boolean);
+      
+      setFormErrors(errors);
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [form.watch, form.formState]);
 
   return (
     <div className="min-h-screen flex flex-col dark:bg-background">
@@ -90,8 +142,22 @@ const TaskCreate = () => {
           </Alert>
         )}
 
+        {formErrors.length > 0 && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Form errors</AlertTitle>
+            <AlertDescription>
+              <ul className="list-disc pl-4">
+                {formErrors.map((error, index) => (
+                  <li key={index}>{error}</li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="mb-6">
               <TemplateSelector onSelectTemplate={loadTemplateData} />
             </div>
@@ -166,7 +232,7 @@ const TaskCreate = () => {
               <h3 className="font-medium">Steps</h3>
               <DndProvider backend={HTML5Backend}>
                 <div className="space-y-4">
-                  {form.watch("steps").map((_, index) => (
+                  {form.watch("steps").map((step, index) => (
                     <TaskStepDraggable
                       key={index}
                       index={index}
@@ -196,6 +262,11 @@ const TaskCreate = () => {
                           />
                         )}
                       />
+                      {form.formState.errors.steps?.[index]?.title && (
+                        <p className="text-sm text-destructive mt-2">
+                          {form.formState.errors.steps[index]?.title?.message}
+                        </p>
+                      )}
                     </TaskStepDraggable>
                   ))}
                 </div>
@@ -236,7 +307,22 @@ const TaskCreate = () => {
                 type="button"
                 variant="outline"
                 disabled={isSavingTemplate || isSubmitting}
-                onClick={() => form.getValues() && saveAsTemplate(form.getValues())}
+                onClick={() => {
+                  const data = form.getValues();
+                  
+                  // Validate before saving
+                  const emptySteps = data.steps.filter(step => !step.title.trim());
+                  if (emptySteps.length > 0) {
+                    toast({
+                      title: "Validation Error",
+                      description: "All step titles must be filled in",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  
+                  saveAsTemplate(data);
+                }}
                 className="flex items-center gap-2"
               >
                 <SaveAll className="h-4 w-4" />
