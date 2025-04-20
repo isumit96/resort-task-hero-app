@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { SaveAll, AlertCircle } from "lucide-react";
+import { SaveAll, AlertCircle, Loader2 } from "lucide-react";
 import TaskDescription from "@/components/TaskDescription";
 import LocationSelect from "@/components/LocationSelect";
 import TaskStepInput from "@/components/TaskStepInput";
@@ -27,12 +27,14 @@ import { uploadFileToStorage } from "@/utils/storage";
 
 const TaskCreate = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const templateId = searchParams.get('template');
   const [photoUrl, setPhotoUrl] = useState<string>();
   const [videoUrl, setVideoUrl] = useState<string>();
   const { toast } = useToast();
   const [formErrors, setFormErrors] = useState<string[]>([]);
 
+  // Initialize form with appropriate validation and default values
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
@@ -48,25 +50,43 @@ const TaskCreate = () => {
         interactionType: "checkbox"
       }],
     },
-    mode: "onChange"
+    mode: "onChange" // Validate fields as they change
   });
 
   const { employees, isLoading: isLoadingEmployees } = useEmployees();
   const { handleSubmit, saveAsTemplate, isSubmitting, isSavingTemplate } = useTaskCreation();
   const { loadTemplateData, isLoadingTemplate, templateApplied } = useTemplateLoader(form);
 
+  // File handling functions
   const handlePhotoUpload = async (file: File) => {
-    const url = await uploadFileToStorage(file, 'photos');
-    setPhotoUrl(url);
-    form.setValue('photoUrl', url);
+    try {
+      const url = await uploadFileToStorage(file, 'photos');
+      setPhotoUrl(url);
+      form.setValue('photoUrl', url);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to upload photo",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleVideoUpload = async (file: File) => {
-    const url = await uploadFileToStorage(file, 'videos');
-    setVideoUrl(url);
-    form.setValue('videoUrl', url);
+    try {
+      const url = await uploadFileToStorage(file, 'videos');
+      setVideoUrl(url);
+      form.setValue('videoUrl', url);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to upload video",
+        variant: "destructive",
+      });
+    }
   };
 
+  // Step reordering function
   const moveStep = (dragIndex: number, hoverIndex: number) => {
     const steps = [...form.getValues().steps];
     const draggedStep = steps[dragIndex];
@@ -75,34 +95,44 @@ const TaskCreate = () => {
     form.setValue('steps', steps);
   };
 
+  // Form submission handler
   const onSubmit = async (data: TaskFormData) => {
-    // Validate step titles
-    const emptySteps = data.steps.filter(step => !step.title.trim());
-    if (emptySteps.length > 0) {
+    try {
+      // Validate step titles
+      const emptySteps = data.steps.filter(step => !step.title.trim());
+      if (emptySteps.length > 0) {
+        toast({
+          title: "Validation Error",
+          description: "All step titles must be filled in",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check for duplicate step titles
+      const titles = data.steps.map(step => step.title.trim());
+      const uniqueTitles = new Set(titles);
+      if (uniqueTitles.size !== titles.length) {
+        toast({
+          title: "Validation Error",
+          description: "Step titles must be unique",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      await handleSubmit(data);
+    } catch (error) {
+      console.error("Error submitting form:", error);
       toast({
-        title: "Validation Error",
-        description: "All step titles must be filled in",
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
-      return;
     }
-
-    // Check for duplicate step titles
-    const titles = data.steps.map(step => step.title.trim());
-    const uniqueTitles = new Set(titles);
-    if (uniqueTitles.size !== titles.length) {
-      toast({
-        title: "Validation Error",
-        description: "Step titles must be unique",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    await handleSubmit(data);
   };
 
-  // Load template data if templateId is present
+  // Template loading effect
   useEffect(() => {
     if (templateId) {
       loadTemplateData(templateId);
@@ -125,10 +155,10 @@ const TaskCreate = () => {
     });
     
     return () => subscription.unsubscribe();
-  }, [form.watch, form.formState]);
+  }, [form]);
 
   return (
-    <div className="min-h-screen flex flex-col dark:bg-background">
+    <div className="min-h-screen flex flex-col bg-background dark:bg-background">
       <Header title="Create Task" showBackButton={true} />
       
       <div className="flex-1 overflow-y-auto p-4 space-y-6 max-w-3xl mx-auto w-full">
@@ -169,7 +199,11 @@ const TaskCreate = () => {
                 <FormItem>
                   <FormLabel>Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="Task title" {...field} />
+                    <Input 
+                      placeholder="Task title" 
+                      {...field} 
+                      className="bg-background dark:bg-background border-input"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -282,6 +316,7 @@ const TaskCreate = () => {
                     { title: "", requiresPhoto: false, isOptional: false, interactionType: "checkbox" },
                   ]);
                 }}
+                className="bg-background dark:bg-background hover:bg-accent dark:hover:bg-accent transition-colors"
               >
                 Add Step
               </Button>
@@ -291,11 +326,11 @@ const TaskCreate = () => {
               <Button 
                 type="submit" 
                 disabled={isSubmitting}
-                className="flex-1"
+                className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
               >
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
-                    <div className="h-4 w-4 border-2 border-current border-t-transparent animate-spin rounded-full" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                     Creating...
                   </span>
                 ) : (
@@ -323,10 +358,19 @@ const TaskCreate = () => {
                   
                   saveAsTemplate(data);
                 }}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 bg-background dark:bg-background hover:bg-accent dark:hover:bg-accent transition-colors"
               >
-                <SaveAll className="h-4 w-4" />
-                {isSavingTemplate ? "Saving..." : "Save as Template"}
+                {isSavingTemplate ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <SaveAll className="h-4 w-4" />
+                    Save as Template
+                  </>
+                )}
               </Button>
             </div>
           </form>
