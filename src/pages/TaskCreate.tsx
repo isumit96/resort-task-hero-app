@@ -1,11 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SaveAll, AlertCircle } from "lucide-react";
 import TaskDescription from "@/components/TaskDescription";
@@ -22,6 +23,7 @@ import { useTemplateLoader } from "@/hooks/useTemplateLoader";
 import { taskSchema, TaskFormData } from "@/types/forms";
 import { DateTimeSelect } from "@/components/DateTimeSelect";
 import { AssigneeSelect } from "@/components/AssigneeSelect";
+import { uploadFileToStorage } from "@/utils/storage";
 
 const TaskCreate = () => {
   const [searchParams] = useSearchParams();
@@ -67,7 +69,7 @@ const TaskCreate = () => {
   };
 
   // Load template data if templateId is present
-  React.useEffect(() => {
+  useEffect(() => {
     if (templateId) {
       loadTemplateData(templateId);
     }
