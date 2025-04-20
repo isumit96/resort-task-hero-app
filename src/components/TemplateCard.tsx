@@ -1,7 +1,9 @@
-
 import { Button } from "@/components/ui/button";
 import { FileEdit, CopyPlus, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { QuickAssignDialog } from "@/components/QuickAssignDialog";
+import { useState } from "react";
+import { Profile } from "@/types";
 
 interface TemplateCardProps {
   template: {
@@ -12,10 +14,12 @@ interface TemplateCardProps {
     step_count?: number;
   };
   onUse: (templateId: string) => void;
-  onQuickAssign: (templateId: string) => void;
+  onQuickAssign: (templateId: string, employeeId: string, dueDate: Date) => void;
   onEdit: (templateId: string) => void;
   onDuplicate: (templateId: string) => void;
   onDelete: (templateId: string) => void;
+  employees: Profile[];
+  isLoadingEmployees: boolean;
 }
 
 const TemplateCard = ({ 
@@ -24,8 +28,17 @@ const TemplateCard = ({
   onQuickAssign, 
   onEdit, 
   onDuplicate, 
-  onDelete 
+  onDelete,
+  employees,
+  isLoadingEmployees
 }: TemplateCardProps) => {
+  const [isQuickAssignOpen, setIsQuickAssignOpen] = useState(false);
+
+  const handleQuickAssign = ({ employeeId, dueDate }: { employeeId: string; dueDate: Date }) => {
+    onQuickAssign(template.id, employeeId, dueDate);
+    setIsQuickAssignOpen(false);
+  };
+
   return (
     <div className="border rounded-lg p-4 bg-card">
       <h3 className="font-medium text-lg">{template.title}</h3>
@@ -57,7 +70,7 @@ const TemplateCard = ({
         </Button>
         
         <Button 
-          onClick={() => onQuickAssign(template.id)}
+          onClick={() => setIsQuickAssignOpen(true)}
           variant="outline"
           size="sm"
         >
@@ -116,6 +129,15 @@ const TemplateCard = ({
           </AlertDialog>
         </div>
       </div>
+
+      <QuickAssignDialog
+        isOpen={isQuickAssignOpen}
+        onClose={() => setIsQuickAssignOpen(false)}
+        onAssign={handleQuickAssign}
+        template={template}
+        employees={employees}
+        isLoading={isLoadingEmployees}
+      />
     </div>
   );
 };

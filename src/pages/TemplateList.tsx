@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +30,8 @@ import {
 } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import BottomNavigation from "@/components/BottomNavigation";
+import { useEmployees } from "@/hooks/useEmployees";
+import TemplateCard from "@/components/TemplateCard";
 
 interface Template {
   id: string;
@@ -46,12 +47,10 @@ const TemplateList = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedEmployee, setSelectedEmployee] = useState<string>("");
-  const [isQuickAssignDialogOpen, setIsQuickAssignDialogOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [locationFilter, setLocationFilter] = useState<string>("");
+  const { employees, isLoading: isLoadingEmployees } = useEmployees();
+  
   const [locations, setLocations] = useState<string[]>([]);
-  const [employees, setEmployees] = useState<any[]>([]);
 
   // Fetch templates with their step counts
   const { data: templates, isLoading } = useQuery({
@@ -98,26 +97,6 @@ const TemplateList = () => {
     fetchLocations();
   }, []);
 
-  // Fetch employees for assignment
-  useEffect(() => {
-    const fetchEmployees = async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, username, role");
-
-      if (error) {
-        console.error("Error fetching employees:", error);
-        return;
-      }
-
-      if (data) {
-        setEmployees(data);
-      }
-    };
-
-    fetchEmployees();
-  }, []);
-
   // Delete template mutation
   const deleteTemplateMutation = useMutation({
     mutationFn: async (templateId: string) => {
@@ -160,9 +139,17 @@ const TemplateList = () => {
     },
   });
 
-  // Quick assign task from template mutation
+  // Update the quick assign mutation
   const quickAssignMutation = useMutation({
-    mutationFn: async ({ templateId, employeeId }: { templateId: string, employeeId: string }) => {
+    mutationFn: async ({ 
+      templateId, 
+      employeeId, 
+      dueDate 
+    }: { 
+      templateId: string; 
+      employeeId: string; 
+      dueDate: Date;
+    }) => {
       // First fetch the template details
       const { data: templateData, error: templateError } = await supabase
         .from("task_templates")
@@ -189,7 +176,7 @@ const TemplateList = () => {
           description: templateData.description,
           location: templateData.location,
           assigned_to: employeeId,
-          due_time: new Date().toISOString(), // Default to now, can be improved
+          due_time: dueDate.toISOString(),
           status: "pending",
         })
         .select()
@@ -215,9 +202,6 @@ const TemplateList = () => {
       return task;
     },
     onSuccess: () => {
-      setIsQuickAssignDialogOpen(false);
-      setSelectedTemplate(null);
-      setSelectedEmployee("");
       toast({
         title: "Task assigned",
         description: "The task has been successfully created and assigned.",
@@ -234,11 +218,9 @@ const TemplateList = () => {
     },
   });
 
-  // Filter templates based on search query and location
-  const filteredTemplates = templates?.filter(template => 
-    template.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-    (!locationFilter || locationFilter === "all-locations" || (template.location && template.location === locationFilter))
-  );
+  const handleQuickAssign = (templateId: string, employeeId: string, dueDate: Date) => {
+    quickAssignMutation.mutate({ templateId, employeeId, dueDate });
+  };
 
   const handleEditTemplate = (templateId: string) => {
     navigate(`/templates/edit/${templateId}`);
@@ -307,30 +289,15 @@ const TemplateList = () => {
     }
   };
 
-  const openQuickAssignDialog = (template: Template) => {
-    setSelectedTemplate(template);
-    setIsQuickAssignDialogOpen(true);
-  };
-
-  const handleQuickAssign = () => {
-    if (!selectedTemplate || !selectedEmployee) {
-      toast({
-        title: "Missing information",
-        description: "Please select an employee to assign this task to.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    quickAssignMutation.mutate({ 
-      templateId: selectedTemplate.id, 
-      employeeId: selectedEmployee 
-    });
-  };
-
   const handleUseTemplate = (templateId: string) => {
     navigate(`/tasks/create?template=${templateId}`);
   };
+
+  // Filter templates based on search query and location
+  const filteredTemplates = templates?.filter(template => 
+    template.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+    (!locationFilter || locationFilter === "all-locations" || (template.location && template.location === locationFilter))
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -385,137 +352,22 @@ const TemplateList = () => {
             </div>
           ) : (
             filteredTemplates?.map((template) => (
-              <div key={template.id} className="border rounded-lg p-4 bg-card">
-                <h3 className="font-medium text-lg">{template.title}</h3>
-                
-                {template.description && (
-                  <p className="text-muted-foreground text-sm mt-1 line-clamp-2">{template.description}</p>
-                )}
-                
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {template.location && (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                      {template.location}
-                    </span>
-                  )}
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary/20 text-secondary-foreground">
-                    {template.step_count} steps
-                  </span>
-                </div>
-                
-                <div className="flex mt-4 gap-2">
-                  <Button 
-                    onClick={() => handleUseTemplate(template.id)}
-                    className="flex-1"
-                    size="sm"
-                  >
-                    Use Template
-                  </Button>
-                  
-                  <Button 
-                    onClick={() => openQuickAssignDialog(template)}
-                    variant="outline"
-                    size="sm"
-                  >
-                    Quick Assign
-                  </Button>
-                  
-                  <div className="flex">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-9 w-9 p-0"
-                      onClick={() => handleEditTemplate(template.id)}
-                    >
-                      <FileEdit className="h-4 w-4" />
-                      <span className="sr-only">Edit</span>
-                    </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-9 w-9 p-0"
-                      onClick={() => handleDuplicateTemplate(template.id)}
-                    >
-                      <CopyPlus className="h-4 w-4" />
-                      <span className="sr-only">Duplicate</span>
-                    </Button>
-                    
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-9 w-9 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          <span className="sr-only">Delete</span>
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Template</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to delete this template? This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction 
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            onClick={() => deleteTemplateMutation.mutate(template.id)}
-                          >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
-              </div>
+              <TemplateCard
+                key={template.id}
+                template={template}
+                onUse={handleUseTemplate}
+                onQuickAssign={handleQuickAssign}
+                onEdit={handleEditTemplate}
+                onDuplicate={handleDuplicateTemplate}
+                onDelete={(id) => deleteTemplateMutation.mutate(id)}
+                employees={employees}
+                isLoadingEmployees={isLoadingEmployees}
+              />
             ))
           )}
         </div>
       </div>
-      
-      {/* Quick Assign Dialog */}
-      <Dialog open={isQuickAssignDialogOpen} onOpenChange={setIsQuickAssignDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Assign Task</DialogTitle>
-            <DialogDescription>
-              Select an employee to assign this task to.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="py-4">
-            <p className="mb-2 font-medium">Template: {selectedTemplate?.title}</p>
-            
-            <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select employee" />
-              </SelectTrigger>
-              <SelectContent>
-                {employees.map((employee) => (
-                  <SelectItem key={employee.id} value={employee.id || "unknown-employee"}>
-                    {employee.username || 'Unnamed'} ({employee.role || 'No role'})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsQuickAssignDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleQuickAssign} disabled={!selectedEmployee || quickAssignMutation.isPending}>
-              {quickAssignMutation.isPending ? "Assigning..." : "Assign Task"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
+
       <div className="h-16" />
       <BottomNavigation />
     </div>
