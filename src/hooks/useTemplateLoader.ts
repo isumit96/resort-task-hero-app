@@ -47,7 +47,17 @@ export const useTemplateLoader = (form: UseFormReturn<TaskFormData>) => {
           isOptional: step.is_optional || false,
           interactionType: step.interaction_type || "checkbox"
         }));
+        
+        // Clear any existing steps and set the new ones
         form.setValue("steps", formattedSteps);
+      } else {
+        // If no steps were found, ensure there's at least one empty step
+        form.setValue("steps", [{
+          title: "",
+          requiresPhoto: false,
+          isOptional: false,
+          interactionType: "checkbox"
+        }]);
       }
 
       setTemplateApplied(true);
