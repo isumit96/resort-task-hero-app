@@ -11,10 +11,10 @@ interface TaskStepsListProps {
 
 const TaskStepsList = ({ steps, onComplete, onAddComment, onAddPhoto }: TaskStepsListProps) => {
   return (
-    <div className="bg-white mt-2 px-4">
-      <h2 className="text-lg font-medium py-3 border-b">Steps to complete</h2>
+    <div className="bg-background dark:bg-background mt-2 px-4">
+      <h2 className="text-lg font-medium py-3 border-b dark:border-border">Steps to complete</h2>
       
-      <div className="divide-y divide-gray-100">
+      <div className="divide-y divide-gray-100 dark:divide-gray-800">
         {steps.map(step => (
           <TaskStep 
             key={step.id} 
