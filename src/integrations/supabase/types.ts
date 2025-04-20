@@ -14,6 +14,7 @@ export type Database = {
           activity_name: string | null
           category: string | null
           created_at: string | null
+          featured: boolean | null
           id: number
           ideal_for: string | null
           inclusions_details: string | null
@@ -27,6 +28,7 @@ export type Database = {
           activity_name?: string | null
           category?: string | null
           created_at?: string | null
+          featured?: boolean | null
           id: number
           ideal_for?: string | null
           inclusions_details?: string | null
@@ -40,6 +42,7 @@ export type Database = {
           activity_name?: string | null
           category?: string | null
           created_at?: string | null
+          featured?: boolean | null
           id?: number
           ideal_for?: string | null
           inclusions_details?: string | null

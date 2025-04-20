@@ -361,13 +361,14 @@ const TaskCreate = () => {
 
       console.log("Task created successfully:", task);
 
-      const taskSteps = data.steps.map((step, index) => ({
+      // Remove position field from task steps since it doesn't exist in the database
+      const taskSteps = data.steps.map((step) => ({
         task_id: task.id,
         title: step.title,
         requires_photo: step.requiresPhoto,
         is_optional: step.isOptional,
         interaction_type: step.interactionType,
-        position: index,
+        // position field removed
       }));
 
       const { error: stepsError } = await supabase
