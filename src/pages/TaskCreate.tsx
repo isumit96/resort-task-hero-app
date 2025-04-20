@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -37,18 +36,28 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import TaskStepDraggable from "@/components/TaskStepDraggable";
 
+const stepSchema = z.object({
+  title: z.string().min(1, "Step title is required"),
+  requiresPhoto: z.boolean().default(false),
+  isOptional: z.boolean().default(false),
+  interactionType: z.enum(["checkbox", "yes_no"] as const).default("checkbox")
+});
+
 const taskSchema = z.object({
   title: z.string().min(1, "Title is required"),
   location: z.string().min(1, "Location is required"),
   dueTime: z.string().min(1, "Due time is required"),
   assignedTo: z.string().min(1, "Assignee is required"),
   deadline: z.string().optional(),
-  steps: z.array(z.object({
-    title: z.string().min(1, "Step title is required"),
-    requiresPhoto: z.boolean().default(false),
-    isOptional: z.boolean().default(false),
-    interactionType: z.enum(["checkbox", "yes_no"] as const).default("checkbox")
-  })).min(1, "At least one step is required"),
+  steps: z.array(stepSchema)
+    .min(1, "At least one step is required")
+    .refine(steps => {
+      const titles = steps.map(step => step.title);
+      return new Set(titles).size === titles.length;
+    }, {
+      message: "Step titles must be unique",
+      path: ["steps"]
+    }),
   description: z.string().optional(),
 });
 
@@ -171,7 +180,6 @@ const TaskCreate = () => {
           isOptional: step.is_optional || false,
           interactionType: (step.interaction_type as StepInteractionType) || "checkbox"
         }));
-        // Replace all existing steps with template steps
         form.setValue("steps", formattedSteps);
       }
 
@@ -250,7 +258,6 @@ const TaskCreate = () => {
 
       if (templateError) throw templateError;
 
-      // Convert interactionType from string to the proper enum type
       const templateSteps = data.steps.map((step, index) => ({
         template_id: template.id,
         title: step.title,
@@ -283,19 +290,14 @@ const TaskCreate = () => {
     }
   };
 
-  // Update date and time handling
   useEffect(() => {
     if (selectedDate && selectedTime) {
       try {
-        // Parse the selected date
         const dateObj = new Date(selectedDate);
-        // Extract hours and minutes from the time string (format "HH:MM")
         const [hours, minutes] = selectedTime.split(':').map(Number);
         
-        // Set hours and minutes to the date
         dateObj.setHours(hours, minutes);
         
-        // Format the date to ISO string and set it in the form
         form.setValue('dueTime', dateObj.toISOString());
         form.clearErrors('dueTime');
       } catch (err) {
@@ -304,25 +306,19 @@ const TaskCreate = () => {
     }
   }, [selectedDate, selectedTime, form]);
 
-  // Update deadline handling
   useEffect(() => {
     if (deadlineDate && deadlineTime) {
       try {
-        // Parse the selected date
         const dateObj = new Date(deadlineDate);
-        // Extract hours and minutes from the time string (format "HH:MM")
         const [hours, minutes] = deadlineTime.split(':').map(Number);
         
-        // Set hours and minutes to the date
         dateObj.setHours(hours, minutes);
         
-        // Format the date to ISO string and set it in the form
         form.setValue('deadline', dateObj.toISOString());
       } catch (err) {
         console.error("Error combining deadline date and time:", err);
       }
     } else if (deadlineDate) {
-      // If we have only a date but no time, set the time to end of day
       try {
         const dateObj = new Date(deadlineDate);
         dateObj.setHours(23, 59, 59, 999);
@@ -361,14 +357,14 @@ const TaskCreate = () => {
 
       console.log("Task created successfully:", task);
 
-      // Remove position field from task steps since it doesn't exist in the database
-      const taskSteps = data.steps.map((step) => ({
+      const processedSteps = ensureUniqueStepTitles(data.steps);
+      
+      const taskSteps = processedSteps.map((step) => ({
         task_id: task.id,
         title: step.title,
         requires_photo: step.requiresPhoto,
         is_optional: step.isOptional,
         interaction_type: step.interactionType,
-        // position field removed
       }));
 
       const { error: stepsError } = await supabase
@@ -398,6 +394,27 @@ const TaskCreate = () => {
     }
   };
 
+  const ensureUniqueStepTitles = (steps: typeof taskSchema._type.steps) => {
+    const titleCounts: Record<string, number> = {};
+    
+    return steps.map(step => {
+      const title = step.title;
+      
+      if (!titleCounts[title] || title === "") {
+        titleCounts[title] = 1;
+        return step;
+      }
+      
+      titleCounts[title]++;
+      const newTitle = `${title} (${titleCounts[title]})`;
+      
+      return {
+        ...step,
+        title: newTitle
+      };
+    });
+  };
+
   const handleSelectTemplate = (templateId: string) => {
     loadTemplateData(templateId);
   };
@@ -413,9 +430,7 @@ const TaskCreate = () => {
     const steps = [...form.getValues().steps];
     const draggedStep = steps[dragIndex];
     
-    // Remove the dragged item
     steps.splice(dragIndex, 1);
-    // Add it at the new position
     steps.splice(hoverIndex, 0, draggedStep);
     
     form.setValue('steps', steps);
@@ -686,6 +701,10 @@ const TaskCreate = () => {
                 Add Step
               </Button>
             </div>
+
+            {form.formState.errors.steps?.message && (
+              <p className="text-sm font-medium text-destructive">{form.formState.errors.steps.message}</p>
+            )}
 
             <div className="flex gap-3">
               <Button 
