@@ -43,7 +43,7 @@ export const useRole = () => {
     },
     enabled: !!userId,
     staleTime: 5 * 60 * 1000, // Cache role for 5 minutes
-    cacheTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes (renamed from cacheTime)
     refetchOnWindowFocus: false
   });
 

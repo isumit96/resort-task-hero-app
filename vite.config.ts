@@ -11,10 +11,7 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [
-    react({
-      // Use faster SWC minification
-      swcMinify: true,
-    }),
+    react(),
     mode === 'development' &&
     componentTagger(),
   ].filter(Boolean),
