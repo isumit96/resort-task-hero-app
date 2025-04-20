@@ -1,85 +1,33 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+
+import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { format, parseISO } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { cn } from "@/lib/utils";
+import { SaveAll, AlertCircle } from "lucide-react";
 import TaskDescription from "@/components/TaskDescription";
 import LocationSelect from "@/components/LocationSelect";
 import TaskStepInput from "@/components/TaskStepInput";
-import { SaveAll, AlertCircle } from "lucide-react";
-import { CalendarIcon, Clock } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
-import { Input } from "@/components/ui/input";
-import { StepInteractionType } from "@/types";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import TemplateSelector from "@/components/TemplateSelector";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import TaskStepDraggable from "@/components/TaskStepDraggable";
-
-const stepSchema = z.object({
-  title: z.string().min(1, "Step title is required"),
-  requiresPhoto: z.boolean().default(false),
-  isOptional: z.boolean().default(false),
-  interactionType: z.enum(["checkbox", "yes_no"] as const).default("checkbox")
-});
-
-const taskSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  location: z.string().min(1, "Location is required"),
-  dueTime: z.string().min(1, "Due time is required"),
-  assignedTo: z.string().min(1, "Assignee is required"),
-  deadline: z.string().optional(),
-  steps: z.array(stepSchema)
-    .min(1, "At least one step is required")
-    .refine(steps => {
-      const titles = steps.map(step => step.title);
-      return new Set(titles).size === titles.length;
-    }, {
-      message: "Step titles must be unique",
-      path: ["steps"]
-    }),
-  description: z.string().optional(),
-});
-
-type TaskFormData = z.infer<typeof taskSchema>;
+import { useEmployees } from "@/hooks/useEmployees";
+import { useTaskCreation } from "@/hooks/useTaskCreation";
+import { useTemplateLoader } from "@/hooks/useTemplateLoader";
+import { taskSchema, TaskFormData } from "@/types/forms";
+import { DateTimeSelect } from "@/components/DateTimeSelect";
+import { AssigneeSelect } from "@/components/AssigneeSelect";
 
 const TaskCreate = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const templateId = searchParams.get('template');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
-  const [selectedTime, setSelectedTime] = useState<string>("");
-  const [deadlineDate, setDeadlineDate] = useState<Date | undefined>();
-  const [deadlineTime, setDeadlineTime] = useState<string>("");
   const [photoUrl, setPhotoUrl] = useState<string>();
   const [videoUrl, setVideoUrl] = useState<string>();
-  const [employees, setEmployees] = useState<any[]>([]);
-  const [isLoadingTemplate, setIsLoadingTemplate] = useState(false);
-  const [templateApplied, setTemplateApplied] = useState(false);
 
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
@@ -89,352 +37,41 @@ const TaskCreate = () => {
         title: "", 
         requiresPhoto: false, 
         isOptional: false,
-        interactionType: "checkbox" as StepInteractionType
+        interactionType: "checkbox"
       }],
     },
   });
 
-  useEffect(() => {
-    const fetchEmployees = async () => {
-      setIsLoading(true);
-      try {
-        const { data: allProfiles, error: profilesError } = await supabase
-          .from("profiles")
-          .select("id, username, role");
-        
-        if (profilesError) {
-          console.error("Error fetching profiles:", profilesError);
-          throw profilesError;
-        }
-        
-        if (allProfiles && allProfiles.length > 0) {
-          const formattedProfiles = allProfiles.map((profile: any) => ({
-            id: profile.id,
-            username: profile.username || '',
-            role: profile.role || ''
-          }));
-          
-          setEmployees(formattedProfiles);
-        } else {
-          toast({
-            title: "No Profiles",
-            description: "No profiles found in the database.",
-            variant: "destructive"
-          });
-        }
-      } catch (error) {
-        console.error("Error in fetchEmployees:", error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch profiles",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchEmployees();
-  }, [toast]);
-
-  useEffect(() => {
-    if (templateId) {
-      loadTemplateData(templateId);
-    }
-  }, [templateId]);
-
-  const loadTemplateData = async (templateId: string) => {
-    setIsLoadingTemplate(true);
-    try {
-      const { data: template, error: templateError } = await supabase
-        .from("task_templates")
-        .select("*")
-        .eq("id", templateId)
-        .single();
-
-      if (templateError) throw templateError;
-
-      const { data: steps, error: stepsError } = await supabase
-        .from("template_steps")
-        .select("*")
-        .eq("template_id", templateId)
-        .order("position", { ascending: true });
-
-      if (stepsError) throw stepsError;
-
-      form.setValue("title", template.title);
-      form.clearErrors("title");
-      
-      if (template.description) {
-        form.setValue("description", template.description);
-      }
-      if (template.location) {
-        form.setValue("location", template.location);
-        form.clearErrors("location");
-      }
-
-      if (steps && steps.length > 0) {
-        const formattedSteps = steps.map((step) => ({
-          title: step.title,
-          requiresPhoto: step.requires_photo || false,
-          isOptional: step.is_optional || false,
-          interactionType: (step.interaction_type as StepInteractionType) || "checkbox"
-        }));
-        form.setValue("steps", formattedSteps);
-      }
-
-      setTemplateApplied(true);
-      toast({
-        title: "Template Applied",
-        description: "The template has been loaded successfully."
-      });
-    } catch (error) {
-      console.error("Error loading template:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load template data.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoadingTemplate(false);
-    }
-  };
+  const { employees, isLoading: isLoadingEmployees } = useEmployees();
+  const { handleSubmit, saveAsTemplate, isSubmitting, isSavingTemplate } = useTaskCreation();
+  const { loadTemplateData, isLoadingTemplate, templateApplied } = useTemplateLoader(form);
 
   const handlePhotoUpload = async (file: File) => {
-    const { data, error } = await supabase.storage
-      .from('task-attachments')
-      .upload(`photos/${Date.now()}-${file.name}`, file);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to upload photo",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('task-attachments')
-      .getPublicUrl(data.path);
-
-    setPhotoUrl(publicUrl);
+    const url = await uploadFileToStorage(file, 'photos');
+    setPhotoUrl(url);
+    form.setValue('photoUrl', url);
   };
 
   const handleVideoUpload = async (file: File) => {
-    const { data, error } = await supabase.storage
-      .from('task-attachments')
-      .upload(`videos/${Date.now()}-${file.name}`, file);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to upload video",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('task-attachments')
-      .getPublicUrl(data.path);
-
-    setVideoUrl(publicUrl);
+    const url = await uploadFileToStorage(file, 'videos');
+    setVideoUrl(url);
+    form.setValue('videoUrl', url);
   };
-
-  const saveAsTemplate = async (data: TaskFormData) => {
-    try {
-      setIsSavingTemplate(true);
-      
-      const { data: template, error: templateError } = await supabase
-        .from('task_templates')
-        .insert({
-          title: data.title,
-          description: data.description,
-          location: data.location,
-        })
-        .select()
-        .single();
-
-      if (templateError) throw templateError;
-
-      const templateSteps = data.steps.map((step, index) => ({
-        template_id: template.id,
-        title: step.title,
-        requires_photo: step.requiresPhoto,
-        is_optional: step.isOptional,
-        interaction_type: step.interactionType,
-        position: index,
-      }));
-
-      const { error: stepsError } = await supabase
-        .from('template_steps')
-        .insert(templateSteps);
-
-      if (stepsError) throw stepsError;
-
-      toast({
-        title: "Success",
-        description: "Task template saved successfully",
-      });
-
-    } catch (error) {
-      console.error("Error saving template:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save template",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSavingTemplate(false);
-    }
-  };
-
-  useEffect(() => {
-    if (selectedDate && selectedTime) {
-      try {
-        const dateObj = new Date(selectedDate);
-        const [hours, minutes] = selectedTime.split(':').map(Number);
-        
-        dateObj.setHours(hours, minutes);
-        
-        form.setValue('dueTime', dateObj.toISOString());
-        form.clearErrors('dueTime');
-      } catch (err) {
-        console.error("Error combining date and time:", err);
-      }
-    }
-  }, [selectedDate, selectedTime, form]);
-
-  useEffect(() => {
-    if (deadlineDate && deadlineTime) {
-      try {
-        const dateObj = new Date(deadlineDate);
-        const [hours, minutes] = deadlineTime.split(':').map(Number);
-        
-        dateObj.setHours(hours, minutes);
-        
-        form.setValue('deadline', dateObj.toISOString());
-      } catch (err) {
-        console.error("Error combining deadline date and time:", err);
-      }
-    } else if (deadlineDate) {
-      try {
-        const dateObj = new Date(deadlineDate);
-        dateObj.setHours(23, 59, 59, 999);
-        form.setValue('deadline', dateObj.toISOString());
-      } catch (err) {
-        console.error("Error setting deadline with default time:", err);
-      }
-    }
-  }, [deadlineDate, deadlineTime, form]);
-
-  const onSubmit = async (data: TaskFormData) => {
-    setIsSubmitting(true);
-    try {
-      console.log("Submitting task with data:", data);
-      
-      const { data: task, error: taskError } = await supabase
-        .from("tasks")
-        .insert({
-          title: data.title,
-          description: data.description,
-          location: data.location,
-          due_time: data.dueTime,
-          assigned_to: data.assignedTo,
-          deadline: data.deadline || null,
-          photo_url: photoUrl,
-          video_url: videoUrl,
-          status: "pending",
-        })
-        .select()
-        .single();
-
-      if (taskError) {
-        console.error("Error creating task:", taskError);
-        throw taskError;
-      }
-
-      console.log("Task created successfully:", task);
-
-      const processedSteps = ensureUniqueStepTitles(data.steps);
-      
-      const taskSteps = processedSteps.map((step) => ({
-        task_id: task.id,
-        title: step.title,
-        requires_photo: step.requiresPhoto,
-        is_optional: step.isOptional,
-        interaction_type: step.interactionType,
-      }));
-
-      const { error: stepsError } = await supabase
-        .from("task_steps")
-        .insert(taskSteps);
-
-      if (stepsError) {
-        console.error("Error creating task steps:", stepsError);
-        throw stepsError;
-      }
-
-      toast({
-        title: "Success",
-        description: "Task created successfully",
-      });
-
-      navigate("/manager");
-    } catch (error) {
-      console.error("Error in task creation:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create task",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const ensureUniqueStepTitles = (steps: typeof taskSchema._type.steps) => {
-    const titleCounts: Record<string, number> = {};
-    
-    return steps.map(step => {
-      const title = step.title;
-      
-      if (!titleCounts[title] || title === "") {
-        titleCounts[title] = 1;
-        return step;
-      }
-      
-      titleCounts[title]++;
-      const newTitle = `${title} (${titleCounts[title]})`;
-      
-      return {
-        ...step,
-        title: newTitle
-      };
-    });
-  };
-
-  const handleSelectTemplate = (templateId: string) => {
-    loadTemplateData(templateId);
-  };
-
-  const timeOptions = Array.from({ length: 48 }, (_, i) => {
-    const hour = Math.floor(i / 2);
-    const minute = (i % 2) * 30;
-    const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-    return time;
-  });
 
   const moveStep = (dragIndex: number, hoverIndex: number) => {
     const steps = [...form.getValues().steps];
     const draggedStep = steps[dragIndex];
-    
     steps.splice(dragIndex, 1);
     steps.splice(hoverIndex, 0, draggedStep);
-    
     form.setValue('steps', steps);
   };
+
+  // Load template data if templateId is present
+  React.useEffect(() => {
+    if (templateId) {
+      loadTemplateData(templateId);
+    }
+  }, [templateId, loadTemplateData]);
 
   return (
     <div className="min-h-screen flex flex-col dark:bg-background">
@@ -452,9 +89,9 @@ const TaskCreate = () => {
         )}
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
             <div className="mb-6">
-              <TemplateSelector onSelectTemplate={handleSelectTemplate} />
+              <TemplateSelector onSelectTemplate={loadTemplateData} />
             </div>
 
             <FormField
@@ -485,149 +122,24 @@ const TaskCreate = () => {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="dueTime"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Due Time</FormLabel>
-                  <div className="flex gap-2">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "justify-start text-left font-normal flex-1",
-                            !selectedDate && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={selectedDate}
-                          onSelect={setSelectedDate}
-                          initialFocus
-                          className={cn("p-3 pointer-events-auto")}
-                        />
-                      </PopoverContent>
-                    </Popover>
-
-                    <Select 
-                      value={selectedTime} 
-                      onValueChange={setSelectedTime}
-                    >
-                      <SelectTrigger className="w-[140px]">
-                        <Clock className="mr-2 h-4 w-4" />
-                        {selectedTime || "Select time"}
-                      </SelectTrigger>
-                      <SelectContent>
-                        {timeOptions.map((time) => (
-                          <SelectItem key={time} value={time}>
-                            {time}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <DateTimeSelect
+              form={form}
+              isDeadline={false}
+              label="Due Time"
+              required={true}
             />
 
-            <FormField
-              control={form.control}
-              name="deadline"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Deadline (Optional)</FormLabel>
-                  <div className="flex gap-2">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "justify-start text-left font-normal flex-1",
-                            !deadlineDate && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {deadlineDate ? format(deadlineDate, "PPP") : <span>Pick a date</span>}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={deadlineDate}
-                          onSelect={setDeadlineDate}
-                          initialFocus
-                          className={cn("p-3 pointer-events-auto")}
-                        />
-                      </PopoverContent>
-                    </Popover>
-
-                    <Select 
-                      value={deadlineTime} 
-                      onValueChange={setDeadlineTime}
-                    >
-                      <SelectTrigger className="w-[140px]">
-                        <Clock className="mr-2 h-4 w-4" />
-                        {deadlineTime || "Select time"}
-                      </SelectTrigger>
-                      <SelectContent>
-                        {timeOptions.map((time) => (
-                          <SelectItem key={time} value={time}>
-                            {time}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <DateTimeSelect
+              form={form}
+              isDeadline={true}
+              label="Deadline (Optional)"
+              required={false}
             />
 
-            <FormField
-              control={form.control}
-              name="assignedTo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Assign To</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value}
-                    disabled={isLoading}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select employee" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent className="bg-popover">
-                      {isLoading ? (
-                        <SelectItem value="loading-placeholder" disabled>
-                          Loading employees...
-                        </SelectItem>
-                      ) : employees.length === 0 ? (
-                        <SelectItem value="no-employees-placeholder" disabled>
-                          No employees found
-                        </SelectItem>
-                      ) : (
-                        employees.map((employee) => (
-                          <SelectItem key={employee.id} value={employee.id || "unknown-employee"}>
-                            {employee.username || 'Unnamed'} ({employee.role || 'No role'})
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <AssigneeSelect
+              form={form}
+              employees={employees}
+              isLoading={isLoadingEmployees}
             />
 
             <FormField
@@ -678,7 +190,7 @@ const TaskCreate = () => {
                             isOptional={field.value.isOptional}
                             onIsOptionalChange={(value) => form.setValue(`steps.${index}.isOptional`, value)}
                             interactionType={field.value.interactionType}
-                            onInteractionTypeChange={(value) => form.setValue(`steps.${index}.interactionType`, value as StepInteractionType)}
+                            onInteractionTypeChange={(value) => form.setValue(`steps.${index}.interactionType`, value)}
                           />
                         )}
                       />
@@ -694,17 +206,13 @@ const TaskCreate = () => {
                   const currentSteps = form.getValues("steps");
                   form.setValue("steps", [
                     ...currentSteps,
-                    { title: "", requiresPhoto: false, isOptional: false, interactionType: "checkbox" as StepInteractionType },
+                    { title: "", requiresPhoto: false, isOptional: false, interactionType: "checkbox" },
                   ]);
                 }}
               >
                 Add Step
               </Button>
             </div>
-
-            {form.formState.errors.steps?.message && (
-              <p className="text-sm font-medium text-destructive">{form.formState.errors.steps.message}</p>
-            )}
 
             <div className="flex gap-3">
               <Button 
