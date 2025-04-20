@@ -222,13 +222,20 @@ const TaskCreate = () => {
                 disabled={isSubmitting}
                 className="flex-1"
               >
-                {isSubmitting ? "Creating..." : "Create Task"}
+                {isSubmitting ? (
+                  <span className="flex items-center gap-2">
+                    <div className="h-4 w-4 border-2 border-current border-t-transparent animate-spin rounded-full" />
+                    Creating...
+                  </span>
+                ) : (
+                  "Create Task"
+                )}
               </Button>
               
               <Button
                 type="button"
                 variant="outline"
-                disabled={isSavingTemplate}
+                disabled={isSavingTemplate || isSubmitting}
                 onClick={() => form.getValues() && saveAsTemplate(form.getValues())}
                 className="flex items-center gap-2"
               >

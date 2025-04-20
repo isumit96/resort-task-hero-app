@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { z } from "zod";
 import { TaskFormData } from "@/types/forms";
 
 export const useTaskCreation = () => {
@@ -34,6 +33,8 @@ export const useTaskCreation = () => {
   };
 
   const handleSubmit = async (data: TaskFormData) => {
+    if (isSubmitting) return; // Prevent duplicate submissions
+    
     setIsSubmitting(true);
     try {
       const { data: task, error: taskError } = await supabase
@@ -75,7 +76,7 @@ export const useTaskCreation = () => {
         description: "Task created successfully",
       });
 
-      navigate("/manager");
+      navigate("/manager"); // Redirect to manager dashboard after success
     } catch (error) {
       console.error("Error in task creation:", error);
       toast({
