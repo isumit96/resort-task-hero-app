@@ -1,20 +1,32 @@
 
 import { useUser } from "@/context/UserContext";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useCallback, useMemo } from "react";
 
 export const useRole = () => {
   const { userId } = useUser();
+  const queryClient = useQueryClient();
+
+  // Try to get role from cache first
+  const getCachedRole = useCallback(() => {
+    if (!userId) return null;
+    
+    // Check if we have the role cached
+    const cachedData = queryClient.getQueryData(["userRole", userId]);
+    return cachedData || null;
+  }, [userId, queryClient]);
 
   const { data: role, isLoading } = useQuery({
     queryKey: ["userRole", userId],
     queryFn: async () => {
+      // Try getting role from cache first
+      const cachedRole = getCachedRole();
+      if (cachedRole) return cachedRole;
+      
       if (!userId) {
-        console.warn("No user ID found for role check");
         return null;
       }
-      
-      console.log("Fetching role for user:", userId);
       
       const { data: profile, error } = await supabase
         .from("profiles")
@@ -27,13 +39,16 @@ export const useRole = () => {
         throw error;
       }
       
-      console.log("User role data:", profile);
       return profile?.role || null;
     },
-    enabled: !!userId
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000, // Cache role for 5 minutes
+    cacheTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnWindowFocus: false
   });
 
-  console.log("Current user role:", role);
-  const isManager = role === "manager";
+  // Calculate derived values only once per render
+  const isManager = useMemo(() => role === "manager", [role]);
+  
   return { role, isManager, isLoading };
 };

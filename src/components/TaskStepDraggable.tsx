@@ -1,5 +1,5 @@
 
-import { useRef } from 'react';
+import { useRef, memo } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { GripVertical, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,7 @@ type DragItem = {
   type: string;
 };
 
-const TaskStepDraggable = ({ children, index, moveStep, onRemove }: TaskStepDraggableProps) => {
+const TaskStepDraggable = memo(({ children, index, moveStep, onRemove }: TaskStepDraggableProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const itemType = 'STEP';
 
@@ -52,7 +52,7 @@ const TaskStepDraggable = ({ children, index, moveStep, onRemove }: TaskStepDrag
 
       // Get pixels to the top
       const hoverClientY = clientOffset!.y - hoverBoundingRect.top;
-
+      
       // Only perform the move when the mouse has crossed half of the items height
       // When dragging downwards, only move when the cursor is below 50%
       // When dragging upwards, only move when the cursor is above 50%
@@ -122,6 +122,8 @@ const TaskStepDraggable = ({ children, index, moveStep, onRemove }: TaskStepDrag
       {children}
     </div>
   );
-};
+});
+
+TaskStepDraggable.displayName = "TaskStepDraggable";
 
 export default TaskStepDraggable;

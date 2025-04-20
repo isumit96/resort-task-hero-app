@@ -1,5 +1,5 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Task } from "@/types";
 import { useUser } from "@/context/UserContext";
@@ -8,14 +8,14 @@ import { useToast } from "@/hooks/use-toast";
 export const useTasks = (isManager: boolean = false) => {
   const { user } = useUser();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   return useQuery({
     queryKey: ["tasks", user?.id, isManager],
     queryFn: async (): Promise<Task[]> => {
       if (!user) return [];
       
-      console.log("Fetching tasks for user:", user.id);
-      
+      // Create a single query based on role to reduce redundant API calls
       let query = supabase
         .from("tasks")
         .select(`
@@ -42,16 +42,13 @@ export const useTasks = (isManager: boolean = false) => {
         throw error;
       }
 
-      console.log("Tasks returned from database:", data);
-
-      // Ensure data is an array and handle the case where it might not be
+      // Handle empty data case more efficiently
       if (!data || !Array.isArray(data)) {
-        console.error("Expected data to be an array but got:", data);
         return [];
       }
 
-      // Transform the data to match our Task type with proper type safety
-      const transformedTasks = data.map((task: any) => ({
+      // Transform the data once and reuse to avoid repeated transformations
+      return data.map((task: any) => ({
         id: task.id,
         title: task.title,
         dueTime: task.due_time ? new Date(task.due_time).toLocaleString() : '',
@@ -72,9 +69,10 @@ export const useTasks = (isManager: boolean = false) => {
           isOptional: step.is_optional || false
         }))
       }));
-
-      return transformedTasks;
     },
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    staleTime: 1000 * 60, // Cache data for 1 minute before refetching
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
+    refetchOnMount: true // But do refetch when component mounts
   });
 };

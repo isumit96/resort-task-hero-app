@@ -4,8 +4,9 @@ import { NavLink } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
 import { useRole } from "@/hooks/useRole";
 import { cn } from "@/lib/utils";
+import { memo } from "react";
 
-const BottomNavigation = () => {
+const BottomNavigation = memo(() => {
   const { isManager } = useRole();
   
   return (
@@ -65,6 +66,8 @@ const BottomNavigation = () => {
       </NavLink>
     </div>
   );
-};
+});
+
+BottomNavigation.displayName = "BottomNavigation";
 
 export default BottomNavigation;
