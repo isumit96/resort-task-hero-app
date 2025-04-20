@@ -128,10 +128,10 @@ const TaskDetail = () => {
   const isCompleted = task.status === 'completed';
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-screen bg-background dark:bg-[#121212]">
       <Header showBackButton title={`${task.title} - ${task.location}`} />
       
-      <div className="flex-1 overflow-y-auto pb-24">
+      <div className="flex-1 overflow-y-auto pb-24 bg-background dark:bg-[#121212]">
         <TaskHeader task={task} />
         
         <TaskStepsList
@@ -141,7 +141,7 @@ const TaskDetail = () => {
           onAddPhoto={handleAddPhoto}
         />
         
-        <div className="px-4 py-4">
+        <div className="px-4 py-4 bg-background dark:bg-[#121212]">
           <TaskStatus
             status={task.status}
             completedSteps={completedSteps}
@@ -149,9 +149,9 @@ const TaskDetail = () => {
           />
         
           {!isCompleted && (
-            <div className="mt-6">
+            <div className="mt-6 bg-background dark:bg-[#121212]">
               <Button 
-                className="w-full py-6 text-base" 
+                className="w-full py-6 text-base bg-primary text-primary-foreground dark:bg-primary-foreground dark:text-primary" 
                 disabled={!allRequiredStepsCompleted}
                 onClick={handleMarkComplete}
               >
@@ -159,7 +159,7 @@ const TaskDetail = () => {
                 Mark as Complete
               </Button>
               {!allRequiredStepsCompleted && (
-                <p className="text-sm text-muted-foreground mt-2 text-center">
+                <p className="text-sm text-muted-foreground dark:text-muted-foreground/80 mt-2 text-center">
                   Complete all required steps before marking the task as complete
                 </p>
               )}
@@ -168,7 +168,7 @@ const TaskDetail = () => {
         </div>
       </div>
       
-      <div className="h-16" />
+      <div className="h-16 bg-background dark:bg-[#121212]" />
       <BottomNavigation />
     </div>
   );
