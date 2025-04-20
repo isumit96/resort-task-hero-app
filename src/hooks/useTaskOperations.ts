@@ -17,19 +17,20 @@ export const useTaskOperations = (taskId: string | undefined) => {
     try {
       const { error: stepError } = await supabase
         .from('task_steps')
-        .update({ is_completed: isCompleted } as any)
-        .eq('id', stepId as any);
+        .update({ is_completed: isCompleted })
+        .eq('id', stepId);
       
       if (stepError) throw stepError;
 
-      // Use more specific invalidation to update only necessary data
+      // Optimistic update for better user experience
       queryClient.invalidateQueries({ queryKey: ["task", taskId] });
-      // No need to invalidate all tasks if we're just updating a step
+      
+      console.log(`Step ${stepId} marked as ${isCompleted ? 'completed' : 'not completed'}`);
     } catch (error) {
-      console.error('Error updating task:', error);
+      console.error('Error updating task step:', error);
       toast({
         title: "Error",
-        description: "Failed to update task status",
+        description: "Failed to update step status",
         variant: "destructive",
       });
     }
@@ -41,12 +42,12 @@ export const useTaskOperations = (taskId: string | undefined) => {
     try {
       const { error } = await supabase
         .from('task_steps')
-        .update({ comment } as any)
-        .eq('id', stepId as any);
+        .update({ comment })
+        .eq('id', stepId);
       
       if (error) throw error;
       
-      // Only invalidate the specific task that changed
+      // Optimistic update for better user experience
       queryClient.invalidateQueries({ queryKey: ["task", taskId] });
       
       toast({
@@ -69,12 +70,12 @@ export const useTaskOperations = (taskId: string | undefined) => {
     try {
       const { error } = await supabase
         .from('task_steps')
-        .update({ photo_url: photoUrl } as any)
-        .eq('id', stepId as any);
+        .update({ photo_url: photoUrl })
+        .eq('id', stepId);
       
       if (error) throw error;
       
-      // Only invalidate the specific task that changed
+      // Optimistic update for better user experience
       queryClient.invalidateQueries({ queryKey: ["task", taskId] });
       
       toast({
@@ -91,7 +92,7 @@ export const useTaskOperations = (taskId: string | undefined) => {
     }
   }, [taskId, queryClient, toast]);
 
-  const handleTaskStatusUpdate = useCallback(async (newStatus: 'completed' | 'inprogress') => {
+  const handleTaskStatusUpdate = useCallback(async (newStatus: 'completed' | 'inprogress' | 'pending') => {
     if (!taskId) return;
 
     try {
@@ -101,11 +102,12 @@ export const useTaskOperations = (taskId: string | undefined) => {
 
       const { error } = await supabase
         .from('tasks')
-        .update(updateData as any)
-        .eq('id', taskId as any);
+        .update(updateData)
+        .eq('id', taskId);
       
       if (error) throw error;
 
+      // For user feedback
       if (newStatus === 'completed') {
         toast({
           title: "Task Completed",
@@ -115,10 +117,10 @@ export const useTaskOperations = (taskId: string | undefined) => {
         // Use setTimeout to delay navigation until toast is visible
         setTimeout(() => {
           navigate('/tasks');
-        }, 1000);
+        }, 1500);
       }
 
-      // Batch update queries to reduce render cycles
+      // Update the cache for both this task and the tasks list
       queryClient.invalidateQueries({ queryKey: ["task", taskId] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
     } catch (error) {

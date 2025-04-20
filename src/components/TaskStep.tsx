@@ -2,6 +2,10 @@
 import { useState } from "react";
 import { TaskStep as TaskStepType } from "@/types";
 import { Camera, X, CheckCircle, XCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Toggle } from "@/components/ui/toggle";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 interface TaskStepProps {
   step: TaskStepType;
@@ -56,42 +60,48 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
   };
 
   return (
-    <div className="py-3 border-b border-gray-200 last:border-b-0">
+    <div className="py-3 border-b border-border last:border-b-0 dark:border-border">
       <div className="flex items-start">
         {step.interactionType === 'yes_no' ? (
           <div className="flex flex-col gap-2">
-            <button 
-              onClick={() => handleYesNoResponse(true)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md ${step.isCompleted === true ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}
-            >
-              <CheckCircle size={16} />
-              <span>Yes</span>
-            </button>
-            
-            <button 
-              onClick={() => handleYesNoResponse(false)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md ${step.isCompleted === false ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-700'}`}
-            >
-              <XCircle size={16} />
-              <span>No</span>
-            </button>
+            <ToggleGroup type="single" value={step.isCompleted === true ? "yes" : step.isCompleted === false ? "no" : undefined}>
+              <ToggleGroupItem 
+                value="yes"
+                aria-label="Yes"
+                onClick={() => handleYesNoResponse(true)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md ${step.isCompleted === true ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' : ''}`}
+              >
+                <CheckCircle size={16} />
+                <span>Yes</span>
+              </ToggleGroupItem>
+              
+              <ToggleGroupItem 
+                value="no"
+                aria-label="No"
+                onClick={() => handleYesNoResponse(false)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md ${step.isCompleted === false ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100' : ''}`}
+              >
+                <XCircle size={16} />
+                <span>No</span>
+              </ToggleGroupItem>
+            </ToggleGroup>
           </div>
         ) : (
           <input
             type="checkbox"
             checked={!!step.isCompleted}
             onChange={handleCheck}
-            className="mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
+            className="mt-1 h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
           />
         )}
         
         <div className="ml-3 w-full">
           <div className="flex justify-between items-start">
-            <label className={`text-base ${step.isCompleted ? 'line-through text-gray-500' : ''}`}>
+            <label className={`text-base ${step.isCompleted ? 'line-through text-muted-foreground' : ''}`}>
               {step.title}
             </label>
             {step.isOptional && (
-              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+              <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full dark:bg-muted/50">
                 Optional
               </span>
             )}
@@ -101,7 +111,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
           {step.requiresPhoto && (
             <div className="mt-3">
               {!photoPreview ? (
-                <label className="flex items-center gap-2 py-2 px-3 rounded-md bg-gray-100 text-gray-700 cursor-pointer hover:bg-gray-200 transition-colors text-sm">
+                <label className="flex items-center gap-2 py-2 px-3 rounded-md bg-muted text-muted-foreground cursor-pointer hover:bg-muted/80 transition-colors text-sm dark:bg-muted/50 dark:hover:bg-muted/30">
                   <Camera size={18} />
                   <span>Add Photo</span>
                   <input 
@@ -120,7 +130,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
                   />
                   <button 
                     onClick={handleRemovePhoto}
-                    className="absolute top-2 right-2 bg-black bg-opacity-50 text-white p-1 rounded-full"
+                    className="absolute top-2 right-2 bg-black bg-opacity-50 dark:bg-white dark:bg-opacity-20 text-white p-1 rounded-full"
                   >
                     <X size={16} />
                   </button>
@@ -132,36 +142,38 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
           {/* Comment section */}
           {showCommentInput ? (
             <div className="mt-3">
-              <textarea
-                className="w-full border border-gray-300 rounded-md p-2 text-sm"
+              <Textarea
+                className="w-full border border-input bg-background rounded-md p-2 text-sm"
                 placeholder="Add a comment..."
                 rows={2}
                 value={comment}
                 onChange={handleCommentChange}
               />
               <div className="flex justify-end gap-2 mt-2">
-                <button 
-                  className="text-sm py-1 px-3 bg-gray-200 text-gray-700 rounded-md"
+                <Button 
+                  variant="outline"
+                  size="sm"
                   onClick={() => setShowCommentInput(false)}
                 >
                   Cancel
-                </button>
-                <button 
-                  className="text-sm py-1 px-3 bg-blue-600 text-white rounded-md"
+                </Button>
+                <Button 
+                  variant="default"
+                  size="sm"
                   onClick={handleCommentSave}
                 >
                   Save
-                </button>
+                </Button>
               </div>
             </div>
           ) : (
             <div>
               {step.comment && (
-                <p className="text-gray-600 text-sm mt-1 italic">"{step.comment}"</p>
+                <p className="text-muted-foreground text-sm mt-1 italic">"{step.comment}"</p>
               )}
               {!showCommentInput && (
                 <button 
-                  className="text-sm text-blue-600 mt-2"
+                  className="text-sm text-primary mt-2"
                   onClick={() => setShowCommentInput(true)}
                 >
                   {step.comment ? 'Edit comment' : 'Add comment'}

@@ -7,7 +7,7 @@ interface LoadingStateProps {
 
 const LoadingState = ({ title = "Loading..." }: LoadingStateProps) => {
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col bg-background">
       <Header showBackButton title={title} />
       <div className="flex-1 flex items-center justify-center">
         <div className="flex flex-col items-center justify-center space-y-4">

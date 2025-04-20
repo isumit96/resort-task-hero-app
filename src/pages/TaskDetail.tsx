@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
 import Header from "@/components/Header";
@@ -13,14 +13,19 @@ import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
 import BottomNavigation from "@/components/BottomNavigation";
 import type { Task } from "@/types";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { CheckCircle2 } from "lucide-react";
 
 const TaskDetail = () => {
   const { taskId } = useParams<{ taskId: string }>();
   const { isAuthenticated } = useUser();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { handleStepComplete, handleAddComment, handleAddPhoto, handleTaskStatusUpdate } = useTaskOperations(taskId);
+  const [allRequiredStepsCompleted, setAllRequiredStepsCompleted] = useState(false);
 
-  const { data: task, error } = useQuery({
+  const { data: task, error, isLoading } = useQuery({
     queryKey: ["task", taskId],
     queryFn: async (): Promise<Task | null> => {
       if (!taskId) throw new Error("No task ID provided");
@@ -53,10 +58,13 @@ const TaskDetail = () => {
           requiresPhoto: step.requires_photo,
           comment: step.comment,
           photoUrl: step.photo_url,
-          isOptional: step.is_optional || false
+          isOptional: step.is_optional || false,
+          interactionType: step.interaction_type || 'checkbox'
         }))
       };
-    }
+    },
+    staleTime: 1000, // Short stale time to ensure data is fresh
+    refetchOnWindowFocus: true, // Refetch when window regains focus 
   });
 
   useEffect(() => {
@@ -71,29 +79,59 @@ const TaskDetail = () => {
     }
   }, [taskId, isAuthenticated, navigate]);
 
+  // Check if all required steps are completed when task data changes
   useEffect(() => {
-    if (task?.steps.every(step => step.isCompleted) && task.status !== 'completed') {
-      handleTaskStatusUpdate('completed');
-    } else if (task?.steps.some(step => step.isCompleted) && task.status === 'pending') {
+    if (!task) return;
+    
+    const requiredSteps = task.steps.filter(step => !step.isOptional);
+    const requiredStepsCompleted = requiredSteps.every(step => 
+      step.isCompleted !== null && step.isCompleted !== undefined
+    );
+    setAllRequiredStepsCompleted(requiredStepsCompleted);
+    
+    // Auto-update task status based on step completion
+    if (task.steps.every(step => step.isCompleted) && task.status !== 'completed') {
+      handleTaskStatusUpdate('inprogress'); // Just update to in progress, let user explicitly complete
+    } else if (task.steps.some(step => step.isCompleted) && task.status === 'pending') {
       handleTaskStatusUpdate('inprogress');
     }
-  }, [task?.steps, task?.status]);
+  }, [task?.steps, task?.status, handleTaskStatusUpdate]);
+
+  const handleMarkComplete = () => {
+    if (!task) return;
+    
+    if (!allRequiredStepsCompleted) {
+      toast({
+        title: "Cannot complete task",
+        description: "Please complete all required steps first",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    handleTaskStatusUpdate('completed');
+    toast({
+      title: "Task completed",
+      description: "All steps have been completed",
+    });
+  };
+
+  if (isLoading || !task) {
+    return <LoadingState title="Task Details" />;
+  }
 
   if (error) {
     return <ErrorState error={error} title="Task Details" />;
   }
 
-  if (!task) {
-    return <LoadingState title="Task Details" />;
-  }
-
   const completedSteps = task.steps.filter(s => s.isCompleted).length;
+  const isCompleted = task.status === 'completed';
 
   return (
     <div className="flex flex-col h-screen bg-background">
       <Header showBackButton title={`${task.title} - ${task.location}`} />
       
-      <div className="flex-1 overflow-y-auto pb-20">
+      <div className="flex-1 overflow-y-auto pb-24">
         <TaskHeader task={task} />
         
         <TaskStepsList
@@ -103,12 +141,30 @@ const TaskDetail = () => {
           onAddPhoto={handleAddPhoto}
         />
         
-        <div className="px-4">
+        <div className="px-4 py-4">
           <TaskStatus
             status={task.status}
             completedSteps={completedSteps}
             totalSteps={task.steps.length}
           />
+        
+          {!isCompleted && (
+            <div className="mt-6">
+              <Button 
+                className="w-full py-6 text-base" 
+                disabled={!allRequiredStepsCompleted}
+                onClick={handleMarkComplete}
+              >
+                <CheckCircle2 className="mr-2" />
+                Mark as Complete
+              </Button>
+              {!allRequiredStepsCompleted && (
+                <p className="text-sm text-muted-foreground mt-2 text-center">
+                  Complete all required steps before marking the task as complete
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
       
