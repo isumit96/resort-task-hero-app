@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Clock } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -53,21 +53,32 @@ export const QuickAssignDialog = ({
 }: QuickAssignDialogProps) => {
   const [selectedEmployee, setSelectedEmployee] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<Date>();
+  const [selectedTime, setSelectedTime] = useState<string>("");
   const { toast } = useToast();
 
+  const timeOptions = Array.from({ length: 48 }, (_, i) => {
+    const hour = Math.floor(i / 2);
+    const minute = (i % 2) * 30;
+    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+  });
+
   const handleQuickAssign = () => {
-    if (!selectedEmployee || !selectedDate) {
+    if (!selectedEmployee || !selectedDate || !selectedTime) {
       toast({
         title: "Missing information",
-        description: "Please select both an employee and a due date.",
+        description: "Please select an employee, date, and time.",
         variant: "destructive",
       });
       return;
     }
 
+    const [hours, minutes] = selectedTime.split(':').map(Number);
+    const dueDate = new Date(selectedDate);
+    dueDate.setHours(hours, minutes);
+
     onAssign({
       employeeId: selectedEmployee,
-      dueDate: selectedDate,
+      dueDate: dueDate,
     });
   };
 
@@ -119,29 +130,46 @@ export const QuickAssignDialog = ({
 
           <div className="space-y-2">
             <label className="text-sm font-medium">Due Date</label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !selectedDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  initialFocus
-                  disabled={(date) => date < new Date()}
-                />
-              </PopoverContent>
-            </Popover>
+            <div className="flex gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !selectedDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={setSelectedDate}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                    disabled={(date) => date < new Date()}
+                  />
+                </PopoverContent>
+              </Popover>
+
+              <Select value={selectedTime} onValueChange={setSelectedTime}>
+                <SelectTrigger className="w-[140px]">
+                  <Clock className="mr-2 h-4 w-4" />
+                  {selectedTime || "Select time"}
+                </SelectTrigger>
+                <SelectContent>
+                  {timeOptions.map((time) => (
+                    <SelectItem key={time} value={time}>
+                      {time}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
         
