@@ -14,8 +14,35 @@ const initializeDarkMode = () => {
   }
 };
 
+// Check if the app is running in a mobile environment
+const isMobileApp = () => {
+  return window.navigator.userAgent.includes('Android') || 
+         document.URL.includes('android-app://');
+};
+
+// Handle back button for Android
+const setupAndroidBackButton = () => {
+  if (isMobileApp()) {
+    document.addEventListener('backbutton', (e) => {
+      e.preventDefault();
+      // Let React Router handle navigation
+      window.history.back();
+    });
+  }
+};
+
 // Initialize dark mode before rendering
 initializeDarkMode();
+
+// Setup mobile-specific handlers
+setupAndroidBackButton();
+
+// Prevent pull-to-refresh behavior in mobile wrapper
+document.body.addEventListener('touchmove', (e) => {
+  if (isMobileApp() && document.documentElement.scrollTop === 0) {
+    e.preventDefault();
+  }
+}, { passive: false });
 
 // Create root once and store in a variable - optimize render process
 const container = document.getElementById("root");

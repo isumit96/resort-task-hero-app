@@ -103,6 +103,17 @@
   body {
     @apply bg-background text-foreground font-inter;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  /* Fix for Android notches */
+  @supports (padding: max(0px)) {
+    body {
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
   }
 }
 
@@ -125,6 +136,24 @@
 
   .animate-in {
     animation: animateIn 0.3s ease-out;
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  
+  .no-tap-highlight {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .native-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Helper to prevent text selection on mobile */
+  .no-select {
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   @keyframes animateIn {
