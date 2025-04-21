@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { FileEdit, CopyPlus, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -45,6 +44,11 @@ const TemplateCard = ({
 
   return (
     <div className="border rounded-lg p-4 bg-card overflow-hidden flex flex-col justify-between h-full">
+      {template.department && (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent text-accent-foreground whitespace-nowrap mb-4">
+          {template.department}
+        </span>
+      )}
       <div>
         <div className="flex justify-between items-start gap-2">
           <h3 className="font-medium text-lg">{template.title}</h3>
@@ -142,12 +146,6 @@ const TemplateCard = ({
         </div>
       </div>
 
-      {template.department && (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent text-accent-foreground whitespace-nowrap mt-4">
-          {template.department}
-        </span>
-      )}
-
       <QuickAssignDialog
         isOpen={isQuickAssignOpen}
         onClose={() => setIsQuickAssignOpen(false)}
@@ -161,4 +159,3 @@ const TemplateCard = ({
 };
 
 export default TemplateCard;
-
