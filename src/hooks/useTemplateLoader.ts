@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { UseFormReturn } from "react-hook-form";
 import { TaskFormData } from "@/types/forms";
+import { DepartmentType } from "@/types/index";
 
 export const useTemplateLoader = (form: UseFormReturn<TaskFormData>) => {
   const [isLoadingTemplate, setIsLoadingTemplate] = useState(false);
@@ -38,6 +39,11 @@ export const useTemplateLoader = (form: UseFormReturn<TaskFormData>) => {
       if (template.location) {
         form.setValue("location", template.location);
         form.clearErrors("location");
+      }
+      
+      if (template.department) {
+        form.setValue("department", template.department as DepartmentType);
+        form.clearErrors("department");
       }
 
       if (steps && steps.length > 0) {

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { TaskFormData } from "@/types/forms";
+import { DepartmentType } from "@/types/index";
 
 export const useTaskCreation = () => {
   const navigate = useNavigate();
@@ -48,7 +49,7 @@ export const useTaskCreation = () => {
           deadline: data.deadline || null,
           photo_url: data.photoUrl,
           video_url: data.videoUrl,
-          department: data.department,
+          department: data.department as DepartmentType,
           status: "pending",
         })
         .select()
@@ -100,7 +101,7 @@ export const useTaskCreation = () => {
           title: data.title,
           description: data.description,
           location: data.location,
-          department: data.department,
+          department: data.department as DepartmentType,
         })
         .select()
         .single();

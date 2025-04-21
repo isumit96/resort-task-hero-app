@@ -15,7 +15,9 @@ export const taskSchema = z.object({
   dueTime: z.string().min(1, "Due time is required"),
   assignedTo: z.string().min(1, "Assignee is required"),
   deadline: z.string().optional(),
-  department: z.string().min(1, "Department is required"),
+  department: z.enum(["Housekeeping", "Front Office", "Kitchen", "Activities", "Gardening"] as const, {
+    required_error: "Department is required",
+  }),
   steps: z.array(stepSchema)
     .min(1, "At least one step is required")
     .refine(steps => {
