@@ -152,10 +152,12 @@ const TaskDetail = () => {
           {!isCompleted && (
             <div className="mt-6 bg-background dark:bg-[#121212]">
               <Button 
-                className="w-full py-6 text-base bg-primary text-primary-foreground dark:bg-primary-foreground dark:text-primary animate-fade-in hover-scale"
+                className="w-full py-6 text-base shadow-lg hover:shadow-primary/25 transition-all duration-300 animate-fade-in hover:bg-primary/90" 
                 disabled={!allRequiredStepsCompleted}
                 onClick={handleMarkComplete}
                 type="button"
+                variant="primary"
+                size="default"
               >
                 <CheckCircle2 className="mr-2" />
                 Mark as Complete
