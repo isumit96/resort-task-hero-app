@@ -1,7 +1,17 @@
 
 import { Button } from "@/components/ui/button";
-import { FileEdit, CopyPlus, Trash2, CopyPlus } from "lucide-react";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { FileEdit, CopyPlus, Trash2 } from "lucide-react"; // Removed duplicate CopyPlus import
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { QuickAssignDialog } from "@/components/QuickAssignDialog";
 import { useState } from "react";
 import { Profile } from "@/types";
@@ -25,18 +35,24 @@ interface TemplateCardProps {
 }
 
 const TemplateCard = ({
-  template, 
-  onUse, 
-  onQuickAssign, 
-  onEdit, 
-  onDuplicate, 
+  template,
+  onUse,
+  onQuickAssign,
+  onEdit,
+  onDuplicate,
   onDelete,
   employees,
-  isLoadingEmployees
+  isLoadingEmployees,
 }: TemplateCardProps) => {
   const [isQuickAssignOpen, setIsQuickAssignOpen] = useState(false);
 
-  const handleQuickAssign = ({ employeeId, dueDate }: { employeeId: string; dueDate: Date }) => {
+  const handleQuickAssign = ({
+    employeeId,
+    dueDate,
+  }: {
+    employeeId: string;
+    dueDate: Date;
+  }) => {
     onQuickAssign(template.id, employeeId, dueDate);
     setIsQuickAssignOpen(false);
   };
@@ -63,18 +79,16 @@ const TemplateCard = ({
           <h3 className="font-medium text-lg">{template.title}</h3>
         </div>
         {template.description && (
-          <p className="text-muted-foreground text-sm mt-1 line-clamp-2">{template.description}</p>
+          <p className="text-muted-foreground text-sm mt-1 line-clamp-2">
+            {template.description}
+          </p>
         )}
       </div>
 
       <div className="flex flex-col gap-2 mt-4 w-full">
         {/* CTAs (always side by side) */}
         <div className="flex flex-row gap-2 w-full">
-          <Button
-            onClick={() => onUse(template.id)}
-            className="flex-1"
-            size="sm"
-          >
+          <Button onClick={() => onUse(template.id)} className="flex-1" size="sm">
             Use Template
           </Button>
           <Button
@@ -138,7 +152,7 @@ const TemplateCard = ({
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction 
+                  <AlertDialogAction
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     onClick={() => onDelete(template.id)}
                   >
@@ -164,3 +178,4 @@ const TemplateCard = ({
 };
 
 export default TemplateCard;
+
