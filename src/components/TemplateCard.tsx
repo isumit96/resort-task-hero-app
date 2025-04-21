@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { FileEdit, CopyPlus, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -70,11 +71,11 @@ const TemplateCard = ({
         </div>
       </div>
 
-      <div className="flex justify-between items-center mt-4">
-        <div className="flex flex-wrap gap-2 items-center">
+      <div className={`flex flex-col gap-2 mt-4 w-full`}>
+        <div className={`flex ${isMobile ? "flex-col gap-2" : "flex-row gap-2"} w-full`}>
           <Button 
             onClick={() => onUse(template.id)}
-            className={`${isMobile ? 'flex-1 min-w-0' : 'flex-1'}`}
+            className="flex-1"
             size={isMobile ? "sm" : "sm"}
           >
             Use Template
@@ -84,13 +85,13 @@ const TemplateCard = ({
             onClick={() => setIsQuickAssignOpen(true)}
             variant="outline"
             size={isMobile ? "sm" : "sm"}
-            className={`${isMobile ? 'flex-1 min-w-0' : ''}`}
+            className="flex-1"
           >
             Quick Assign
           </Button>
         </div>
 
-        <div className={`flex ${isMobile ? 'w-full justify-end mt-2' : ''} gap-2`}>
+        <div className={`flex w-full justify-end gap-2`}>
           <Button
             variant="ghost"
             size="sm"
@@ -159,3 +160,4 @@ const TemplateCard = ({
 };
 
 export default TemplateCard;
+
