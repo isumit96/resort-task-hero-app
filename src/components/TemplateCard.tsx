@@ -53,7 +53,7 @@ const TemplateCard = ({
       <div className="flex-1">
         <div className="flex justify-between items-start gap-2">
           <h3 className="font-medium text-lg">{template.title}</h3>
-          <DepartmentLabel department={template.department} />
+          {/* Removed DepartmentLabel from here */}
         </div>
         {template.description && (
           <>
