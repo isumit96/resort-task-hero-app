@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { FileEdit, CopyPlus, Trash2 } from "lucide-react";
+import { FileEdit, CopyPlus, Trash2, CopyPlus } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { QuickAssignDialog } from "@/components/QuickAssignDialog";
 import { useState } from "react";
@@ -45,11 +45,6 @@ const TemplateCard = ({
     <div className="border rounded-lg p-4 bg-card overflow-hidden flex flex-col justify-between h-full">
       {/* Badges at top */}
       <div className="flex flex-wrap gap-2 mb-2">
-        {template.department && (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent text-accent-foreground whitespace-nowrap">
-            {template.department}
-          </span>
-        )}
         {template.location && (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent text-accent-foreground whitespace-nowrap">
             {template.location}
@@ -61,6 +56,7 @@ const TemplateCard = ({
           </span>
         )}
       </div>
+
       {/* Card Content */}
       <div className="flex-1">
         <div className="flex justify-between items-start gap-2">
@@ -90,58 +86,68 @@ const TemplateCard = ({
             Quick Assign
           </Button>
         </div>
-        {/* Icon Buttons */}
-        <div className="flex w-full justify-end gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-9 w-9 p-0"
-            onClick={() => onEdit(template.id)}
-            title="Edit"
-          >
-            <FileEdit className="h-4 w-4" />
-            <span className="sr-only">Edit</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-9 w-9 p-0"
-            onClick={() => onDuplicate(template.id)}
-            title="Duplicate"
-          >
-            <CopyPlus className="h-4 w-4" />
-            <span className="sr-only">Duplicate</span>
-          </Button>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-9 w-9 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                title="Delete"
-              >
-                <Trash2 className="h-4 w-4" />
-                <span className="sr-only">Delete</span>
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Template</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to delete this template? This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction 
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  onClick={() => onDelete(template.id)}
+
+        <div className="flex justify-between items-center">
+          {/* Department badge on the left */}
+          {template.department && (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent text-accent-foreground whitespace-nowrap">
+              {template.department}
+            </span>
+          )}
+
+          {/* Icon Buttons on the right */}
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 w-9 p-0"
+              onClick={() => onEdit(template.id)}
+              title="Edit"
+            >
+              <FileEdit className="h-4 w-4" />
+              <span className="sr-only">Edit</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 w-9 p-0"
+              onClick={() => onDuplicate(template.id)}
+              title="Duplicate"
+            >
+              <CopyPlus className="h-4 w-4" />
+              <span className="sr-only">Duplicate</span>
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-9 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  title="Delete"
                 >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                  <Trash2 className="h-4 w-4" />
+                  <span className="sr-only">Delete</span>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Template</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete this template? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction 
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={() => onDelete(template.id)}
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </div>
       </div>
 
