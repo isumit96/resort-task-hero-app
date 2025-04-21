@@ -40,14 +40,14 @@ const TaskCard = ({ task, showAssignee = true }: TaskCardProps) => {
       whileHover={{ y: -2 }}
       whileTap={{ scale: 0.98 }}
       className={cn(
-        "bg-card rounded-xl shadow-card hover:shadow-card-hover border border-border/40",
+        "bg-white dark:bg-gray-800 rounded-xl shadow-card hover:shadow-card-hover border border-border/40 dark:border-gray-700/60",
         "transition-all duration-200 overflow-hidden"
       )}
       onClick={handleClick}
     >
       <div className="relative">
         {/* Progress Bar */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gray-100">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gray-100 dark:bg-gray-700">
           <div 
             className={cn(
               "h-full transition-all",
@@ -62,7 +62,7 @@ const TaskCard = ({ task, showAssignee = true }: TaskCardProps) => {
         <div className="p-4 pt-5">
           <div className="flex justify-between items-start">
             <div className="flex-1 pr-3">
-              <h3 className="font-medium text-lg text-balance">{task.title}</h3>
+              <h3 className="font-medium text-lg text-gray-900 dark:text-gray-100">{task.title}</h3>
               
               <div className="mt-3 flex flex-wrap gap-y-2 gap-x-4">
                 <div className={cn(
@@ -74,13 +74,13 @@ const TaskCard = ({ task, showAssignee = true }: TaskCardProps) => {
                   <span>Due {relativeTime}</span>
                 </div>
                 
-                <div className="flex items-center text-muted-foreground text-sm">
+                <div className="flex items-center text-muted-foreground text-sm dark:text-gray-300">
                   <MapPin size={14} className="mr-1 flex-shrink-0" />
                   <span>{task.location}</span>
                 </div>
 
                 {showAssignee && task.assigneeName && (
-                  <div className="flex items-center text-muted-foreground text-sm">
+                  <div className="flex items-center text-muted-foreground text-sm dark:text-gray-300">
                     <User size={14} className="mr-1 flex-shrink-0" />
                     <span>{task.assigneeName}</span>
                   </div>
@@ -89,14 +89,14 @@ const TaskCard = ({ task, showAssignee = true }: TaskCardProps) => {
               
               <div className="mt-3 flex items-center justify-between">
                 <TaskStatusBadge status={task.status} />
-                <div className="flex items-center text-muted-foreground text-xs">
+                <div className="flex items-center text-muted-foreground text-xs dark:text-gray-400">
                   <Calendar size={12} className="mr-1" />
                   <span>{completedSteps}/{task.steps.length} steps</span>
                 </div>
               </div>
             </div>
             
-            <div className="text-muted-foreground/50 self-center">
+            <div className="text-muted-foreground/50 dark:text-gray-400 self-center">
               <ChevronRight size={20} />
             </div>
           </div>
