@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { FileEdit, CopyPlus, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -45,6 +46,7 @@ const TemplateCard = ({
     onQuickAssign(template.id, employeeId, dueDate);
     setIsQuickAssignOpen(false);
   };
+
   return (
     <div className="border rounded-lg p-4 bg-card overflow-hidden flex flex-col justify-between h-full">
       {/* Card Content */}
@@ -99,8 +101,12 @@ const TemplateCard = ({
           </Button>
         </div>
 
-        <div className="flex justify-end items-center">
-          <div className="flex justify-end gap-2">
+        <div className="flex justify-between items-center">
+          {/* Department label on the left with icon */}
+          <DepartmentLabel department={template.department} />
+
+          {/* Icons Buttons on the right */}
+          <div className="flex justify-end gap-2" aria-label="Template Actions">
             <Button variant="ghost" size="sm" className="h-9 w-9 p-0" onClick={() => onEdit(template.id)} title="Edit">
               <FileEdit className="h-4 w-4" />
               <span className="sr-only">Edit</span>
@@ -111,7 +117,11 @@ const TemplateCard = ({
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-destructive hover:text-destructive hover:bg-destructive/10" title="Delete">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-9 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  title="Delete">
                   <Trash2 className="h-4 w-4" />
                   <span className="sr-only">Delete</span>
                 </Button>
@@ -141,3 +151,4 @@ const TemplateCard = ({
 };
 
 export default TemplateCard;
+
