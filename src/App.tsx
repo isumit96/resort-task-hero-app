@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -16,6 +15,7 @@ import NotFound from "./pages/NotFound";
 import Settings from "./pages/Settings";
 import TemplateList from "./pages/TemplateList";
 import TemplateDetail from "./pages/TemplateDetail";
+import TemplateEdit from "./pages/TemplateEdit";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -61,6 +61,7 @@ const AppRoutes = () => {
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/templates" element={<ProtectedRoute><TemplateList /></ProtectedRoute>} />
       <Route path="/templates/:templateId" element={<ProtectedRoute><TemplateDetail /></ProtectedRoute>} />
+      <Route path="/templates/edit/:templateId" element={<ProtectedRoute><TemplateEdit /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

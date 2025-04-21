@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,7 +39,6 @@ const TemplateDetail = () => {
       try {
         setIsLoading(true);
         
-        // Fetch template details
         const { data: templateData, error: templateError } = await supabase
           .from("task_templates")
           .select("*")
@@ -49,7 +47,6 @@ const TemplateDetail = () => {
 
         if (templateError) throw templateError;
 
-        // Fetch template steps
         const { data: steps, error: stepsError } = await supabase
           .from("template_steps")
           .select("*")
