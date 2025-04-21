@@ -1,9 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { FileEdit, CopyPlus, Trash2 } from "lucide-react"; // Removed duplicate CopyPlus import
+import { FileEdit, CopyPlus, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { QuickAssignDialog } from "@/components/QuickAssignDialog";
 import { useState } from "react";
 import { Profile } from "@/types";
+import DepartmentLabel from "./DepartmentLabel";
+
 interface TemplateCardProps {
   template: {
     id: string;
@@ -21,6 +23,7 @@ interface TemplateCardProps {
   employees: Profile[];
   isLoadingEmployees: boolean;
 }
+
 const TemplateCard = ({
   template,
   onUse,
@@ -42,36 +45,47 @@ const TemplateCard = ({
     onQuickAssign(template.id, employeeId, dueDate);
     setIsQuickAssignOpen(false);
   };
-  return <div className="border rounded-lg p-4 bg-card overflow-hidden flex flex-col justify-between h-full">
+  return (
+    <div className="border rounded-lg p-4 bg-card overflow-hidden flex flex-col justify-between h-full">
       {/* Card Content */}
       <div className="flex-1">
         <div className="flex justify-between items-start gap-2">
           <h3 className="font-medium text-lg">{template.title}</h3>
+          <DepartmentLabel department={template.department} />
         </div>
-        {template.description && <>
-            <p className="text-muted-foreground text-sm mt-1 line-clamp-2">
-              {template.description}
-            </p>
-            {/* Location and Steps badges below subtext */}
+        {template.description && (
+          <>
+            <p className="text-muted-foreground text-sm mt-1 line-clamp-2">{template.description}</p>
             <div className="flex flex-wrap gap-2 mt-2">
-              {template.location && <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent text-accent-foreground whitespace-nowrap">
+              {template.location && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent text-accent-foreground whitespace-nowrap">
                   {template.location}
-                </span>}
-              {template.step_count !== undefined && <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary/20 text-secondary-foreground whitespace-nowrap">
+                </span>
+              )}
+              {template.step_count !== undefined && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary/20 text-secondary-foreground whitespace-nowrap">
                   {template.step_count} steps
-                </span>}
+                </span>
+              )}
             </div>
-          </>}
-        {!template.description &&
-      // In case there is no description, show the badges below the title
-      <div className="flex flex-wrap gap-2 mt-2">
-            {template.location && <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent text-accent-foreground whitespace-nowrap">
-                {template.location}
-              </span>}
-            {template.step_count !== undefined && <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary/20 text-secondary-foreground whitespace-nowrap">
-                {template.step_count} steps
-              </span>}
-          </div>}
+          </>
+        )}
+        {!template.description && (
+          <>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {template.location && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent text-accent-foreground whitespace-nowrap">
+                  {template.location}
+                </span>
+              )}
+              {template.step_count !== undefined && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary/20 text-secondary-foreground whitespace-nowrap">
+                  {template.step_count} steps
+                </span>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       <div className="flex flex-col gap-2 mt-4 w-full">
@@ -85,13 +99,7 @@ const TemplateCard = ({
           </Button>
         </div>
 
-        <div className="flex justify-between items-center">
-          {/* Department badge on the left */}
-          {template.department && <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent text-foreground whitespace-nowrap">
-              {template.department}
-            </span>}
-
-          {/* Icon Buttons on the right */}
+        <div className="flex justify-end items-center">
           <div className="flex justify-end gap-2">
             <Button variant="ghost" size="sm" className="h-9 w-9 p-0" onClick={() => onEdit(template.id)} title="Edit">
               <FileEdit className="h-4 w-4" />
@@ -128,6 +136,8 @@ const TemplateCard = ({
       </div>
 
       <QuickAssignDialog isOpen={isQuickAssignOpen} onClose={() => setIsQuickAssignOpen(false)} onAssign={handleQuickAssign} template={template} employees={employees} isLoading={isLoadingEmployees} />
-    </div>;
+    </div>
+  );
 };
+
 export default TemplateCard;
