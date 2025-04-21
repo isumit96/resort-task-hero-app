@@ -59,29 +59,45 @@ const TemplateCard = ({
 
   return (
     <div className="border rounded-lg p-4 bg-card overflow-hidden flex flex-col justify-between h-full">
-      {/* Badges at top */}
-      <div className="flex flex-wrap gap-2 mb-2">
-        {template.location && (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent text-accent-foreground whitespace-nowrap">
-            {template.location}
-          </span>
-        )}
-        {template.step_count !== undefined && (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary/20 text-secondary-foreground whitespace-nowrap">
-            {template.step_count} steps
-          </span>
-        )}
-      </div>
-
       {/* Card Content */}
       <div className="flex-1">
         <div className="flex justify-between items-start gap-2">
           <h3 className="font-medium text-lg">{template.title}</h3>
         </div>
         {template.description && (
-          <p className="text-muted-foreground text-sm mt-1 line-clamp-2">
-            {template.description}
-          </p>
+          <>
+            <p className="text-muted-foreground text-sm mt-1 line-clamp-2">
+              {template.description}
+            </p>
+            {/* Location and Steps badges below subtext */}
+            <div className="flex flex-wrap gap-2 mt-2">
+              {template.location && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent text-accent-foreground whitespace-nowrap">
+                  {template.location}
+                </span>
+              )}
+              {template.step_count !== undefined && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary/20 text-secondary-foreground whitespace-nowrap">
+                  {template.step_count} steps
+                </span>
+              )}
+            </div>
+          </>
+        )}
+        {!template.description && (
+          // In case there is no description, show the badges below the title
+          <div className="flex flex-wrap gap-2 mt-2">
+            {template.location && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent text-accent-foreground whitespace-nowrap">
+                {template.location}
+              </span>
+            )}
+            {template.step_count !== undefined && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary/20 text-secondary-foreground whitespace-nowrap">
+                {template.step_count} steps
+              </span>
+            )}
+          </div>
         )}
       </div>
 
