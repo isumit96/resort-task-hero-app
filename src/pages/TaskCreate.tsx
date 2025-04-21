@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -24,6 +23,14 @@ import { taskSchema, TaskFormData } from "@/types/forms";
 import { DateTimeSelect } from "@/components/DateTimeSelect";
 import { AssigneeSelect } from "@/components/AssigneeSelect";
 import { uploadFileToStorage } from "@/utils/storage";
+import { useDepartments } from "@/hooks/useDepartments";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 const TaskCreate = () => {
   const [searchParams] = useSearchParams();
@@ -34,7 +41,8 @@ const TaskCreate = () => {
   const { toast } = useToast();
   const [formErrors, setFormErrors] = useState<string[]>([]);
 
-  // Initialize form with appropriate validation and default values
+  const { data: departments, isLoading: isLoadingDepartments } = useDepartments();
+
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
@@ -49,15 +57,15 @@ const TaskCreate = () => {
         isOptional: false,
         interactionType: "checkbox"
       }],
+      department: ""
     },
-    mode: "onChange" // Validate fields as they change
+    mode: "onChange"
   });
 
   const { employees, isLoading: isLoadingEmployees } = useEmployees();
   const { handleSubmit, saveAsTemplate, isSubmitting, isSavingTemplate } = useTaskCreation();
   const { loadTemplateData, isLoadingTemplate, templateApplied } = useTemplateLoader(form);
 
-  // File handling functions
   const handlePhotoUpload = async (file: File) => {
     try {
       const url = await uploadFileToStorage(file, 'photos');
@@ -86,7 +94,6 @@ const TaskCreate = () => {
     }
   };
 
-  // Step reordering function
   const moveStep = (dragIndex: number, hoverIndex: number) => {
     const steps = [...form.getValues().steps];
     const draggedStep = steps[dragIndex];
@@ -95,10 +102,8 @@ const TaskCreate = () => {
     form.setValue('steps', steps);
   };
 
-  // Form submission handler
   const onSubmit = async (data: TaskFormData) => {
     try {
-      // Validate step titles
       const emptySteps = data.steps.filter(step => !step.title.trim());
       if (emptySteps.length > 0) {
         toast({
@@ -109,7 +114,6 @@ const TaskCreate = () => {
         return;
       }
 
-      // Check for duplicate step titles
       const titles = data.steps.map(step => step.title.trim());
       const uniqueTitles = new Set(titles);
       if (uniqueTitles.size !== titles.length) {
@@ -132,14 +136,12 @@ const TaskCreate = () => {
     }
   };
 
-  // Template loading effect
   useEffect(() => {
     if (templateId) {
       loadTemplateData(templateId);
     }
   }, [templateId, loadTemplateData]);
 
-  // Monitor form errors
   useEffect(() => {
     const subscription = form.watch(() => {
       const errors = Object.entries(form.formState.errors)
@@ -262,6 +264,36 @@ const TaskCreate = () => {
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="department"
+              rules={{ required: true }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Department</FormLabel>
+                  <FormControl>
+                    <Select
+                      value={field.value || ""}
+                      onValueChange={field.onChange}
+                      disabled={isLoadingDepartments}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {departments?.map(dep => (
+                          <SelectItem key={dep} value={dep}>
+                            {dep}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="space-y-4">
               <h3 className="font-medium">Steps</h3>
               <DndProvider backend={HTML5Backend}>
@@ -345,7 +377,6 @@ const TaskCreate = () => {
                 onClick={() => {
                   const data = form.getValues();
                   
-                  // Validate before saving
                   const emptySteps = data.steps.filter(step => !step.title.trim());
                   if (emptySteps.length > 0) {
                     toast({

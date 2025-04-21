@@ -31,6 +31,7 @@ import {
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import BottomNavigation from "@/components/BottomNavigation";
 import { useEmployees } from "@/hooks/useEmployees";
+import { useDepartments } from "@/hooks/useDepartments";
 import TemplateCard from "@/components/TemplateCard";
 
 interface Template {
@@ -40,6 +41,7 @@ interface Template {
   location: string | null;
   created_at: string;
   step_count?: number;
+  department: string | null;
 }
 
 const TemplateList = () => {
@@ -48,11 +50,12 @@ const TemplateList = () => {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [locationFilter, setLocationFilter] = useState<string>("");
+  const [departmentFilter, setDepartmentFilter] = useState<string>("all-departments");
   const { employees, isLoading: isLoadingEmployees } = useEmployees();
+  const { data: departments, isLoading: isLoadingDepartments } = useDepartments();
   
   const [locations, setLocations] = useState<string[]>([]);
 
-  // Fetch templates with their step counts
   const { data: templates, isLoading } = useQuery({
     queryKey: ["templates"],
     queryFn: async () => {
@@ -68,7 +71,6 @@ const TemplateList = () => {
         throw templateError;
       }
 
-      // Transform the data to include step counts
       return templatesData.map((template: any) => ({
         ...template,
         step_count: template.template_steps[0]?.count || 0
@@ -76,7 +78,6 @@ const TemplateList = () => {
     }
   });
 
-  // Fetch locations for filtering
   useEffect(() => {
     const fetchLocations = async () => {
       const { data, error } = await supabase
@@ -97,10 +98,8 @@ const TemplateList = () => {
     fetchLocations();
   }, []);
 
-  // Delete template mutation
   const deleteTemplateMutation = useMutation({
     mutationFn: async (templateId: string) => {
-      // First delete the template steps
       const { error: stepsError } = await supabase
         .from("template_steps")
         .delete()
@@ -110,7 +109,6 @@ const TemplateList = () => {
         throw stepsError;
       }
 
-      // Then delete the template itself
       const { error: templateError } = await supabase
         .from("task_templates")
         .delete()
@@ -139,7 +137,6 @@ const TemplateList = () => {
     },
   });
 
-  // Update the quick assign mutation
   const quickAssignMutation = useMutation({
     mutationFn: async ({ 
       templateId, 
@@ -150,7 +147,6 @@ const TemplateList = () => {
       employeeId: string; 
       dueDate: Date;
     }) => {
-      // First fetch the template details
       const { data: templateData, error: templateError } = await supabase
         .from("task_templates")
         .select("*")
@@ -159,7 +155,6 @@ const TemplateList = () => {
 
       if (templateError) throw templateError;
 
-      // Then fetch the template steps
       const { data: templateSteps, error: stepsError } = await supabase
         .from("template_steps")
         .select("*")
@@ -168,7 +163,6 @@ const TemplateList = () => {
 
       if (stepsError) throw stepsError;
 
-      // Create a new task based on the template
       const { data: task, error: taskError } = await supabase
         .from("tasks")
         .insert({
@@ -184,7 +178,6 @@ const TemplateList = () => {
 
       if (taskError) throw taskError;
 
-      // Create task steps based on template steps
       const taskStepsToInsert = templateSteps.map(step => ({
         task_id: task.id,
         title: step.title,
@@ -228,7 +221,6 @@ const TemplateList = () => {
 
   const handleDuplicateTemplate = async (templateId: string) => {
     try {
-      // Fetch the template to duplicate
       const { data: templateData, error: templateError } = await supabase
         .from("task_templates")
         .select("*")
@@ -237,7 +229,6 @@ const TemplateList = () => {
 
       if (templateError) throw templateError;
 
-      // Create a new template based on the original
       const { data: newTemplate, error: newTemplateError } = await supabase
         .from("task_templates")
         .insert({
@@ -250,7 +241,6 @@ const TemplateList = () => {
 
       if (newTemplateError) throw newTemplateError;
 
-      // Fetch the steps from the original template
       const { data: steps, error: stepsError } = await supabase
         .from("template_steps")
         .select("*")
@@ -258,7 +248,6 @@ const TemplateList = () => {
 
       if (stepsError) throw stepsError;
 
-      // Create steps for the new template
       const newSteps = steps.map(step => ({
         template_id: newTemplate.id,
         title: step.title,
@@ -293,10 +282,10 @@ const TemplateList = () => {
     navigate(`/tasks/create?template=${templateId}`);
   };
 
-  // Filter templates based on search query and location
-  const filteredTemplates = templates?.filter(template => 
+  const filteredTemplates = templates?.filter(template =>
     template.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-    (!locationFilter || locationFilter === "all-locations" || (template.location && template.location === locationFilter))
+    (!locationFilter || locationFilter === "all-locations" || (template.location && template.location === locationFilter)) &&
+    (departmentFilter === "all-departments" || template.department === departmentFilter)
   );
 
   return (
@@ -316,15 +305,15 @@ const TemplateList = () => {
           </div>
           
           <div className="flex gap-2 items-center">
-            <Select value={locationFilter} onValueChange={setLocationFilter}>
+            <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by location" />
+                <SelectValue placeholder="Filter by department" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all-locations">All Locations</SelectItem>
-                {locations.map(location => (
-                  <SelectItem key={location} value={location || "no-location"}>
-                    {location || "No Location"}
+                <SelectItem value="all-departments">All Departments</SelectItem>
+                {departments?.map(dep => (
+                  <SelectItem key={dep} value={dep}>
+                    {dep}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -54,6 +54,24 @@ export type Database = {
         }
         Relationships: []
       }
+      departments: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: Database["public"]["Enums"]["department_type"]
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: Database["public"]["Enums"]["department_type"]
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: Database["public"]["Enums"]["department_type"]
+        }
+        Relationships: []
+      }
       locations: {
         Row: {
           created_at: string | null
@@ -75,6 +93,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string | null
+          department: Database["public"]["Enums"]["department_type"] | null
           id: string
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string | null
@@ -82,6 +101,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          department?: Database["public"]["Enums"]["department_type"] | null
           id: string
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
@@ -89,6 +109,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          department?: Database["public"]["Enums"]["department_type"] | null
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
@@ -216,6 +237,7 @@ export type Database = {
         Row: {
           created_at: string | null
           created_by: string | null
+          department: Database["public"]["Enums"]["department_type"] | null
           description: string | null
           id: string
           location: string | null
@@ -224,6 +246,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           created_by?: string | null
+          department?: Database["public"]["Enums"]["department_type"] | null
           description?: string | null
           id?: string
           location?: string | null
@@ -232,6 +255,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           created_by?: string | null
+          department?: Database["public"]["Enums"]["department_type"] | null
           description?: string | null
           id?: string
           location?: string | null
@@ -253,6 +277,7 @@ export type Database = {
           completed_at: string | null
           created_at: string | null
           deadline: string | null
+          department: Database["public"]["Enums"]["department_type"] | null
           description: string | null
           due_time: string
           id: string
@@ -267,6 +292,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string | null
           deadline?: string | null
+          department?: Database["public"]["Enums"]["department_type"] | null
           description?: string | null
           due_time: string
           id?: string
@@ -281,6 +307,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string | null
           deadline?: string | null
+          department?: Database["public"]["Enums"]["department_type"] | null
           description?: string | null
           due_time?: string
           id?: string
@@ -352,6 +379,12 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      department_type:
+        | "Housekeeping"
+        | "Front Office"
+        | "Kitchen"
+        | "Activities"
+        | "Gardening"
       step_interaction_type: "checkbox" | "yes_no"
       task_status: "pending" | "inprogress" | "completed"
       user_role: "employee" | "manager"
@@ -470,6 +503,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      department_type: [
+        "Housekeeping",
+        "Front Office",
+        "Kitchen",
+        "Activities",
+        "Gardening",
+      ],
       step_interaction_type: ["checkbox", "yes_no"],
       task_status: ["pending", "inprogress", "completed"],
       user_role: ["employee", "manager"],

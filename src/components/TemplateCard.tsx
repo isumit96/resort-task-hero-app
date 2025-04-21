@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { FileEdit, CopyPlus, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -14,6 +13,7 @@ interface TemplateCardProps {
     description: string | null;
     location: string | null;
     step_count?: number;
+    department?: string;
   };
   onUse: (templateId: string) => void;
   onQuickAssign: (templateId: string, employeeId: string, dueDate: Date) => void;
@@ -24,7 +24,7 @@ interface TemplateCardProps {
   isLoadingEmployees: boolean;
 }
 
-const TemplateCard = ({ 
+const TemplateCard = ({
   template, 
   onUse, 
   onQuickAssign, 
@@ -44,12 +44,17 @@ const TemplateCard = ({
 
   return (
     <div className="border rounded-lg p-4 bg-card overflow-hidden">
-      <h3 className="font-medium text-lg">{template.title}</h3>
-      
+      <div className="flex justify-between items-start gap-2">
+        <h3 className="font-medium text-lg">{template.title}</h3>
+        {template.department && (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent text-accent-foreground whitespace-nowrap">
+            {template.department}
+          </span>
+        )}
+      </div>
       {template.description && (
         <p className="text-muted-foreground text-sm mt-1 line-clamp-2">{template.description}</p>
       )}
-      
       <div className="flex flex-wrap gap-2 mt-2">
         {template.location && (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
@@ -62,7 +67,6 @@ const TemplateCard = ({
           </span>
         )}
       </div>
-      
       <div className={`flex flex-wrap mt-4 ${isMobile ? 'gap-2' : 'gap-2'}`}>
         <Button 
           onClick={() => onUse(template.id)}
