@@ -84,43 +84,8 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
   return (
     <div className="py-3 border-b border-border last:border-b-0 dark:border-border">
       <div className="flex items-start">
-        {step.interactionType === 'yes_no' ? (
-          <ToggleGroup
-            type="single"
-            value={yesNoValue}
-            className="mt-1"
-            onValueChange={v => {
-              if (v === 'yes' || v === 'no') handleYesNoResponse(v);
-            }}
-          >
-            <ToggleGroupItem
-              value="yes"
-              aria-label="Yes"
-              data-state={yesNoValue === 'yes' ? "on" : "off"}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md ${
-                yesNoValue === "yes"
-                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
-                  : "bg-muted text-muted-foreground dark:bg-muted/50"
-              }`}
-            >
-              <CheckCircle size={16} />
-              <span>Yes</span>
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              value="no"
-              aria-label="No"
-              data-state={yesNoValue === 'no' ? "on" : "off"}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md ${
-                yesNoValue === "no"
-                  ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
-                  : "bg-muted text-muted-foreground dark:bg-muted/50"
-              }`}
-            >
-              <XCircle size={16} />
-              <span>No</span>
-            </ToggleGroupItem>
-          </ToggleGroup>
-        ) : (
+        {/* Checkbox input on left */}
+        {step.interactionType === 'checkbox' && (
           <input
             type="checkbox"
             checked={!!step.isCompleted}
@@ -128,7 +93,8 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
             className="mt-1 h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
           />
         )}
-        
+
+        {/* Main content to the right */}
         <div className="ml-3 w-full">
           <div className="flex justify-between items-start">
             <label className={`text-base ${step.isCompleted ? 'line-through text-muted-foreground' : ''}`}>
@@ -140,6 +106,8 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
               </span>
             )}
           </div>
+
+          {/* Photo section */}
           {step.requiresPhoto && (
             <div className="mt-3">
               {!photoPreview ? (
@@ -171,6 +139,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
               )}
             </div>
           )}
+
           {/* Comment section */}
           {showCommentInput ? (
             <div className="mt-3">
@@ -216,6 +185,47 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
               )}
             </div>
           )}
+
+          {/* Yes/No buttons below content */}
+          {step.interactionType === 'yes_no' && (
+            <div className="mt-3">
+              <ToggleGroup
+                type="single"
+                value={yesNoValue}
+                className=""
+                onValueChange={v => {
+                  if (v === 'yes' || v === 'no') handleYesNoResponse(v);
+                }}
+              >
+                <ToggleGroupItem
+                  value="yes"
+                  aria-label="Yes"
+                  data-state={yesNoValue === 'yes' ? "on" : "off"}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md ${
+                    yesNoValue === "yes"
+                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
+                      : "bg-muted text-muted-foreground dark:bg-muted/50"
+                  }`}
+                >
+                  <CheckCircle size={16} />
+                  <span>Yes</span>
+                </ToggleGroupItem>
+                <ToggleGroupItem
+                  value="no"
+                  aria-label="No"
+                  data-state={yesNoValue === 'no' ? "on" : "off"}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md ${
+                    yesNoValue === "no"
+                      ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
+                      : "bg-muted text-muted-foreground dark:bg-muted/50"
+                  }`}
+                >
+                  <XCircle size={16} />
+                  <span>No</span>
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -223,3 +233,4 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
 };
 
 export default TaskStep;
+
