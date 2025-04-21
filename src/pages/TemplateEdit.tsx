@@ -24,6 +24,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { useDepartments } from "@/hooks/useDepartments";
+import { StepInteractionType } from "@/types";
 
 const TemplateEdit = () => {
   const { templateId } = useParams<{ templateId: string }>();
@@ -77,9 +78,10 @@ const TemplateEdit = () => {
               title: step.title || "", // Ensure title is never undefined
               requiresPhoto: step.requires_photo || false,
               isOptional: step.is_optional || false,
-              interactionType: step.interaction_type || "checkbox"
+              // Ensure interaction_type is cast to a valid StepInteractionType
+              interactionType: (step.interaction_type || "checkbox") as StepInteractionType
             }))
-          : [{ title: "", requiresPhoto: false, isOptional: false, interactionType: "checkbox" }];
+          : [{ title: "", requiresPhoto: false, isOptional: false, interactionType: "checkbox" as StepInteractionType }];
 
         form.reset({
           title: template.title || "",
