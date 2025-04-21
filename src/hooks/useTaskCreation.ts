@@ -48,6 +48,7 @@ export const useTaskCreation = () => {
           deadline: data.deadline || null,
           photo_url: data.photoUrl,
           video_url: data.videoUrl,
+          department: data.department,
           status: "pending",
         })
         .select()
@@ -99,6 +100,7 @@ export const useTaskCreation = () => {
           title: data.title,
           description: data.description,
           location: data.location,
+          department: data.department,
         })
         .select()
         .single();

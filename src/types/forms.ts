@@ -1,6 +1,6 @@
 
 import { z } from "zod";
-import { StepInteractionType } from "./index";
+import { StepInteractionType, DepartmentType } from "./index";
 
 const stepSchema = z.object({
   title: z.string().min(1, "Step title is required"),
@@ -15,6 +15,7 @@ export const taskSchema = z.object({
   dueTime: z.string().min(1, "Due time is required"),
   assignedTo: z.string().min(1, "Assignee is required"),
   deadline: z.string().optional(),
+  department: z.string().min(1, "Department is required"),
   steps: z.array(stepSchema)
     .min(1, "At least one step is required")
     .refine(steps => {

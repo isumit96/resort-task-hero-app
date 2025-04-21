@@ -50,14 +50,14 @@ const TaskCreate = () => {
       location: "",
       dueTime: "",
       assignedTo: "",
+      department: "",
       description: "",
       steps: [{ 
         title: "", 
         requiresPhoto: false, 
         isOptional: false,
         interactionType: "checkbox"
-      }],
-      department: ""
+      }]
     },
     mode: "onChange"
   });
@@ -273,7 +273,7 @@ const TaskCreate = () => {
                   <FormLabel>Department</FormLabel>
                   <FormControl>
                     <Select
-                      value={field.value || ""}
+                      value={field.value}
                       onValueChange={field.onChange}
                       disabled={isLoadingDepartments}
                     >
