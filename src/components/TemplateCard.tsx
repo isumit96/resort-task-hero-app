@@ -36,7 +36,6 @@ const TemplateCard = ({
   isLoadingEmployees
 }: TemplateCardProps) => {
   const [isQuickAssignOpen, setIsQuickAssignOpen] = useState(false);
-  const isMobile = useIsMobile();
 
   const handleQuickAssign = ({ employeeId, dueDate }: { employeeId: string; dueDate: Date }) => {
     onQuickAssign(template.id, employeeId, dueDate);
@@ -45,53 +44,55 @@ const TemplateCard = ({
 
   return (
     <div className="border rounded-lg p-4 bg-card overflow-hidden flex flex-col justify-between h-full">
-      {template.department && (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent text-accent-foreground whitespace-nowrap mb-4">
-          {template.department}
-        </span>
-      )}
-      <div>
+      {/* Badges at top */}
+      <div className="flex flex-wrap gap-2 mb-2">
+        {template.department && (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent text-accent-foreground whitespace-nowrap">
+            {template.department}
+          </span>
+        )}
+        {template.location && (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+            {template.location}
+          </span>
+        )}
+        {template.step_count !== undefined && (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary/20 text-secondary-foreground">
+            {template.step_count} steps
+          </span>
+        )}
+      </div>
+      {/* Card Content */}
+      <div className="flex-1">
         <div className="flex justify-between items-start gap-2">
           <h3 className="font-medium text-lg">{template.title}</h3>
         </div>
         {template.description && (
           <p className="text-muted-foreground text-sm mt-1 line-clamp-2">{template.description}</p>
         )}
-        <div className="flex flex-wrap gap-2 mt-2">
-          {template.location && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-              {template.location}
-            </span>
-          )}
-          {template.step_count !== undefined && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary/20 text-secondary-foreground">
-              {template.step_count} steps
-            </span>
-          )}
-        </div>
       </div>
 
-      <div className={`flex flex-col gap-2 mt-4 w-full`}>
-        <div className={`flex ${isMobile ? "flex-col gap-2" : "flex-row gap-2"} w-full`}>
-          <Button 
+      <div className="flex flex-col gap-2 mt-4 w-full">
+        {/* CTAs (always side by side) */}
+        <div className="flex flex-row gap-2 w-full">
+          <Button
             onClick={() => onUse(template.id)}
             className="flex-1"
-            size={isMobile ? "sm" : "sm"}
+            size="sm"
           >
             Use Template
           </Button>
-          
-          <Button 
+          <Button
             onClick={() => setIsQuickAssignOpen(true)}
             variant="outline"
-            size={isMobile ? "sm" : "sm"}
+            size="sm"
             className="flex-1"
           >
             Quick Assign
           </Button>
         </div>
-
-        <div className={`flex w-full justify-end gap-2`}>
+        {/* Icon Buttons */}
+        <div className="flex w-full justify-end gap-2">
           <Button
             variant="ghost"
             size="sm"
@@ -102,7 +103,6 @@ const TemplateCard = ({
             <FileEdit className="h-4 w-4" />
             <span className="sr-only">Edit</span>
           </Button>
-          
           <Button
             variant="ghost"
             size="sm"
@@ -113,7 +113,6 @@ const TemplateCard = ({
             <CopyPlus className="h-4 w-4" />
             <span className="sr-only">Duplicate</span>
           </Button>
-          
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
