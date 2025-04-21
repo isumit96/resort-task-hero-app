@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -50,7 +51,7 @@ const TaskCreate = () => {
       location: "",
       dueTime: "",
       assignedTo: "",
-      department: "",
+      department: "Housekeeping", // Set a valid default department value
       description: "",
       steps: [{ 
         title: "", 
