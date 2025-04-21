@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { FileEdit, CopyPlus, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -43,53 +44,55 @@ const TemplateCard = ({
   };
 
   return (
-    <div className="border rounded-lg p-4 bg-card overflow-hidden">
-      <div className="flex justify-between items-start gap-2">
-        <h3 className="font-medium text-lg">{template.title}</h3>
+    <div className="border rounded-lg p-4 bg-card overflow-hidden flex flex-col justify-between h-full">
+      <div>
+        <div className="flex justify-between items-start gap-2">
+          <h3 className="font-medium text-lg">{template.title}</h3>
+        </div>
+        {template.description && (
+          <p className="text-muted-foreground text-sm mt-1 line-clamp-2">{template.description}</p>
+        )}
+        <div className="flex flex-wrap gap-2 mt-2">
+          {template.location && (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+              {template.location}
+            </span>
+          )}
+          {template.step_count !== undefined && (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary/20 text-secondary-foreground">
+              {template.step_count} steps
+            </span>
+          )}
+        </div>
+      </div>
+      <div className={`mt-4 flex flex-wrap justify-between ${isMobile ? 'gap-2' : 'gap-2'} items-center`}>
         {template.department && (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent text-accent-foreground whitespace-nowrap">
             {template.department}
           </span>
         )}
-      </div>
-      {template.description && (
-        <p className="text-muted-foreground text-sm mt-1 line-clamp-2">{template.description}</p>
-      )}
-      <div className="flex flex-wrap gap-2 mt-2">
-        {template.location && (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-            {template.location}
-          </span>
-        )}
-        {template.step_count !== undefined && (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary/20 text-secondary-foreground">
-            {template.step_count} steps
-          </span>
-        )}
-      </div>
-      <div className={`flex flex-wrap mt-4 ${isMobile ? 'gap-2' : 'gap-2'}`}>
-        <Button 
-          onClick={() => onUse(template.id)}
-          className={`${isMobile ? 'flex-1 min-w-0' : 'flex-1'}`}
-          size={isMobile ? "sm" : "sm"}
-        >
-          Use Template
-        </Button>
-        
-        <Button 
-          onClick={() => setIsQuickAssignOpen(true)}
-          variant="outline"
-          size={isMobile ? "sm" : "sm"}
-          className={`${isMobile ? 'flex-1 min-w-0' : ''}`}
-        >
-          Quick Assign
-        </Button>
-        
-        <div className={`flex ${isMobile ? 'w-full justify-end mt-2' : ''}`}>
+        <div className={`flex flex-wrap ${isMobile ? 'w-full justify-end mt-2' : ''}`}>
+          <Button 
+            onClick={() => onUse(template.id)}
+            className={`${isMobile ? 'flex-1 min-w-0' : 'flex-1'}`}
+            size={isMobile ? "sm" : "sm"}
+          >
+            Use Template
+          </Button>
+          
+          <Button 
+            onClick={() => setIsQuickAssignOpen(true)}
+            variant="outline"
+            size={isMobile ? "sm" : "sm"}
+            className={`${isMobile ? 'flex-1 min-w-0' : ''}`}
+          >
+            Quick Assign
+          </Button>
+          
           <Button
             variant="ghost"
             size="sm"
-            className="h-9 w-9 p-0"
+            className="h-9 w-9 p-0 ml-2"
             onClick={() => onEdit(template.id)}
             title="Edit"
           >
@@ -100,7 +103,7 @@ const TemplateCard = ({
           <Button
             variant="ghost"
             size="sm"
-            className="h-9 w-9 p-0"
+            className="h-9 w-9 p-0 ml-2"
             onClick={() => onDuplicate(template.id)}
             title="Duplicate"
           >
@@ -113,7 +116,7 @@ const TemplateCard = ({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-9 w-9 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                className="h-9 w-9 p-0 ml-2 text-destructive hover:text-destructive hover:bg-destructive/10"
                 title="Delete"
               >
                 <Trash2 className="h-4 w-4" />
@@ -154,3 +157,4 @@ const TemplateCard = ({
 };
 
 export default TemplateCard;
+
