@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
@@ -63,8 +62,8 @@ const TaskDetail = () => {
         }))
       };
     },
-    staleTime: 1000, // Short stale time to ensure data is fresh
-    refetchOnWindowFocus: true, // Refetch when window regains focus 
+    staleTime: 1000,
+    refetchOnWindowFocus: true,
   });
 
   useEffect(() => {
@@ -79,19 +78,21 @@ const TaskDetail = () => {
     }
   }, [taskId, isAuthenticated, navigate]);
 
-  // Check if all required steps are completed when task data changes
   useEffect(() => {
     if (!task) return;
-    
+
     const requiredSteps = task.steps.filter(step => !step.isOptional);
-    const requiredStepsCompleted = requiredSteps.every(step => 
-      step.isCompleted !== null && step.isCompleted !== undefined
-    );
+    const requiredStepsCompleted = requiredSteps.every(step => {
+      if (step.interactionType === "yes_no") {
+        return typeof step.isCompleted === "boolean";
+      }
+      return step.isCompleted !== null && step.isCompleted !== undefined && !!step.isCompleted;
+    });
+
     setAllRequiredStepsCompleted(requiredStepsCompleted);
-    
-    // Auto-update task status based on step completion
-    if (task.steps.every(step => step.isCompleted) && task.status !== 'completed') {
-      handleTaskStatusUpdate('inprogress'); // Just update to in progress, let user explicitly complete
+
+    if (task.steps.every(step => (typeof step.isCompleted === "boolean" && step.isCompleted === true)) && task.status !== 'completed') {
+      handleTaskStatusUpdate('inprogress');
     } else if (task.steps.some(step => step.isCompleted) && task.status === 'pending') {
       handleTaskStatusUpdate('inprogress');
     }
@@ -124,7 +125,7 @@ const TaskDetail = () => {
     return <ErrorState error={error} title="Task Details" />;
   }
 
-  const completedSteps = task.steps.filter(s => s.isCompleted).length;
+  const completedSteps = task.steps.filter(s => s.isCompleted === true).length;
   const isCompleted = task.status === 'completed';
 
   return (
@@ -151,9 +152,10 @@ const TaskDetail = () => {
           {!isCompleted && (
             <div className="mt-6 bg-background dark:bg-[#121212]">
               <Button 
-                className="w-full py-6 text-base bg-primary text-primary-foreground dark:bg-primary-foreground dark:text-primary" 
+                className="w-full py-6 text-base bg-primary text-primary-foreground dark:bg-primary-foreground dark:text-primary animate-fade-in hover-scale"
                 disabled={!allRequiredStepsCompleted}
                 onClick={handleMarkComplete}
+                type="button"
               >
                 <CheckCircle2 className="mr-2" />
                 Mark as Complete

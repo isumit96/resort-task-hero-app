@@ -1,12 +1,15 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TaskStep as TaskStepType } from "@/types";
 import { Camera, X, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Toggle } from "@/components/ui/toggle";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
+/**
+ * Renders an individual task step with support for checkbox or yes/no.
+ * For yes/no steps, defaults to unselected initially and requires response.
+ */
 interface TaskStepProps {
   step: TaskStepType;
   onComplete: (stepId: string, isCompleted: boolean) => void;
@@ -15,41 +18,59 @@ interface TaskStepProps {
 }
 
 const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps) => {
+  // Unselected (undefined), explicitly true/false after selection
+  const [yesNoValue, setYesNoValue] = useState<'yes' | 'no' | undefined>(
+    step.interactionType === 'yes_no'
+      ? step.isCompleted === true
+        ? 'yes'
+        : step.isCompleted === false
+        ? 'no'
+        : undefined
+      : undefined
+  );
   const [comment, setComment] = useState(step.comment || "");
   const [showCommentInput, setShowCommentInput] = useState(false);
-  const [photoPreview, setPhotoPreview] = useState<string | undefined>(step.photoUrl);
+  const [photoPreview, setPhotoPreview] = useState<string | undefined>(step.photoUrl || undefined);
 
+  // Update yesNoValue when step prop changes (react-query refresh etc)
+  useEffect(() => {
+    if (step.interactionType === 'yes_no') {
+      if (step.isCompleted === true) setYesNoValue("yes");
+      else if (step.isCompleted === false) setYesNoValue("no");
+      else setYesNoValue(undefined);
+    }
+    // eslint-disable-next-line
+  }, [step.isCompleted]);
+
+  // Checkbox logic
   const handleCheck = (e: React.ChangeEvent<HTMLInputElement>) => {
     onComplete(step.id, e.target.checked);
   };
   
-  const handleYesNoResponse = (isYes: boolean) => {
-    onComplete(step.id, isYes);
+  // Yes/No click handler with unselected as undefined
+  const handleYesNoResponse = (value: 'yes' | 'no') => {
+    setYesNoValue(value);
+    onComplete(step.id, value === 'yes');
   };
 
+  // Comment logic
   const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setComment(e.target.value);
   };
-
   const handleCommentSave = () => {
-    if (onAddComment) {
-      onAddComment(step.id, comment);
-    }
+    if (onAddComment) onAddComment(step.id, comment);
     setShowCommentInput(false);
   };
 
+  // Photo logic
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // In a real app, we'd upload to a server
-      // For demo purposes, we'll use a local URL
       const reader = new FileReader();
       reader.onload = () => {
         const result = reader.result as string;
         setPhotoPreview(result);
-        if (onAddPhoto) {
-          onAddPhoto(step.id, result);
-        }
+        if (onAddPhoto) onAddPhoto(step.id, result);
       };
       reader.readAsDataURL(file);
     }
@@ -57,35 +78,48 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
 
   const handleRemovePhoto = () => {
     setPhotoPreview(undefined);
+    if (onAddPhoto) onAddPhoto(step.id, ""); // Remove from backend too
   };
 
   return (
     <div className="py-3 border-b border-border last:border-b-0 dark:border-border">
       <div className="flex items-start">
         {step.interactionType === 'yes_no' ? (
-          <div className="flex flex-col gap-2">
-            <ToggleGroup type="single" value={step.isCompleted === true ? "yes" : step.isCompleted === false ? "no" : undefined}>
-              <ToggleGroupItem 
-                value="yes"
-                aria-label="Yes"
-                onClick={() => handleYesNoResponse(true)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md ${step.isCompleted === true ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' : ''}`}
-              >
-                <CheckCircle size={16} />
-                <span>Yes</span>
-              </ToggleGroupItem>
-              
-              <ToggleGroupItem 
-                value="no"
-                aria-label="No"
-                onClick={() => handleYesNoResponse(false)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md ${step.isCompleted === false ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100' : ''}`}
-              >
-                <XCircle size={16} />
-                <span>No</span>
-              </ToggleGroupItem>
-            </ToggleGroup>
-          </div>
+          <ToggleGroup
+            type="single"
+            value={yesNoValue}
+            className="mt-1"
+            onValueChange={v => {
+              if (v === 'yes' || v === 'no') handleYesNoResponse(v);
+            }}
+          >
+            <ToggleGroupItem
+              value="yes"
+              aria-label="Yes"
+              data-state={yesNoValue === 'yes' ? "on" : "off"}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md ${
+                yesNoValue === "yes"
+                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
+                  : "bg-muted text-muted-foreground dark:bg-muted/50"
+              }`}
+            >
+              <CheckCircle size={16} />
+              <span>Yes</span>
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="no"
+              aria-label="No"
+              data-state={yesNoValue === 'no' ? "on" : "off"}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md ${
+                yesNoValue === "no"
+                  ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
+                  : "bg-muted text-muted-foreground dark:bg-muted/50"
+              }`}
+            >
+              <XCircle size={16} />
+              <span>No</span>
+            </ToggleGroupItem>
+          </ToggleGroup>
         ) : (
           <input
             type="checkbox"
@@ -106,8 +140,6 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
               </span>
             )}
           </div>
-
-          {/* Photo upload option */}
           {step.requiresPhoto && (
             <div className="mt-3">
               {!photoPreview ? (
@@ -130,6 +162,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
                   />
                   <button 
                     onClick={handleRemovePhoto}
+                    type="button"
                     className="absolute top-2 right-2 bg-black bg-opacity-50 dark:bg-white dark:bg-opacity-20 text-white p-1 rounded-full"
                   >
                     <X size={16} />
@@ -138,7 +171,6 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
               )}
             </div>
           )}
-          
           {/* Comment section */}
           {showCommentInput ? (
             <div className="mt-3">
@@ -153,6 +185,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
                 <Button 
                   variant="outline"
                   size="sm"
+                  type="button"
                   onClick={() => setShowCommentInput(false)}
                 >
                   Cancel
@@ -160,6 +193,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
                 <Button 
                   variant="default"
                   size="sm"
+                  type="button"
                   onClick={handleCommentSave}
                 >
                   Save
@@ -174,6 +208,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
               {!showCommentInput && (
                 <button 
                   className="text-sm text-primary mt-2"
+                  type="button"
                   onClick={() => setShowCommentInput(true)}
                 >
                   {step.comment ? 'Edit comment' : 'Add comment'}
