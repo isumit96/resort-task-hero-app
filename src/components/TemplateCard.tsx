@@ -5,7 +5,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { QuickAssignDialog } from "@/components/QuickAssignDialog";
 import { useState } from "react";
 import { Profile } from "@/types";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TemplateCardProps {
   template: {
@@ -52,12 +51,12 @@ const TemplateCard = ({
           </span>
         )}
         {template.location && (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent text-accent-foreground whitespace-nowrap">
             {template.location}
           </span>
         )}
         {template.step_count !== undefined && (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary/20 text-secondary-foreground">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary/20 text-secondary-foreground whitespace-nowrap">
             {template.step_count} steps
           </span>
         )}
@@ -159,4 +158,3 @@ const TemplateCard = ({
 };
 
 export default TemplateCard;
-
