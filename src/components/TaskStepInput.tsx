@@ -24,7 +24,7 @@ interface TaskStepInputProps {
 }
 
 const TaskStepInput = ({
-  title,
+  title = "", // Default value in case title is undefined
   onTitleChange,
   requiresPhoto,
   onRequiresPhotoChange,

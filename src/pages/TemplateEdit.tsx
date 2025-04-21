@@ -72,21 +72,23 @@ const TemplateEdit = () => {
 
         if (stepsError) throw stepsError;
 
+        const formattedSteps = steps && steps.length > 0
+          ? steps.map((step) => ({
+              title: step.title || "", // Ensure title is never undefined
+              requiresPhoto: step.requires_photo || false,
+              isOptional: step.is_optional || false,
+              interactionType: step.interaction_type || "checkbox"
+            }))
+          : [{ title: "", requiresPhoto: false, isOptional: false, interactionType: "checkbox" }];
+
         form.reset({
-          title: template.title,
+          title: template.title || "",
           location: template.location || "",
           department: template.department || "Housekeeping",
           description: template.description || "",
           dueTime: "", // keep empty
           assignedTo: "", // keep empty
-          steps: steps && steps.length > 0
-            ? steps.map((step) => ({
-                title: step.title,
-                requiresPhoto: step.requires_photo || false,
-                isOptional: step.is_optional || false,
-                interactionType: step.interaction_type || "checkbox"
-              }))
-            : [{ title: "", requiresPhoto: false, isOptional: false, interactionType: "checkbox" }]
+          steps: formattedSteps
         });
       } catch (error) {
         console.error("Error loading template:", error);
@@ -135,7 +137,8 @@ const TemplateEdit = () => {
 
   // Helpers
   function areStepTitlesUnique(steps: { title: string }[]) {
-    const titles = steps.map(s => s.title.trim());
+    // Ensure all titles are strings before checking uniqueness
+    const titles = steps.map(s => (s.title || "").trim());
     return new Set(titles).size === titles.length;
   }
 
@@ -150,7 +153,14 @@ const TemplateEdit = () => {
       });
       return;
     }
-    if (!areStepTitlesUnique(data.steps)) {
+    
+    // Ensure all step titles are defined strings before checking uniqueness
+    const stepsWithDefinedTitles = data.steps.map(step => ({
+      ...step,
+      title: step.title || ""
+    }));
+    
+    if (!areStepTitlesUnique(stepsWithDefinedTitles)) {
       toast({
         title: "Validation Error",
         description: "Step titles must be unique.",
@@ -158,7 +168,8 @@ const TemplateEdit = () => {
       });
       return;
     }
-    if (data.steps.some(step => !step.title.trim())) {
+    
+    if (stepsWithDefinedTitles.some(step => !step.title.trim())) {
       toast({
         title: "Validation Error",
         description: "All step titles must be filled in.",
@@ -196,7 +207,7 @@ const TemplateEdit = () => {
         if (currentExisting) {
           // Update existing step
           await supabase.from("template_steps").update({
-            title: step.title,
+            title: step.title || "", // Ensure title is never undefined
             requires_photo: step.requiresPhoto,
             is_optional: step.isOptional,
             interaction_type: step.interactionType,
@@ -206,7 +217,7 @@ const TemplateEdit = () => {
           // New row
           await supabase.from("template_steps").insert({
             template_id: templateId,
-            title: step.title,
+            title: step.title || "", // Ensure title is never undefined
             requires_photo: step.requiresPhoto,
             is_optional: step.isOptional,
             interaction_type: step.interactionType,
