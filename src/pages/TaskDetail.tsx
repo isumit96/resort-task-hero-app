@@ -156,7 +156,7 @@ const TaskDetail = () => {
                 disabled={!allRequiredStepsCompleted}
                 onClick={handleMarkComplete}
                 type="button"
-                variant="primary"
+                variant="default"
                 size="default"
               >
                 <CheckCircle2 className="mr-2" />
