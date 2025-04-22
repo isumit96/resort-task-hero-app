@@ -5,13 +5,19 @@
     "error": "त्रुटि",
     "tryAgain": "पुनः प्रयास करें",
     "notFound": "नहीं मिला",
-    "back": "वापस"
+    "back": "वापस",
+    "save": "सहेजें",
+    "cancel": "रद्द करें",
+    "delete": "हटाएं",
+    "edit": "संपादित करें",
+    "create": "बनाएं"
   },
   "navigation": {
     "tasks": "कार्य",
     "history": "इतिहास",
     "settings": "सेटिंग्स",
-    "templates": "टेम्पलेट्स"
+    "templates": "टेम्पलेट्स",
+    "dashboard": "डैशबोर्ड"
   },
   "tasks": {
     "createNew": "नया कार्य बनाएं",
@@ -20,12 +26,49 @@
     "upcomingTasks": "आगामी कार्य",
     "allCaughtUp": "सब अप टू डेट है!",
     "noTasks": "आपने सभी कार्य पूरे कर लिए हैं। बाद में देखें या ब्रेक का आनंद लें!",
-    "loadingTasks": "कार्य लोड हो रहे हैं..."
+    "loadingTasks": "कार्य लोड हो रहे हैं...",
+    "taskDetails": "कार्य विवरण",
+    "due": "समय सीमा",
+    "steps": "चरण",
+    "stepsToComplete": "पूरा करने के चरण",
+    "location": "स्थान",
+    "assignedTo": "को सौंपा गया",
+    "department": "विभाग",
+    "status": "स्थिति"
+  },
+  "settings": {
+    "appearance": "दिखावट",
+    "darkMode": "डार्क मोड",
+    "darkModeDescription": "डार्क थीम टॉगल करें",
+    "language": "भाषा",
+    "languageDescription": "अपनी पसंदीदा भाषा चुनें",
+    "profile": "प्रोफ़ाइल",
+    "accountType": "खाता प्रकार",
+    "logout": "लॉग आउट",
+    "logoutConfirm": "क्या आप लॉग आउट करना चाहते हैं?",
+    "email": "ईमेल"
   },
   "templates": {
     "search": "टेम्पलेट्स खोजें...",
     "filterByDepartment": "विभाग द्वारा फ़िल्टर करें",
     "allDepartments": "सभी विभाग",
-    "noTemplates": "कोई टेम्पलेट नहीं मिला"
+    "noTemplates": "कोई टेम्पलेट नहीं मिला",
+    "createFromTemplate": "टेम्पलेट से कार्य बनाएं",
+    "editTemplate": "टेम्पलेट संपादित करें",
+    "useTemplate": "टेम्पलेट का उपयोग करें"
+  },
+  "auth": {
+    "welcome": "वापसी पर स्वागत है",
+    "loginPrompt": "जारी रखने के लिए साइन इन करें",
+    "emailLabel": "ईमेल पता",
+    "passwordLabel": "पासवर्ड",
+    "signIn": "साइन इन करें",
+    "forgotPassword": "पासवर्ड भूल गए?"
+  },
+  "errors": {
+    "loadingTasks": "कार्य लोड करने में त्रुटि",
+    "generic": "कुछ गलत हो गया",
+    "loginFailed": "लॉगिन विफल",
+    "unauthorized": "अनधिकृत पहुंच"
   }
 }

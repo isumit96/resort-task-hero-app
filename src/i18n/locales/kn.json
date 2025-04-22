@@ -5,13 +5,19 @@
     "error": "ದೋಷ",
     "tryAgain": "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ",
     "notFound": "ಕಂಡುಬಂದಿಲ್ಲ",
-    "back": "ಹಿಂದೆ"
+    "back": "ಹಿಂದೆ",
+    "save": "ಉಳಿಸಿ",
+    "cancel": "ರದ್ದುಮಾಡಿ",
+    "delete": "ಅಳಿಸಿ",
+    "edit": "ಸಂಪಾದಿಸಿ",
+    "create": "ರಚಿಸಿ"
   },
   "navigation": {
     "tasks": "ಕಾರ್ಯಗಳು",
     "history": "ಇತಿಹಾಸ",
     "settings": "ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
-    "templates": "ಟೆಂಪ್ಲೇಟ್‌ಗಳು"
+    "templates": "ಟೆಂಪ್ಲೇಟ್‌ಗಳು",
+    "dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್"
   },
   "tasks": {
     "createNew": "ಹೊಸ ಕಾರ್ಯ ರಚಿಸಿ",
@@ -20,12 +26,49 @@
     "upcomingTasks": "ಮುಂಬರುವ ಕಾರ್ಯಗಳು",
     "allCaughtUp": "ಎಲ್ಲಾ ನವೀಕರಿಸಲಾಗಿದೆ!",
     "noTasks": "ನೀವು ಎಲ್ಲಾ ಕಾರ್ಯಗಳನ್ನು ಪೂರ್ಣಗೊಳಿಸಿದ್ದೀರಿ. ನಂತರ ಪರಿಶೀಲಿಸಿ ಅಥವಾ ವಿರಾಮದ ಆನಂದ ಪಡೆಯಿರಿ!",
-    "loadingTasks": "ಕಾರ್ಯಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ..."
+    "loadingTasks": "ಕಾರ್ಯಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...",
+    "taskDetails": "ಕಾರ್ಯ ವಿವರಗಳು",
+    "due": "ಗಡುವು",
+    "steps": "ಹಂತಗಳು",
+    "stepsToComplete": "ಪೂರ್ಣಗೊಳಿಸಬೇಕಾದ ಹಂತಗಳು",
+    "location": "ಸ್ಥಳ",
+    "assignedTo": "ನಿಯೋಜಿಸಲಾಗಿದೆ",
+    "department": "ವಿಭಾಗ",
+    "status": "ಸ್ಥಿತಿ"
+  },
+  "settings": {
+    "appearance": "ನೋಟ",
+    "darkMode": "ಡಾರ್ಕ್ ಮೋಡ್",
+    "darkModeDescription": "ಡಾರ್ಕ್ ಥೀಮ್ ಟಾಗಲ್ ಮಾಡಿ",
+    "language": "ಭಾಷೆ",
+    "languageDescription": "ನಿಮ್ಮ ಆದ್ಯತೆಯ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+    "profile": "ಪ್ರೊಫೈಲ್",
+    "accountType": "ಖಾತೆ ಪ್ರಕಾರ",
+    "logout": "ಲಾಗ್ ಔಟ್",
+    "logoutConfirm": "ನೀವು ಲಾಗ್ ಔಟ್ ಮಾಡಲು ಖಚಿತವಾಗಿ ಬಯಸುವಿರಾ?",
+    "email": "ಇಮೇಲ್"
   },
   "templates": {
     "search": "ಟೆಂಪ್ಲೇಟ್‌ಗಳನ್ನು ಹುಡುಕಿ...",
     "filterByDepartment": "ವಿಭಾಗದ ಮೂಲಕ ಫಿಲ್ಟರ್ ಮಾಡಿ",
     "allDepartments": "ಎಲ್ಲಾ ವಿಭಾಗಗಳು",
-    "noTemplates": "ಯಾವುದೇ ಟೆಂಪ್ಲೇಟ್‌ಗಳು ಕಂಡುಬಂದಿಲ್ಲ"
+    "noTemplates": "ಯಾವುದೇ ಟೆಂಪ್ಲೇಟ್‌ಗಳು ಕಂಡುಬಂದಿಲ್ಲ",
+    "createFromTemplate": "ಟೆಂಪ್ಲೇಟ್‌ನಿಂದ ಕಾರ್ಯವನ್ನು ರಚಿಸಿ",
+    "editTemplate": "ಟೆಂಪ್ಲೇಟ್ ಸಂಪಾದಿಸಿ",
+    "useTemplate": "ಟೆಂಪ್ಲೇಟ್ ಬಳಸಿ"
+  },
+  "auth": {
+    "welcome": "ಮರಳಿ ಸ್ವಾಗತ",
+    "loginPrompt": "ಮುಂದುವರೆಯಲು ಸೈನ್ ಇನ್ ಮಾಡಿ",
+    "emailLabel": "ಇಮೇಲ್ ವಿಳಾಸ",
+    "passwordLabel": "ಪಾಸ್‌ವರ್ಡ್",
+    "signIn": "ಸೈನ್ ಇನ್ ಮಾಡಿ",
+    "forgotPassword": "ಪಾಸ್‌ವರ್ಡ್ ಮರೆತಿರುವಿರಾ?"
+  },
+  "errors": {
+    "loadingTasks": "ಕಾರ್ಯಗಳನ್ನು ಲೋಡ್ ಮಾಡುವಲ್ಲಿ ದೋಷ",
+    "generic": "ಏನೋ ತಪ್ಪಾಗಿದೆ",
+    "loginFailed": "ಲಾಗಿನ್ ವಿಫಲವಾಗಿದೆ",
+    "unauthorized": "ಅನಧಿಕೃತ ಪ್ರವೇಶ"
   }
 }

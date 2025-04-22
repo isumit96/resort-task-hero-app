@@ -1,14 +1,15 @@
-
 import { Settings, ListChecks, History, ClipboardEdit } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
 import { useRole } from "@/hooks/useRole";
 import { cn } from "@/lib/utils";
 import { memo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const BottomNavigation = memo(() => {
   const { isManager } = useRole();
   const [touchedItem, setTouchedItem] = useState<string | null>(null);
+  const { t } = useTranslation();
   
   const handleTouchStart = (item: string) => {
     setTouchedItem(item);
@@ -33,7 +34,7 @@ const BottomNavigation = memo(() => {
         onTouchEnd={handleTouchEnd}
       >
         <ListChecks className="h-5 w-5" />
-        <span>Tasks</span>
+        <span>{t('navigation.tasks')}</span>
       </NavLink>
       
       <NavLink
@@ -49,7 +50,7 @@ const BottomNavigation = memo(() => {
         onTouchEnd={handleTouchEnd}
       >
         <History className="h-5 w-5" />
-        <span>History</span>
+        <span>{t('navigation.history')}</span>
       </NavLink>
       
       {isManager && (
@@ -66,7 +67,7 @@ const BottomNavigation = memo(() => {
           onTouchEnd={handleTouchEnd}
         >
           <ClipboardEdit className="h-5 w-5" />
-          <span>Dashboard</span>
+          <span>{t('navigation.dashboard')}</span>
         </NavLink>
       )}
       
@@ -83,7 +84,7 @@ const BottomNavigation = memo(() => {
         onTouchEnd={handleTouchEnd}
       >
         <Settings className="h-5 w-5" />
-        <span>Settings</span>
+        <span>{t('navigation.settings')}</span>
       </NavLink>
     </div>
   );

@@ -5,13 +5,19 @@
     "error": "Error",
     "tryAgain": "Try Again",
     "notFound": "Not Found",
-    "back": "Back"
+    "back": "Back",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create"
   },
   "navigation": {
     "tasks": "Tasks",
     "history": "History",
     "settings": "Settings",
-    "templates": "Templates"
+    "templates": "Templates",
+    "dashboard": "Dashboard"
   },
   "tasks": {
     "createNew": "Create New Task",
@@ -20,12 +26,49 @@
     "upcomingTasks": "Upcoming Tasks",
     "allCaughtUp": "All caught up!",
     "noTasks": "You've completed all your tasks. Check back later or enjoy your break!",
-    "loadingTasks": "Loading your tasks..."
+    "loadingTasks": "Loading your tasks...",
+    "taskDetails": "Task Details",
+    "due": "Due",
+    "steps": "steps",
+    "stepsToComplete": "Steps to complete",
+    "location": "Location",
+    "assignedTo": "Assigned to",
+    "department": "Department",
+    "status": "Status"
+  },
+  "settings": {
+    "appearance": "Appearance",
+    "darkMode": "Dark Mode",
+    "darkModeDescription": "Toggle dark theme",
+    "language": "Language",
+    "languageDescription": "Select your preferred language",
+    "profile": "Profile",
+    "accountType": "Account Type",
+    "logout": "Log Out",
+    "logoutConfirm": "Are you sure you want to log out?",
+    "email": "Email"
   },
   "templates": {
     "search": "Search templates...",
     "filterByDepartment": "Filter by department",
     "allDepartments": "All Departments",
-    "noTemplates": "No templates found"
+    "noTemplates": "No templates found",
+    "createFromTemplate": "Create Task from Template",
+    "editTemplate": "Edit Template",
+    "useTemplate": "Use Template"
+  },
+  "auth": {
+    "welcome": "Welcome back",
+    "loginPrompt": "Please sign in to continue",
+    "emailLabel": "Email address",
+    "passwordLabel": "Password",
+    "signIn": "Sign In",
+    "forgotPassword": "Forgot password?"
+  },
+  "errors": {
+    "loadingTasks": "Error loading tasks",
+    "generic": "Something went wrong",
+    "loginFailed": "Login failed",
+    "unauthorized": "Unauthorized access"
   }
 }

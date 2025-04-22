@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
@@ -12,6 +11,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { Switch } from "@/components/ui/switch";
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const Settings = () => {
   const { user, logout } = useUser();
@@ -19,16 +20,15 @@ const Settings = () => {
   const { toast } = useToast();
   const [darkMode, setDarkMode] = useState(false);
 
-  // Initialize dark mode from localStorage or system preference
+  const { t } = useTranslation();
+
   useEffect(() => {
-    // Check if user prefers dark mode
     const isDarkMode = localStorage.getItem('darkMode') === 'true' || 
                       (!('darkMode' in localStorage) && 
                        window.matchMedia('(prefers-color-scheme: dark)').matches);
     
     setDarkMode(isDarkMode);
     
-    // Apply dark mode if needed on initial load
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
@@ -65,17 +65,14 @@ const Settings = () => {
     const newDarkMode = !darkMode;
     setDarkMode(newDarkMode);
     
-    // Update DOM
     if (newDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
     
-    // Save preference
     localStorage.setItem('darkMode', newDarkMode.toString());
     
-    // Show toast notification
     toast({
       title: newDarkMode ? "Dark mode enabled" : "Light mode enabled",
       description: newDarkMode 
@@ -137,20 +134,32 @@ const Settings = () => {
                 ) : (
                   <Sun className="h-5 w-5 text-amber-500" />
                 )}
-                Appearance
+                {t('settings.appearance')}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <div className="font-medium">Dark Mode</div>
-                  <div className="text-sm text-muted-foreground">Toggle dark theme</div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <div className="font-medium">{t('settings.darkMode')}</div>
+                    <div className="text-sm text-muted-foreground">{t('settings.darkModeDescription')}</div>
+                  </div>
+                  <Switch
+                    checked={darkMode}
+                    onCheckedChange={toggleDarkMode}
+                    className="data-[state=checked]:bg-primary"
+                  />
                 </div>
-                <Switch
-                  checked={darkMode}
-                  onCheckedChange={toggleDarkMode}
-                  className="data-[state=checked]:bg-primary"
-                />
+                
+                <div className="border-t pt-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <div className="font-medium">{t('settings.language')}</div>
+                      <div className="text-sm text-muted-foreground">{t('settings.languageDescription')}</div>
+                    </div>
+                    <LanguageSwitcher />
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>

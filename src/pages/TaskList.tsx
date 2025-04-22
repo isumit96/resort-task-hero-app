@@ -9,8 +9,7 @@ import { Button } from "@/components/ui/button";
 import TaskCard from "@/components/TaskCard";
 import { useRole } from "@/hooks/useRole";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTranslation } from 'react-i18next';
-import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useTranslation } from "react-i18next";
 
 const TaskList = () => {
   const { t } = useTranslation();
@@ -102,7 +101,7 @@ const TaskList = () => {
             <div className="mb-4 bg-red-100 dark:bg-red-900/30 rounded-full w-16 h-16 flex items-center justify-center mx-auto">
               <AlertTriangle className="h-8 w-8 text-red-600 dark:text-red-400" />
             </div>
-            <h2 className="text-xl font-semibold mb-2">{t('common.error')}</h2>
+            <h2 className="text-xl font-semibold mb-2">{t('errors.loadingTasks')}</h2>
             <p className="text-muted-foreground mb-4">{error.message}</p>
             <Button onClick={() => window.location.reload()}>
               {t('common.tryAgain')}
@@ -135,10 +134,6 @@ const TaskList = () => {
       <Header showBackButton={false} />
       
       <div className="flex-1 overflow-y-auto px-4 py-6 pb-20 max-w-2xl mx-auto w-full">
-        <div className="flex justify-end mb-4">
-          <LanguageSwitcher />
-        </div>
-
         {isManager && (
           <div className="mb-8 space-y-3">
             <Button onClick={handleCreateTask} className="w-full bg-primary hover:bg-primary/90 shadow-lg hover:shadow-primary/25 transition-all duration-300" size="lg">
