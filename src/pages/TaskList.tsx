@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useUser } from "@/context/UserContext";
 import { useNavigate } from "react-router-dom";
@@ -92,7 +93,8 @@ const TaskList = () => {
   };
 
   if (error) {
-    return <div className="min-h-screen flex flex-col bg-background">
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
         <Header showBackButton={false} />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center p-4 max-w-md">
@@ -107,11 +109,13 @@ const TaskList = () => {
           </div>
         </div>
         <BottomNavigation />
-      </div>;
+      </div>
+    );
   }
 
   if (isLoading) {
-    return <div className="min-h-screen flex flex-col bg-background">
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
         <Header showBackButton={false} />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -121,14 +125,17 @@ const TaskList = () => {
         </div>
         <div className="h-16" />
         <BottomNavigation />
-      </div>;
+      </div>
+    );
   }
 
-  return <div className="min-h-screen flex flex-col bg-background">
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
       <Header showBackButton={false} />
       
       <div className="flex-1 overflow-y-auto px-4 py-6 pb-20 max-w-2xl mx-auto w-full">
-        {isManager && <div className="mb-8 space-y-3">
+        {isManager && (
+          <div className="mb-8 space-y-3">
             <Button onClick={handleCreateTask} className="w-full bg-primary hover:bg-primary/90 shadow-lg hover:shadow-primary/25 transition-all duration-300" size="lg">
               <Plus className="h-4 w-4 mr-2" />
               Create New Task
@@ -138,7 +145,8 @@ const TaskList = () => {
               <FileEdit className="h-4 w-4 mr-2" />
               View Templates
             </Button>
-          </div>}
+          </div>
+        )}
 
         {!activeTasks.length ? (
           <div className="flex flex-col items-center justify-center min-h-full flex-1 text-center">
@@ -153,7 +161,8 @@ const TaskList = () => {
         ) : (
           <AnimatePresence>
             <motion.div className="space-y-6" variants={container} initial="hidden" animate="show">
-              {overdueTasks.length > 0 && <div>
+              {overdueTasks.length > 0 && (
+                <div>
                   <div className="flex items-center mb-4">
                     <CalendarClock size={20} className="text-destructive mr-2" />
                     <h2 className="text-lg font-semibold text-foreground">Overdue Tasks</h2>
@@ -162,13 +171,17 @@ const TaskList = () => {
                     </span>
                   </div>
                   <motion.div className="space-y-3" variants={container}>
-                    {overdueTasks.map(task => <motion.div key={task.id} variants={item}>
+                    {overdueTasks.map(task => (
+                      <motion.div key={task.id} variants={item}>
                         <TaskCard task={task} showAssignee={isManager} />
-                      </motion.div>)}
+                      </motion.div>
+                    ))}
                   </motion.div>
-                </div>}
+                </div>
+              )}
               
-              {upcomingTasks.length > 0 && <div>
+              {upcomingTasks.length > 0 && (
+                <div>
                   <div className="flex items-center mb-4">
                     <Clock size={20} className="text-primary mr-2" />
                     <h2 className="text-lg font-semibold text-foreground">Upcoming Tasks</h2>
@@ -177,18 +190,23 @@ const TaskList = () => {
                     </span>
                   </div>
                   <motion.div className="space-y-3" variants={container}>
-                    {upcomingTasks.map(task => <motion.div key={task.id} variants={item}>
+                    {upcomingTasks.map(task => (
+                      <motion.div key={task.id} variants={item}>
                         <TaskCard task={task} showAssignee={isManager} />
-                      </motion.div>)}
+                      </motion.div>
+                    ))}
                   </motion.div>
-                </div>}
+                </div>
+              )}
             </motion.div>
-          </AnimatePresence>}
+          </AnimatePresence>
+        )}
       </div>
       
       <div className="h-16" />
       <BottomNavigation />
-    </div>;
+    </div>
+  );
 };
 
 export default TaskList;
