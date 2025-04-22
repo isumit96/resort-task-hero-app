@@ -115,7 +115,7 @@ const TaskList = () => {
   return <div className="min-h-screen flex flex-col bg-background">
       <Header showBackButton={false} />
       
-      <div className="flex-1 overflow-y-auto px-4 py-6 pb-20 max-w-2xl mx-auto w-full content-center">
+      <div className="flex-1 overflow-y-auto px-4 py-6 pb-20 max-w-2xl mx-auto w-full">
         {isManager && <div className="mb-8 space-y-3">
             <Button onClick={handleCreateTask} className="w-full bg-primary hover:bg-primary/90 shadow-lg hover:shadow-primary/25 transition-all duration-300" size="lg">
               <Plus className="h-4 w-4 mr-2" />
