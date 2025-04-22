@@ -14,6 +14,9 @@ export const useTemplateLoader = (form: UseFormReturn<TaskFormData>) => {
   const loadTemplateData = async (templateId: string) => {
     setIsLoadingTemplate(true);
     try {
+      // Reset any existing steps to ensure old content is cleared completely
+      form.setValue("steps", []);
+      
       const { data: template, error: templateError } = await supabase
         .from("task_templates")
         .select("*")
@@ -46,6 +49,7 @@ export const useTemplateLoader = (form: UseFormReturn<TaskFormData>) => {
         form.clearErrors("department");
       }
 
+      // When applying steps, completely replace the existing array
       if (steps && steps.length > 0) {
         const formattedSteps = steps.map((step) => ({
           title: step.title,
@@ -54,8 +58,8 @@ export const useTemplateLoader = (form: UseFormReturn<TaskFormData>) => {
           interactionType: step.interaction_type || "checkbox"
         }));
         
-        // Clear any existing steps and set the new ones
-        form.setValue("steps", formattedSteps);
+        // Ensure we're setting an entirely new array, not appending to existing
+        form.setValue("steps", formattedSteps, { shouldValidate: true });
       } else {
         // If no steps were found, ensure there's at least one empty step
         form.setValue("steps", [{
@@ -63,8 +67,11 @@ export const useTemplateLoader = (form: UseFormReturn<TaskFormData>) => {
           requiresPhoto: false,
           isOptional: false,
           interactionType: "checkbox"
-        }]);
+        }], { shouldValidate: true });
       }
+
+      // Force update of form
+      form.trigger();
 
       setTemplateApplied(true);
       toast({
