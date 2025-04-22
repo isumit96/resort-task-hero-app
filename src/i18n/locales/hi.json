@@ -1,4 +1,3 @@
-
 {
   "common": {
     "loading": "लोड हो रहा है...",
@@ -53,7 +52,11 @@
     "stepsCompleted": "चरण पूरे हुए",
     "completed": "कार्य पूर्ण",
     "incomplete": "कार्य अपूर्ण",
-    "no": "नहीं"
+    "no": "नहीं",
+    "unassigned": "असाइन नहीं किया गया",
+    "fetchError": "कार्य विवरण प्राप्त करने में विफल",
+    "noTaskId": "कोई कार्य आईडी प्रदान नहीं की गई",
+    "taskNotFound": "कार्य नहीं मिला"
   },
   "settings": {
     "appearance": "दिखावट",
@@ -69,7 +72,7 @@
   },
   "templates": {
     "search": "टेम्पलेट्स खोजें...",
-    "filterByDepartment": "विभाग द्वारा फ़िल्टर करें",
+    "filterByDepartment": "विभ��ग द्वारा फ़िल्टर करें",
     "allDepartments": "सभी विभाग",
     "noTemplates": "कोई टेम्पलेट नहीं मिला",
     "createFromTemplate": "टेम्पलेट से कार्य बनाएं",

@@ -4,18 +4,19 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Task } from "@/types";
 import { useUser } from "@/context/UserContext";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 export const useTasks = (isManager: boolean = false) => {
   const { user } = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   
   return useQuery({
     queryKey: ["tasks", user?.id, isManager],
     queryFn: async (): Promise<Task[]> => {
       if (!user) return [];
       
-      // Create a single query based on role to reduce redundant API calls
       let query = supabase
         .from("tasks")
         .select(`
@@ -25,7 +26,6 @@ export const useTasks = (isManager: boolean = false) => {
         `)
         .order('created_at', { ascending: false });
 
-      // If not a manager, only fetch tasks assigned to the user
       if (!isManager) {
         query = query.eq('assigned_to', user.id as any);
       }
@@ -36,18 +36,16 @@ export const useTasks = (isManager: boolean = false) => {
         console.error("Error fetching tasks:", error);
         toast({
           variant: "destructive",
-          title: "Error loading tasks",
+          title: t("errors.loadingTasks"),
           description: error.message,
         });
         throw error;
       }
 
-      // Handle empty data case more efficiently
       if (!data || !Array.isArray(data)) {
         return [];
       }
 
-      // Transform the data once and reuse to avoid repeated transformations
       return data.map((task: any) => ({
         id: task.id,
         title: task.title,
@@ -55,7 +53,7 @@ export const useTasks = (isManager: boolean = false) => {
         location: task.location || '',
         status: task.status,
         assignedTo: task.assigned_to,
-        assigneeName: task.profiles?.username || 'Unassigned',
+        assigneeName: task.profiles?.username || t('tasks.unassigned'),
         createdAt: task.created_at,
         completedAt: task.completed_at,
         deadline: task.deadline,
@@ -66,13 +64,14 @@ export const useTasks = (isManager: boolean = false) => {
           requiresPhoto: step.requires_photo,
           comment: step.comment,
           photoUrl: step.photo_url,
-          isOptional: step.is_optional || false
+          isOptional: step.is_optional || false,
+          interactionType: step.interaction_type || 'checkbox'
         }))
       }));
     },
     enabled: !!user?.id,
-    staleTime: 1000 * 60, // Cache data for 1 minute before refetching
-    refetchOnWindowFocus: false, // Don't refetch when window regains focus
-    refetchOnMount: true // But do refetch when component mounts
+    staleTime: 1000 * 60,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true
   });
 };

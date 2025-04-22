@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
@@ -32,7 +31,7 @@ const TaskDetail = () => {
     queryFn: async (): Promise<Task | null> => {
       if (!taskId) throw new Error("No task ID provided");
 
-      const { data: task, error } = await supabase
+      const { data: task, error: taskError } = await supabase
         .from("tasks")
         .select(`
           *,
@@ -41,7 +40,7 @@ const TaskDetail = () => {
         .eq('id', taskId)
         .single();
 
-      if (error) throw error;
+      if (taskError) throw taskError;
       if (!task) return null;
 
       return {
@@ -128,9 +127,6 @@ const TaskDetail = () => {
     return <ErrorState error={error} title={t('tasks.taskDetails')} />;
   }
 
-  const completedSteps = task.steps.filter(s => s.isCompleted === true).length;
-  const isCompleted = task.status === 'completed';
-
   return (
     <div className="flex flex-col h-screen bg-background dark:bg-[#121212]">
       <Header showBackButton title={`${task.title} - ${task.location}`} />
@@ -148,16 +144,16 @@ const TaskDetail = () => {
         <div className="px-4 py-4 bg-background dark:bg-[#121212]">
           <TaskStatus
             status={task.status}
-            completedSteps={completedSteps}
+            completedSteps={task.steps.filter(s => s.isCompleted === true).length}
             totalSteps={task.steps.length}
           />
         
-          {!isCompleted && (
+          {task.status !== 'completed' && (
             <div className="mt-6 bg-background dark:bg-[#121212]">
               <Button 
                 className="w-full py-6 text-base shadow-lg hover:shadow-primary/25 transition-all duration-300 animate-fade-in hover:bg-primary/90" 
                 disabled={!allRequiredStepsCompleted}
-                onClick={handleMarkComplete}
+                onClick={() => handleTaskStatusUpdate('completed')}
                 type="button"
                 variant="default"
                 size="default"

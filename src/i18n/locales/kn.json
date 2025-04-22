@@ -1,4 +1,3 @@
-
 {
   "common": {
     "loading": "ಲೋಡ್ ಆಗುತ್ತಿದೆ...",
@@ -20,7 +19,7 @@
     "history": "ಇತಿಹಾಸ",
     "settings": "ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
     "templates": "ಟೆಂಪ್ಲೇಟ್‌ಗಳು",
-    "dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್"
+    "dashboard": "ಡ್ಯಾಶ್ಬೋರ್ಡ್"
   },
   "tasks": {
     "createNew": "ಹೊಸ ಕಾರ್ಯ ರಚಿಸಿ",
@@ -53,14 +52,18 @@
     "stepsCompleted": "ಹಂತಗಳು ಪೂರ್ಣಗೊಂಡಿವೆ",
     "completed": "ಕಾರ್ಯ ಪೂರ್ಣಗೊಂಡಿದೆ",
     "incomplete": "ಕಾರ್ಯ ಅಪೂರ್ಣ",
-    "no": "ಇಲ್ಲ"
+    "no": "ಇಲ್ಲ",
+    "unassigned": "ನಿಯೋಜಿಸಲಾಗಿಲ್ಲ",
+    "fetchError": "ಕಾರ್ಯ ವಿವರಗಳನ್ನು ಪಡೆಯಲು ವಿಫಲವಾಗಿದೆ",
+    "noTaskId": "ಯಾವುದೇ ಕಾರ್ಯ ID ಒದಗಿಸಲಾಗಿಲ್ಲ",
+    "taskNotFound": "ಕಾರ್ಯ ಕಂಡುಬಂದಿಲ್ಲ"
   },
   "settings": {
     "appearance": "ನೋಟ",
     "darkMode": "ಡಾರ್ಕ್ ಮೋಡ್",
     "darkModeDescription": "ಡಾರ್ಕ್ ಥೀಮ್ ಟಾಗಲ್ ಮಾಡಿ",
     "language": "ಭಾಷೆ",
-    "languageDescription": "ನಿಮ್ಮ ಆದ್ಯತೆಯ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+    "languageDescription": "ನಿಮ್ಮ ಆದ���ಯತೆಯ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ",
     "profile": "ಪ್ರೊಫೈಲ್",
     "accountType": "ಖಾತೆ ಪ್ರಕಾರ",
     "logout": "ಲಾಗ್ ಔಟ್",
@@ -72,7 +75,7 @@
     "filterByDepartment": "ವಿಭಾಗದ ಮೂಲಕ ಫಿಲ್ಟರ್ ಮಾಡಿ",
     "allDepartments": "ಎಲ್ಲಾ ವಿಭಾಗಗಳು",
     "noTemplates": "ಯಾವುದೇ ಟೆಂಪ್ಲೇಟ್‌ಗಳು ಕಂಡುಬಂದಿಲ್ಲ",
-    "createFromTemplate": "ಟೆಂಪ್ಲೇಟ್‌ನಿಂದ ಕಾರ್ಯವನ್ನು ರಚಿಸಿ",
+    "createFromTemplate": "ಟೆಂಪ್ಲೇಟ್ನಿಂದ ಕಾರ್ಯವನ್ನು ರಚಿಸಿ",
     "editTemplate": "ಟೆಂಪ್ಲೇಟ್ ಸಂಪಾದಿಸಿ",
     "useTemplate": "ಟೆಂಪ್ಲೇಟ್ ಬಳಸಿ",
     "templateDetails": "ಟೆಂಪ್ಲೇಟ್ ವಿವರಗಳು",
