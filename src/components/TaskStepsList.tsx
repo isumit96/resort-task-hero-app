@@ -1,6 +1,7 @@
 
 import { TaskStep as TaskStepType } from "@/types";
 import TaskStep from "./TaskStep";
+import { useTranslation } from "react-i18next";
 
 interface TaskStepsListProps {
   steps: TaskStepType[];
@@ -10,9 +11,11 @@ interface TaskStepsListProps {
 }
 
 const TaskStepsList = ({ steps, onComplete, onAddComment, onAddPhoto }: TaskStepsListProps) => {
+  const { t } = useTranslation();
+  
   return (
     <div className="bg-background dark:bg-background mt-2 px-4">
-      <h2 className="text-lg font-medium py-3 border-b dark:border-border">Steps to complete</h2>
+      <h2 className="text-lg font-medium py-3 border-b dark:border-border">{t('tasks.stepsToComplete')}</h2>
       
       <div className="divide-y divide-gray-100 dark:divide-gray-800">
         {steps.map(step => (

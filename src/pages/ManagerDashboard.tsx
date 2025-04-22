@@ -13,10 +13,12 @@ import TaskTabs from "@/components/TaskTabs";
 import TaskMetricsChart from "@/components/TaskMetricsChart";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 const ManagerDashboard = () => {
   const { isManager } = useRole();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const { data: tasks, error, isLoading } = useQuery({
     queryKey: ["all-tasks"],
@@ -72,7 +74,7 @@ const ManagerDashboard = () => {
     return null;
   }
 
-  if (error) return <ErrorState error={error} title="Manager Dashboard" />;
+  if (error) return <ErrorState error={error} title={t('navigation.dashboard')} />;
   
   // Use skeleton loading state instead of blank page
   const delayedTasks = tasks?.filter(task => 
@@ -86,7 +88,7 @@ const ManagerDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header title="Manager Dashboard" showBackButton={false} />
+      <Header title={t('navigation.dashboard')} showBackButton={false} />
       
       <main className="container mx-auto px-4 py-6 pb-20 max-w-7xl">
         <motion.div 
@@ -96,8 +98,8 @@ const ManagerDashboard = () => {
         >
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Manager Dashboard</h1>
-              <p className="text-muted-foreground">Overview of all operational metrics and tasks</p>
+              <h1 className="text-2xl font-bold text-foreground">{t('navigation.dashboard')}</h1>
+              <p className="text-muted-foreground">{t('manager.overview')}</p>
             </div>
             
             {!isLoading && (
@@ -106,7 +108,7 @@ const ManagerDashboard = () => {
                 className="w-full sm:w-auto bg-primary hover:bg-primary/90 shadow-lg hover:shadow-primary/25 transition-all duration-300"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Create Task
+                {t('tasks.createNew')}
               </Button>
             )}
           </div>
@@ -137,7 +139,7 @@ const ManagerDashboard = () => {
             >
               <Card className="overflow-hidden border border-border/50">
                 <CardHeader className="bg-card px-6 py-4 border-b border-border/40">
-                  <CardTitle className="text-lg font-medium">Task Management</CardTitle>
+                  <CardTitle className="text-lg font-medium">{t('manager.taskManagement')}</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                   {isLoading ? (
@@ -166,7 +168,7 @@ const ManagerDashboard = () => {
             >
               <Card className="h-full">
                 <CardHeader>
-                  <CardTitle className="text-lg font-medium">Quick Actions</CardTitle>
+                  <CardTitle className="text-lg font-medium">{t('manager.quickActions')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Button 
@@ -175,7 +177,7 @@ const ManagerDashboard = () => {
                     className="w-full justify-between hover:bg-primary hover:text-white transition-colors"
                     disabled={isLoading}
                   >
-                    Create New Task
+                    {t('tasks.createNew')}
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                   <Button 
@@ -184,13 +186,13 @@ const ManagerDashboard = () => {
                     className="w-full justify-between hover:bg-primary hover:text-white transition-colors"
                     disabled={isLoading}
                   >
-                    View Task History
+                    {t('manager.viewTaskHistory')}
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </CardContent>
                 <CardFooter>
                   <p className="text-xs text-muted-foreground">
-                    {!isLoading ? `${tasks?.length || 0} total tasks in the system` : "Loading tasks..."}
+                    {!isLoading ? `${tasks?.length || 0} ${t('manager.totalTasks')}` : t('common.loading')}
                   </p>
                 </CardFooter>
               </Card>

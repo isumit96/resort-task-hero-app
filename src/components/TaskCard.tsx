@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow, isAfter } from "date-fns";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface TaskCardProps {
   task: Task;
@@ -14,6 +15,7 @@ interface TaskCardProps {
 
 const TaskCard = ({ task, showAssignee = true }: TaskCardProps) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   
   const handleClick = () => {
     navigate(`/task/${task.id}`);
@@ -78,7 +80,7 @@ const TaskCard = ({ task, showAssignee = true }: TaskCardProps) => {
                   "text-sm"
                 )}>
                   <Clock size={14} className="mr-1 flex-shrink-0" />
-                  <span>Due {relativeTime}</span>
+                  <span>{t('tasks.due')} {relativeTime}</span>
                 </div>
                 
                 <div className="flex items-center text-muted-foreground text-sm dark:text-gray-300">
@@ -98,7 +100,7 @@ const TaskCard = ({ task, showAssignee = true }: TaskCardProps) => {
                 <TaskStatusBadge status={task.status} />
                 <div className="flex items-center text-muted-foreground text-xs dark:text-gray-400">
                   <Calendar size={12} className="mr-1" />
-                  <span>{completedSteps}/{task.steps.length} steps</span>
+                  <span>{completedSteps}/{task.steps.length} {t('tasks.steps')}</span>
                 </div>
               </div>
             </div>

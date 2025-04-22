@@ -10,7 +10,10 @@
     "cancel": "ರದ್ದುಮಾಡಿ",
     "delete": "ಅಳಿಸಿ",
     "edit": "ಸಂಪಾದಿಸಿ",
-    "create": "ರಚಿಸಿ"
+    "create": "ರಚಿಸಿ",
+    "appName": "ರಿಸಾರ್ಟ್ ಕಾರ್ಯಗಳು",
+    "of": "ರಲ್ಲಿ",
+    "optional": "ಐಚ್ಛಿಕ"
   },
   "navigation": {
     "tasks": "ಕಾರ್ಯಗಳು",
@@ -34,7 +37,23 @@
     "location": "ಸ್ಥಳ",
     "assignedTo": "ನಿಯೋಜಿಸಲಾಗಿದೆ",
     "department": "ವಿಭಾಗ",
-    "status": "ಸ್ಥಿತಿ"
+    "status": "ಸ್ಥಿತಿ",
+    "todaysTasks": "ಇಂದಿನ ಕಾರ್ಯಗಳು",
+    "activeTasks": "ಸಕ್ರಿಯ ಕಾರ್ಯಗಳು",
+    "pendingTasks": "ಬಾಕಿ ಕಾರ್ಯಗಳು",
+    "delayedTasks": "ವಿಳಂಬಿತ ಕಾರ್ಯಗಳು",
+    "completedTasks": "ಪೂರ್ಣಗೊಂಡ ಕಾರ್ಯಗಳು",
+    "completedTasksWillAppear": "ಪೂರ್ಣಗೊಂಡ ಕಾರ್ಯಗಳು ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತವೆ",
+    "noCompletedTasks": "ಇನ್ನೂ ಯಾವುದೇ ಪೂರ್ಣಗೊಂಡ ಕಾರ್ಯಗಳಿಲ್ಲ",
+    "cannotCompleteTask": "ಕಾರ್ಯವನ್ನು ಪೂರ್ಣಗೊಳಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ",
+    "completeRequiredSteps": "ದಯವಿಟ್ಟು ಮೊದಲು ಎಲ್ಲಾ ಅಗತ್ಯ ಹಂತಗಳನ್ನು ಪೂರ್ಣಗೊಳಿಸಿ",
+    "taskCompleted": "ಕಾರ್ಯ ಪೂರ್ಣಗೊಂಡಿದೆ",
+    "allStepsCompleted": "ಎಲ್ಲಾ ಹಂತಗಳು ಪೂರ್ಣಗೊಂಡಿವೆ",
+    "markComplete": "ಪೂರ್ಣಗೊಂಡಿದೆ ಎಂದು ಗುರುತಿಸಿ",
+    "stepsCompleted": "ಹಂತಗಳು ಪೂರ್ಣಗೊಂಡಿವೆ",
+    "completed": "ಕಾರ್ಯ ಪೂರ್ಣಗೊಂಡಿದೆ",
+    "incomplete": "ಕಾರ್ಯ ಅಪೂರ್ಣ",
+    "no": "ಯಾವುದೂ"
   },
   "settings": {
     "appearance": "ನೋಟ",
@@ -55,7 +74,14 @@
     "noTemplates": "ಯಾವುದೇ ಟೆಂಪ್ಲೇಟ್‌ಗಳು ಕಂಡುಬಂದಿಲ್ಲ",
     "createFromTemplate": "ಟೆಂಪ್ಲೇಟ್‌ನಿಂದ ಕಾರ್ಯವನ್ನು ರಚಿಸಿ",
     "editTemplate": "ಟೆಂಪ್ಲೇಟ್ ಸಂಪಾದಿಸಿ",
-    "useTemplate": "ಟೆಂಪ್ಲೇಟ್ ಬಳಸಿ"
+    "useTemplate": "ಟೆಂಪ್ಲೇಟ್ ಬಳಸಿ",
+    "templateDetails": "ಟೆಂಪ್ಲೇಟ್ ವಿವರಗಳು",
+    "notFound": "ಟೆಂಪ್ಲೇಟ್ ಕಂಡುಬಂದಿಲ್ಲ",
+    "noSteps": "ಈ ಟೆಂಪ್ಲೇಟ್‌ಗೆ ಯಾವುದೇ ಹಂತಗಳನ್ನು ವ್ಯಾಖ್ಯಾನಿಸಲಾಗಿಲ್ಲ",
+    "fetchError": "ಟೆಂಪ್ಲೇಟ್ ವಿವರಗಳನ್ನು ಪಡೆಯಲು ವಿಫಲವಾಗಿದೆ",
+    "requiresPhoto": "ಫೋಟೋ ಅಗತ್ಯವಿದೆ",
+    "checkbox": "ಚೆಕ್‌ಬಾಕ್ಸ್",
+    "yesNo": "ಹೌದು/ಇಲ್ಲ"
   },
   "auth": {
     "welcome": "ಮರಳಿ ಸ್ವಾಗತ",
@@ -69,6 +95,14 @@
     "loadingTasks": "ಕಾರ್ಯಗಳನ್ನು ಲೋಡ್ ಮಾಡುವಲ್ಲಿ ದೋಷ",
     "generic": "ಏನೋ ತಪ್ಪಾಗಿದೆ",
     "loginFailed": "ಲಾಗಿನ್ ವಿಫಲವಾಗಿದೆ",
-    "unauthorized": "ಅನಧಿಕೃತ ಪ್ರವೇಶ"
+    "unauthorized": "ಅನಧಿಕೃತ ಪ್ರವೇಶ",
+    "loadingData": "ಡೇಟಾ ಲೋಡ್ ಮಾಡುವಲ್ಲಿ ದೋಷ"
+  },
+  "manager": {
+    "overview": "ಎಲ್ಲಾ ಕಾರ್ಯಾಚರಣೆ ಮೆಟ್ರಿಕ್ಸ್ ಮತ್ತು ಕಾರ್ಯಗಳ ಅವಲೋಕನ",
+    "taskManagement": "ಕಾರ್ಯ ನಿರ್ವಹಣೆ",
+    "quickActions": "ತ್ವರಿತ ಕ್ರಿಯೆಗಳು",
+    "viewTaskHistory": "ಕಾರ್ಯ ಇತಿಹಾಸವನ್ನು ವೀಕ್ಷಿಸಿ",
+    "totalTasks": "ಸಿಸ್ಟಮ್‌ನಲ್ಲಿ ಒಟ್ಟು ಕಾರ್ಯಗಳು"
   }
 }

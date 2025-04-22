@@ -9,10 +9,12 @@ import { format, parseISO, formatDistanceToNow } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import TaskCard from "@/components/TaskCard";
+import { useTranslation } from "react-i18next";
 
 const TaskHistory = () => {
   const { isAuthenticated } = useUser();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   
   useEffect(() => {
     if (!isAuthenticated) {
@@ -93,9 +95,9 @@ const TaskHistory = () => {
   if (isLoading) {
     return (
       <div className="h-screen flex flex-col bg-background">
-        <Header title="Task History" showBackButton={false} />
+        <Header title={t('navigation.history')} showBackButton={false} />
         <div className="flex-1 flex items-center justify-center text-foreground">
-          <p>Loading history...</p>
+          <p>{t('common.loading')}</p>
         </div>
         <div className="h-16"></div>
         <BottomNavigation />
@@ -105,13 +107,13 @@ const TaskHistory = () => {
   
   return (
     <div className="h-screen flex flex-col bg-background">
-      <Header title="Task History" showBackButton={false} />
+      <Header title={t('navigation.history')} showBackButton={false} />
       
       <div className="flex-1 overflow-y-auto px-4 py-4 pb-20">
         {!tasks?.length ? (
           <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-            <p className="text-lg font-medium">No completed tasks yet</p>
-            <p className="mt-2">Completed tasks will appear here</p>
+            <p className="text-lg font-medium">{t('tasks.noCompletedTasks')}</p>
+            <p className="mt-2">{t('tasks.completedTasksWillAppear')}</p>
           </div>
         ) : (
           <div className="space-y-6">

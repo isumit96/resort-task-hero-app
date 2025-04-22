@@ -1,8 +1,10 @@
+
 import { ArrowLeft, Settings, Menu } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface HeaderProps {
   title?: string;
@@ -11,6 +13,7 @@ interface HeaderProps {
 }
 
 const Header = ({ title, showBackButton = false, showSettings = true }: HeaderProps) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useUser();
@@ -29,18 +32,18 @@ const Header = ({ title, showBackButton = false, showSettings = true }: HeaderPr
     
     switch (location.pathname) {
       case "/":
-        return "Login";
+        return t('auth.welcome');
       case "/tasks":
-        return "Today's Tasks";
+        return t('tasks.todaysTasks');
       case "/history":
-        return "Task History";
+        return t('navigation.history');
       case "/settings":
-        return "Settings";
+        return t('navigation.settings');
       default:
         if (location.pathname.includes("/task/")) {
-          return "Task Details";
+          return t('tasks.taskDetails');
         }
-        return "Resort Tasks";
+        return t('common.appName');
     }
   };
 
@@ -55,7 +58,7 @@ const Header = ({ title, showBackButton = false, showSettings = true }: HeaderPr
             <button 
               onClick={handleBack}
               className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              aria-label="Go back"
+              aria-label={t('common.back')}
             >
               <ArrowLeft className="h-5 w-5 text-gray-700 dark:text-gray-300" />
             </button>

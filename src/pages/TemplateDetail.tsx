@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +7,7 @@ import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Loader, Clock, ListChecks, MapPin } from "lucide-react";
 import { StepInteractionType, TaskStep } from "@/types";
+import { useTranslation } from "react-i18next";
 
 interface TemplateStep {
   id: string;
@@ -31,6 +33,7 @@ const TemplateDetail = () => {
   const { toast } = useToast();
   const [template, setTemplate] = useState<Template | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchTemplateDetails = async () => {
@@ -62,8 +65,8 @@ const TemplateDetail = () => {
       } catch (error) {
         console.error("Error fetching template details:", error);
         toast({
-          title: "Error",
-          description: "Failed to fetch template details.",
+          title: t('common.error'),
+          description: t('templates.fetchError'),
           variant: "destructive",
         });
       } finally {
@@ -72,7 +75,7 @@ const TemplateDetail = () => {
     };
 
     fetchTemplateDetails();
-  }, [templateId, toast]);
+  }, [templateId, toast, t]);
 
   const handleEdit = () => {
     navigate(`/templates/edit/${templateId}`);
@@ -85,7 +88,7 @@ const TemplateDetail = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
-        <Header title="Template Details" showBackButton={true} />
+        <Header title={t('templates.templateDetails')} showBackButton={true} />
         <div className="flex-1 flex items-center justify-center">
           <Loader className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -96,9 +99,9 @@ const TemplateDetail = () => {
   if (!template) {
     return (
       <div className="min-h-screen flex flex-col">
-        <Header title="Template Details" showBackButton={true} />
+        <Header title={t('templates.templateDetails')} showBackButton={true} />
         <div className="flex-1 flex items-center justify-center">
-          <p>Template not found.</p>
+          <p>{t('templates.notFound')}</p>
         </div>
       </div>
     );
@@ -106,7 +109,7 @@ const TemplateDetail = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Header title="Template Details" showBackButton={true} />
+      <Header title={t('templates.templateDetails')} showBackButton={true} />
       
       <div className="flex-1 overflow-y-auto px-4 py-6 max-w-2xl mx-auto w-full">
         <div className="space-y-6">
@@ -125,15 +128,15 @@ const TemplateDetail = () => {
               )}
               <div className="flex items-center gap-1 text-sm text-muted-foreground">
                 <ListChecks className="h-4 w-4" />
-                <span>{template.steps.length} steps</span>
+                <span>{template.steps.length} {t('tasks.steps')}</span>
               </div>
             </div>
           </div>
 
           <div className="space-y-3">
-            <h2 className="text-lg font-medium">Steps</h2>
+            <h2 className="text-lg font-medium">{t('tasks.steps')}</h2>
             {template.steps.length === 0 ? (
-              <p className="text-muted-foreground">No steps defined for this template.</p>
+              <p className="text-muted-foreground">{t('templates.noSteps')}</p>
             ) : (
               <div className="space-y-3">
                 {template.steps.map((step, index) => (
@@ -148,16 +151,16 @@ const TemplateDetail = () => {
                       <div className="flex-1">
                         <p className={`${step.is_optional ? "text-muted-foreground" : ""}`}>
                           {step.title}
-                          {step.is_optional && <span className="ml-2 text-xs">(Optional)</span>}
+                          {step.is_optional && <span className="ml-2 text-xs">({t('common.optional')})</span>}
                         </p>
                         <div className="flex flex-wrap gap-2 mt-1">
                           {step.requires_photo && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
-                              Requires Photo
+                              {t('templates.requiresPhoto')}
                             </span>
                           )}
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-50 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                            {step.interaction_type === "checkbox" ? "Checkbox" : "Yes/No"}
+                            {step.interaction_type === "checkbox" ? t('templates.checkbox') : t('templates.yesNo')}
                           </span>
                         </div>
                       </div>
@@ -170,10 +173,10 @@ const TemplateDetail = () => {
 
           <div className="flex gap-3 pt-4">
             <Button onClick={handleCreateTask} className="flex-1">
-              Create Task from Template
+              {t('templates.createFromTemplate')}
             </Button>
             <Button variant="outline" onClick={handleEdit}>
-              Edit Template
+              {t('templates.editTemplate')}
             </Button>
           </div>
         </div>

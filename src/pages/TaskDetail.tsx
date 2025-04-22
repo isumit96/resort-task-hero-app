@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
@@ -15,6 +16,7 @@ import type { Task } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const TaskDetail = () => {
   const { taskId } = useParams<{ taskId: string }>();
@@ -23,6 +25,7 @@ const TaskDetail = () => {
   const { toast } = useToast();
   const { handleStepComplete, handleAddComment, handleAddPhoto, handleTaskStatusUpdate } = useTaskOperations(taskId);
   const [allRequiredStepsCompleted, setAllRequiredStepsCompleted] = useState(false);
+  const { t } = useTranslation();
 
   const { data: task, error, isLoading } = useQuery({
     queryKey: ["task", taskId],
@@ -103,8 +106,8 @@ const TaskDetail = () => {
     
     if (!allRequiredStepsCompleted) {
       toast({
-        title: "Cannot complete task",
-        description: "Please complete all required steps first",
+        title: t('tasks.cannotCompleteTask'),
+        description: t('tasks.completeRequiredSteps'),
         variant: "destructive"
       });
       return;
@@ -112,17 +115,17 @@ const TaskDetail = () => {
     
     handleTaskStatusUpdate('completed');
     toast({
-      title: "Task completed",
-      description: "All steps have been completed",
+      title: t('tasks.taskCompleted'),
+      description: t('tasks.allStepsCompleted'),
     });
   };
 
   if (isLoading || !task) {
-    return <LoadingState title="Task Details" />;
+    return <LoadingState title={t('tasks.taskDetails')} />;
   }
 
   if (error) {
-    return <ErrorState error={error} title="Task Details" />;
+    return <ErrorState error={error} title={t('tasks.taskDetails')} />;
   }
 
   const completedSteps = task.steps.filter(s => s.isCompleted === true).length;
@@ -160,11 +163,11 @@ const TaskDetail = () => {
                 size="default"
               >
                 <CheckCircle2 className="mr-2" />
-                Mark as Complete
+                {t('tasks.markComplete')}
               </Button>
               {!allRequiredStepsCompleted && (
                 <p className="text-sm text-muted-foreground dark:text-muted-foreground/80 mt-2 text-center">
-                  Complete all required steps before marking the task as complete
+                  {t('tasks.completeRequiredSteps')}
                 </p>
               )}
             </div>

@@ -2,6 +2,7 @@
 import { cn } from "@/lib/utils";
 import { Task } from "@/types";
 import TaskCard from "./TaskCard";
+import { useTranslation } from "react-i18next";
 
 interface TaskSectionProps {
   title: string;
@@ -16,6 +17,8 @@ const TaskSection = ({
   badgeColor = "gray",
   showAssignee = true 
 }: TaskSectionProps) => {
+  const { t } = useTranslation();
+  
   const getBadgeClasses = () => {
     switch (badgeColor) {
       case "yellow":
@@ -46,7 +49,7 @@ const TaskSection = ({
           <TaskCard key={task.id} task={task} showAssignee={showAssignee} />
         ))}
         {tasks.length === 0 && (
-          <p className="text-gray-500 text-center py-4">No {title.toLowerCase()}</p>
+          <p className="text-gray-500 text-center py-4">{t('tasks.no')} {title.toLowerCase()}</p>
         )}
       </div>
     </div>

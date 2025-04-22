@@ -10,7 +10,10 @@
     "cancel": "रद्द करें",
     "delete": "हटाएं",
     "edit": "संपादित करें",
-    "create": "बनाएं"
+    "create": "बनाएं",
+    "appName": "रिसॉर्ट कार्य",
+    "of": "में से",
+    "optional": "वैकल्पिक"
   },
   "navigation": {
     "tasks": "कार्य",
@@ -34,7 +37,23 @@
     "location": "स्थान",
     "assignedTo": "को सौंपा गया",
     "department": "विभाग",
-    "status": "स्थिति"
+    "status": "स्थिति",
+    "todaysTasks": "आज के कार्य",
+    "activeTasks": "सक्रिय कार्य",
+    "pendingTasks": "लंबित कार्य",
+    "delayedTasks": "विलंबित कार्य",
+    "completedTasks": "पूर्ण कार्य",
+    "completedTasksWillAppear": "पूर्ण किए गए कार्य यहां दिखाई देंगे",
+    "noCompletedTasks": "अभी तक कोई पूर्ण कार्य नहीं",
+    "cannotCompleteTask": "कार्य पूरा नहीं कर सकते",
+    "completeRequiredSteps": "कृपया पहले सभी आवश्यक चरण पूरे करें",
+    "taskCompleted": "कार्य पूरा हुआ",
+    "allStepsCompleted": "सभी चरण पूरे हो गए हैं",
+    "markComplete": "पूर्ण के रूप में चिह्नित करें",
+    "stepsCompleted": "चरण पूरे हुए",
+    "completed": "कार्य पूर्ण",
+    "incomplete": "कार्य अपूर्ण",
+    "no": "कोई नहीं"
   },
   "settings": {
     "appearance": "दिखावट",
@@ -55,7 +74,14 @@
     "noTemplates": "कोई टेम्पलेट नहीं मिला",
     "createFromTemplate": "टेम्पलेट से कार्य बनाएं",
     "editTemplate": "टेम्पलेट संपादित करें",
-    "useTemplate": "टेम्पलेट का उपयोग करें"
+    "useTemplate": "टेम्पलेट का उपयोग करें",
+    "templateDetails": "टेम्पलेट विवरण",
+    "notFound": "टेम्पलेट नहीं मिला",
+    "noSteps": "इस टेम्पलेट के लिए कोई चरण परिभाषित नहीं है",
+    "fetchError": "टेम्पलेट विवरण प्राप्त करने में विफल",
+    "requiresPhoto": "फोटो आवश्यक है",
+    "checkbox": "चेकबॉक्स",
+    "yesNo": "हां/नहीं"
   },
   "auth": {
     "welcome": "वापसी पर स्वागत है",
@@ -69,6 +95,14 @@
     "loadingTasks": "कार्य लोड करने में त्रुटि",
     "generic": "कुछ गलत हो गया",
     "loginFailed": "लॉगिन विफल",
-    "unauthorized": "अनधिकृत पहुंच"
+    "unauthorized": "अनधिकृत पहुंच",
+    "loadingData": "डेटा लोड करने में त्रुटि"
+  },
+  "manager": {
+    "overview": "सभी परिचालन मेट्रिक्स और कार्यों का अवलोकन",
+    "taskManagement": "कार्य प्रबंधन",
+    "quickActions": "त्वरित कार्य",
+    "viewTaskHistory": "कार्य इतिहास देखें",
+    "totalTasks": "कुल कार्य सिस्टम में"
   }
 }

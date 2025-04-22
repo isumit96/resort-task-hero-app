@@ -10,7 +10,10 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
-    "create": "Create"
+    "create": "Create",
+    "appName": "Resort Tasks",
+    "of": "of",
+    "optional": "Optional"
   },
   "navigation": {
     "tasks": "Tasks",
@@ -34,7 +37,23 @@
     "location": "Location",
     "assignedTo": "Assigned to",
     "department": "Department",
-    "status": "Status"
+    "status": "Status",
+    "todaysTasks": "Today's Tasks",
+    "activeTasks": "Active Tasks",
+    "pendingTasks": "Pending Tasks",
+    "delayedTasks": "Delayed Tasks",
+    "completedTasks": "Completed Tasks",
+    "completedTasksWillAppear": "Completed tasks will appear here",
+    "noCompletedTasks": "No completed tasks yet",
+    "cannotCompleteTask": "Cannot complete task",
+    "completeRequiredSteps": "Please complete all required steps first",
+    "taskCompleted": "Task completed",
+    "allStepsCompleted": "All steps have been completed",
+    "markComplete": "Mark as Complete",
+    "stepsCompleted": "steps completed",
+    "completed": "Task Completed",
+    "incomplete": "Task Incomplete",
+    "no": "No"
   },
   "settings": {
     "appearance": "Appearance",
@@ -55,7 +74,14 @@
     "noTemplates": "No templates found",
     "createFromTemplate": "Create Task from Template",
     "editTemplate": "Edit Template",
-    "useTemplate": "Use Template"
+    "useTemplate": "Use Template",
+    "templateDetails": "Template Details",
+    "notFound": "Template not found",
+    "noSteps": "No steps defined for this template",
+    "fetchError": "Failed to fetch template details",
+    "requiresPhoto": "Requires Photo",
+    "checkbox": "Checkbox",
+    "yesNo": "Yes/No"
   },
   "auth": {
     "welcome": "Welcome back",
@@ -69,6 +95,14 @@
     "loadingTasks": "Error loading tasks",
     "generic": "Something went wrong",
     "loginFailed": "Login failed",
-    "unauthorized": "Unauthorized access"
+    "unauthorized": "Unauthorized access",
+    "loadingData": "Error loading data"
+  },
+  "manager": {
+    "overview": "Overview of all operational metrics and tasks",
+    "taskManagement": "Task Management",
+    "quickActions": "Quick Actions",
+    "viewTaskHistory": "View Task History",
+    "totalTasks": "total tasks in the system"
   }
 }
