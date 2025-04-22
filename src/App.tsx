@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -67,18 +68,20 @@ const AppRoutes = () => {
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <UserProvider>
-      <BrowserRouter>
-        <div className="bg-background min-h-screen text-foreground">
-          <Toaster />
-          <Sonner />
-          <AppRoutes />
-        </div>
-      </BrowserRouter>
-    </UserProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  return (
+    <BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <UserProvider>
+          <div className="bg-background min-h-screen text-foreground">
+            <Toaster />
+            <Sonner />
+            <AppRoutes />
+          </div>
+        </UserProvider>
+      </QueryClientProvider>
+    </BrowserRouter>
+  );
+};
 
 export default App;
