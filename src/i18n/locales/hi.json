@@ -1,0 +1,31 @@
+
+{
+  "common": {
+    "loading": "लोड हो रहा है...",
+    "error": "त्रुटि",
+    "tryAgain": "पुनः प्रयास करें",
+    "notFound": "नहीं मिला",
+    "back": "वापस"
+  },
+  "navigation": {
+    "tasks": "कार्य",
+    "history": "इतिहास",
+    "settings": "सेटिंग्स",
+    "templates": "टेम्पलेट्स"
+  },
+  "tasks": {
+    "createNew": "नया कार्य बनाएं",
+    "viewTemplates": "टेम्पलेट्स देखें",
+    "overdueTasks": "विलंबित कार्य",
+    "upcomingTasks": "आगामी कार्य",
+    "allCaughtUp": "सब अप टू डेट है!",
+    "noTasks": "आपने सभी कार्य पूरे कर लिए हैं। बाद में देखें या ब्रेक का आनंद लें!",
+    "loadingTasks": "कार्य लोड हो रहे हैं..."
+  },
+  "templates": {
+    "search": "टेम्पलेट्स खोजें...",
+    "filterByDepartment": "विभाग द्वारा फ़िल्टर करें",
+    "allDepartments": "सभी विभाग",
+    "noTemplates": "कोई टेम्पलेट नहीं मिला"
+  }
+}

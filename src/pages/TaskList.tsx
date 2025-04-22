@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useUser } from "@/context/UserContext";
 import { useNavigate } from "react-router-dom";
@@ -10,9 +9,11 @@ import { Button } from "@/components/ui/button";
 import TaskCard from "@/components/TaskCard";
 import { useRole } from "@/hooks/useRole";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const TaskList = () => {
+  const { t } = useTranslation();
   const {
     user,
     isAuthenticated
@@ -101,10 +102,10 @@ const TaskList = () => {
             <div className="mb-4 bg-red-100 dark:bg-red-900/30 rounded-full w-16 h-16 flex items-center justify-center mx-auto">
               <AlertTriangle className="h-8 w-8 text-red-600 dark:text-red-400" />
             </div>
-            <h2 className="text-xl font-semibold mb-2">Error Loading Tasks</h2>
+            <h2 className="text-xl font-semibold mb-2">{t('common.error')}</h2>
             <p className="text-muted-foreground mb-4">{error.message}</p>
             <Button onClick={() => window.location.reload()}>
-              Try Again
+              {t('common.tryAgain')}
             </Button>
           </div>
         </div>
@@ -120,7 +121,7 @@ const TaskList = () => {
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <Loader className="mx-auto h-10 w-10 animate-spin text-primary" />
-            <p className="mt-4 text-muted-foreground">Loading your tasks...</p>
+            <p className="mt-4 text-muted-foreground">{t('tasks.loadingTasks')}</p>
           </div>
         </div>
         <div className="h-16" />
@@ -134,16 +135,20 @@ const TaskList = () => {
       <Header showBackButton={false} />
       
       <div className="flex-1 overflow-y-auto px-4 py-6 pb-20 max-w-2xl mx-auto w-full">
+        <div className="flex justify-end mb-4">
+          <LanguageSwitcher />
+        </div>
+
         {isManager && (
           <div className="mb-8 space-y-3">
             <Button onClick={handleCreateTask} className="w-full bg-primary hover:bg-primary/90 shadow-lg hover:shadow-primary/25 transition-all duration-300" size="lg">
               <Plus className="h-4 w-4 mr-2" />
-              Create New Task
+              {t('tasks.createNew')}
             </Button>
             
             <Button onClick={handleViewTemplates} className="w-full" variant="outline" size="lg">
               <FileEdit className="h-4 w-4 mr-2" />
-              View Templates
+              {t('tasks.viewTemplates')}
             </Button>
           </div>
         )}
@@ -153,9 +158,9 @@ const TaskList = () => {
             <div className="bg-primary/10 p-5 rounded-full mb-4">
               <CheckCircle2 size={40} className="text-primary" />
             </div>
-            <p className="text-xl font-medium text-foreground">All caught up!</p>
+            <p className="text-xl font-medium text-foreground">{t('tasks.allCaughtUp')}</p>
             <p className="mt-2 text-muted-foreground max-w-xs">
-              You've completed all your tasks. Check back later or enjoy your break!
+              {t('tasks.noTasks')}
             </p>
           </div>
         ) : (
@@ -165,7 +170,7 @@ const TaskList = () => {
                 <div>
                   <div className="flex items-center mb-4">
                     <CalendarClock size={20} className="text-destructive mr-2" />
-                    <h2 className="text-lg font-semibold text-foreground">Overdue Tasks</h2>
+                    <h2 className="text-lg font-semibold text-foreground">{t('tasks.overdueTasks')}</h2>
                     <span className="ml-2 px-2 py-0.5 bg-destructive/10 text-destructive text-xs font-medium rounded-full">
                       {overdueTasks.length}
                     </span>
@@ -184,7 +189,7 @@ const TaskList = () => {
                 <div>
                   <div className="flex items-center mb-4">
                     <Clock size={20} className="text-primary mr-2" />
-                    <h2 className="text-lg font-semibold text-foreground">Upcoming Tasks</h2>
+                    <h2 className="text-lg font-semibold text-foreground">{t('tasks.upcomingTasks')}</h2>
                     <span className="ml-2 px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded-full">
                       {upcomingTasks.length}
                     </span>

@@ -1,0 +1,31 @@
+
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "tryAgain": "Try Again",
+    "notFound": "Not Found",
+    "back": "Back"
+  },
+  "navigation": {
+    "tasks": "Tasks",
+    "history": "History",
+    "settings": "Settings",
+    "templates": "Templates"
+  },
+  "tasks": {
+    "createNew": "Create New Task",
+    "viewTemplates": "View Templates",
+    "overdueTasks": "Overdue Tasks",
+    "upcomingTasks": "Upcoming Tasks",
+    "allCaughtUp": "All caught up!",
+    "noTasks": "You've completed all your tasks. Check back later or enjoy your break!",
+    "loadingTasks": "Loading your tasks..."
+  },
+  "templates": {
+    "search": "Search templates...",
+    "filterByDepartment": "Filter by department",
+    "allDepartments": "All Departments",
+    "noTemplates": "No templates found"
+  }
+}
