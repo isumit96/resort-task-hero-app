@@ -128,7 +128,7 @@ const TaskList = () => {
             </Button>
           </div>}
 
-        {!activeTasks.length ? <div className="flex flex-col items-center justify-center h-64 text-center align-middle">
+        {!activeTasks.length ? <div className="flex flex-col items-center justify-center h-full text-center ">
             <div className="bg-primary/10 p-5 rounded-full mb-4">
               <CheckCircle2 size={40} className="text-primary" />
             </div>
