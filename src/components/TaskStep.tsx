@@ -5,6 +5,7 @@ import { Camera, X, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useTranslation } from "react-i18next";
 
 /**
  * Renders an individual task step with support for checkbox or yes/no.
@@ -18,6 +19,8 @@ interface TaskStepProps {
 }
 
 const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps) => {
+  const { t } = useTranslation();
+  
   // Unselected (undefined), explicitly true/false after selection
   const [yesNoValue, setYesNoValue] = useState<'yes' | 'no' | undefined>(
     step.interactionType === 'yes_no'
@@ -102,7 +105,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
             </label>
             {step.isOptional && (
               <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full dark:bg-muted/50">
-                Optional
+                {t('common.optional')}
               </span>
             )}
           </div>
@@ -113,7 +116,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
               {!photoPreview ? (
                 <label className="flex items-center gap-2 py-2 px-3 rounded-md bg-muted text-muted-foreground cursor-pointer hover:bg-muted/80 transition-colors text-sm dark:bg-muted/50 dark:hover:bg-muted/30">
                   <Camera size={18} />
-                  <span>Add Photo</span>
+                  <span>{t('templates.requiresPhoto')}</span>
                   <input 
                     type="file"
                     accept="image/*"
@@ -145,7 +148,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
             <div className="mt-3">
               <Textarea
                 className="w-full border border-input bg-background rounded-md p-2 text-sm"
-                placeholder="Add a comment..."
+                placeholder={t('templates.addComment')}
                 rows={2}
                 value={comment}
                 onChange={handleCommentChange}
@@ -157,7 +160,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
                   type="button"
                   onClick={() => setShowCommentInput(false)}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button 
                   variant="default"
@@ -165,7 +168,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
                   type="button"
                   onClick={handleCommentSave}
                 >
-                  Save
+                  {t('common.save')}
                 </Button>
               </div>
             </div>
@@ -180,7 +183,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
                   type="button"
                   onClick={() => setShowCommentInput(true)}
                 >
-                  {step.comment ? 'Edit comment' : 'Add comment'}
+                  {step.comment ? t('templates.editComment') : t('templates.addComment')}
                 </button>
               )}
             </div>
@@ -208,7 +211,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
                   }`}
                 >
                   <CheckCircle size={16} />
-                  <span>Yes</span>
+                  <span>{t('templates.yes')}</span>
                 </ToggleGroupItem>
                 <ToggleGroupItem
                   value="no"
@@ -221,7 +224,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
                   }`}
                 >
                   <XCircle size={16} />
-                  <span>No</span>
+                  <span>{t('templates.no')}</span>
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>
@@ -233,4 +236,3 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
 };
 
 export default TaskStep;
-

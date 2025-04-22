@@ -79,9 +79,13 @@
     "notFound": "Template not found",
     "noSteps": "No steps defined for this template",
     "fetchError": "Failed to fetch template details",
-    "requiresPhoto": "Requires Photo",
+    "requiresPhoto": "Add Photo",
     "checkbox": "Checkbox",
-    "yesNo": "Yes/No"
+    "yesNo": "Yes/No",
+    "yes": "Yes",
+    "no": "No",
+    "addComment": "Add a comment...",
+    "editComment": "Edit comment"
   },
   "auth": {
     "welcome": "Welcome back",
