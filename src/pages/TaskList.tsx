@@ -10,7 +10,6 @@ import TaskCard from "@/components/TaskCard";
 import { useRole } from "@/hooks/useRole";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-
 const TaskList = () => {
   const {
     user,
@@ -113,29 +112,6 @@ const TaskList = () => {
         <BottomNavigation />
       </div>;
   }
-
-  if (!activeTasks.length) {
-    return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Header showBackButton={false} />
-        
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center max-w-xs">
-            <div className="bg-primary/10 p-5 rounded-full mb-4 mx-auto flex items-center justify-center w-20 h-20">
-              <CheckCircle2 size={40} className="text-primary" />
-            </div>
-            <p className="text-xl font-medium text-foreground mb-2">All caught up!</p>
-            <p className="text-muted-foreground">
-              You've completed all your tasks. Check back later or enjoy your break!
-            </p>
-          </div>
-        </div>
-        
-        <BottomNavigation />
-      </div>
-    );
-  }
-
   return <div className="min-h-screen flex flex-col bg-background">
       <Header showBackButton={false} />
       
@@ -152,7 +128,15 @@ const TaskList = () => {
             </Button>
           </div>}
 
-         <AnimatePresence>
+        {!activeTasks.length ? <div className="flex flex-col items-center justify-center h-full text-center ">
+            <div className="bg-primary/10 p-5 rounded-full mb-4">
+              <CheckCircle2 size={40} className="text-primary" />
+            </div>
+            <p className="text-xl font-medium text-foreground">All caught up!</p>
+            <p className="mt-2 text-muted-foreground max-w-xs">
+              You've completed all your tasks. Check back later or enjoy your break!
+            </p>
+          </div> : <AnimatePresence>
             <motion.div className="space-y-6" variants={container} initial="hidden" animate="show">
               {overdueTasks.length > 0 && <div>
                   <div className="flex items-center mb-4">
@@ -184,12 +168,11 @@ const TaskList = () => {
                   </motion.div>
                 </div>}
             </motion.div>
-          </AnimatePresence>
+          </AnimatePresence>}
       </div>
       
       <div className="h-16" />
       <BottomNavigation />
     </div>;
 };
-
 export default TaskList;
