@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { FileEdit, CopyPlus, Trash2 } from "lucide-react";
+import { FileEdit, CopyPlus, Trash2 } from "lucide-react"; // Removed duplicate CopyPlus
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { QuickAssignDialog } from "@/components/QuickAssignDialog";
 import { useState } from "react";
