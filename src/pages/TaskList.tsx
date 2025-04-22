@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useUser } from "@/context/UserContext";
 import { useNavigate } from "react-router-dom";
@@ -11,37 +10,38 @@ import TaskCard from "@/components/TaskCard";
 import { useRole } from "@/hooks/useRole";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-
 const TaskList = () => {
-  const { user, isAuthenticated } = useUser();
-  const { isManager } = useRole();
+  const {
+    user,
+    isAuthenticated
+  } = useUser();
+  const {
+    isManager
+  } = useRole();
   const navigate = useNavigate();
-  const { data: tasks, isLoading, error } = useTasks(isManager);
-
+  const {
+    data: tasks,
+    isLoading,
+    error
+  } = useTasks(isManager);
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/");
       return;
     }
-    
     console.log("Current user in TaskList:", user);
   }, [isAuthenticated, navigate, user]);
-
   useEffect(() => {
     console.log("Tasks data in TaskList:", tasks);
   }, [tasks]);
-  
   const handleCreateTask = () => {
     navigate("/tasks/create");
   };
-  
   const handleViewTemplates = () => {
     navigate("/templates");
   };
-
   const parseDate = (dateString: string | undefined): Date | null => {
     if (!dateString) return null;
-    
     try {
       return new Date(dateString);
     } catch (e) {
@@ -49,24 +49,21 @@ const TaskList = () => {
       return null;
     }
   };
-  
   const now = new Date();
   const taskArray = Array.isArray(tasks) ? tasks : [];
-  
   const activeTasks = taskArray.filter(task => task.status !== 'completed') || [];
-  
   const overdueTasks = activeTasks.filter(task => {
     const deadlineDate = parseDate(task.deadline);
     return deadlineDate !== null && deadlineDate < now;
   });
-
   const upcomingTasks = activeTasks.filter(task => {
     const deadlineDate = parseDate(task.deadline);
     return deadlineDate === null || deadlineDate >= now;
   });
-
   const container = {
-    hidden: { opacity: 0 },
+    hidden: {
+      opacity: 0
+    },
     show: {
       opacity: 1,
       transition: {
@@ -74,15 +71,18 @@ const TaskList = () => {
       }
     }
   };
-
   const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
+    hidden: {
+      opacity: 0,
+      y: 20
+    },
+    show: {
+      opacity: 1,
+      y: 0
+    }
   };
-
   if (error) {
-    return (
-      <div className="min-h-screen flex flex-col bg-background">
+    return <div className="min-h-screen flex flex-col bg-background">
         <Header showBackButton={false} />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center p-4 max-w-md">
@@ -97,13 +97,10 @@ const TaskList = () => {
           </div>
         </div>
         <BottomNavigation />
-      </div>
-    );
+      </div>;
   }
-  
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col bg-background">
+    return <div className="min-h-screen flex flex-col bg-background">
         <Header showBackButton={false} />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -113,40 +110,25 @@ const TaskList = () => {
         </div>
         <div className="h-16" />
         <BottomNavigation />
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen flex flex-col bg-background">
+  return <div className="min-h-screen flex flex-col bg-background">
       <Header showBackButton={false} />
       
       <div className="flex-1 overflow-y-auto px-4 py-6 pb-20 max-w-2xl mx-auto w-full">
-        {isManager && (
-          <div className="mb-8 space-y-3">
-            <Button 
-              onClick={handleCreateTask}
-              className="w-full bg-primary hover:bg-primary/90 shadow-lg hover:shadow-primary/25 transition-all duration-300"
-              size="lg"
-            >
+        {isManager && <div className="mb-8 space-y-3">
+            <Button onClick={handleCreateTask} className="w-full bg-primary hover:bg-primary/90 shadow-lg hover:shadow-primary/25 transition-all duration-300" size="lg">
               <Plus className="h-4 w-4 mr-2" />
               Create New Task
             </Button>
             
-            <Button 
-              onClick={handleViewTemplates}
-              className="w-full"
-              variant="outline"
-              size="lg"
-            >
+            <Button onClick={handleViewTemplates} className="w-full" variant="outline" size="lg">
               <FileEdit className="h-4 w-4 mr-2" />
               View Templates
             </Button>
-          </div>
-        )}
+          </div>}
 
-        {(!activeTasks.length) ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center">
+        {!activeTasks.length ? <div className="flex flex-col items-center justify-center h-64 text-center align-middle">
             <div className="bg-primary/10 p-5 rounded-full mb-4">
               <CheckCircle2 size={40} className="text-primary" />
             </div>
@@ -154,17 +136,9 @@ const TaskList = () => {
             <p className="mt-2 text-muted-foreground max-w-xs">
               You've completed all your tasks. Check back later or enjoy your break!
             </p>
-          </div>
-        ) : (
-          <AnimatePresence>
-            <motion.div 
-              className="space-y-6"
-              variants={container}
-              initial="hidden"
-              animate="show"
-            >
-              {overdueTasks.length > 0 && (
-                <div>
+          </div> : <AnimatePresence>
+            <motion.div className="space-y-6" variants={container} initial="hidden" animate="show">
+              {overdueTasks.length > 0 && <div>
                   <div className="flex items-center mb-4">
                     <CalendarClock size={20} className="text-destructive mr-2" />
                     <h2 className="text-lg font-semibold text-foreground">Overdue Tasks</h2>
@@ -173,20 +147,13 @@ const TaskList = () => {
                     </span>
                   </div>
                   <motion.div className="space-y-3" variants={container}>
-                    {overdueTasks.map(task => (
-                      <motion.div key={task.id} variants={item}>
-                        <TaskCard 
-                          task={task} 
-                          showAssignee={isManager}
-                        />
-                      </motion.div>
-                    ))}
+                    {overdueTasks.map(task => <motion.div key={task.id} variants={item}>
+                        <TaskCard task={task} showAssignee={isManager} />
+                      </motion.div>)}
                   </motion.div>
-                </div>
-              )}
+                </div>}
               
-              {upcomingTasks.length > 0 && (
-                <div>
+              {upcomingTasks.length > 0 && <div>
                   <div className="flex items-center mb-4">
                     <Clock size={20} className="text-primary mr-2" />
                     <h2 className="text-lg font-semibold text-foreground">Upcoming Tasks</h2>
@@ -195,26 +162,17 @@ const TaskList = () => {
                     </span>
                   </div>
                   <motion.div className="space-y-3" variants={container}>
-                    {upcomingTasks.map(task => (
-                      <motion.div key={task.id} variants={item}>
-                        <TaskCard 
-                          task={task}
-                          showAssignee={isManager}
-                        />
-                      </motion.div>
-                    ))}
+                    {upcomingTasks.map(task => <motion.div key={task.id} variants={item}>
+                        <TaskCard task={task} showAssignee={isManager} />
+                      </motion.div>)}
                   </motion.div>
-                </div>
-              )}
+                </div>}
             </motion.div>
-          </AnimatePresence>
-        )}
+          </AnimatePresence>}
       </div>
       
       <div className="h-16" />
       <BottomNavigation />
-    </div>
-  );
+    </div>;
 };
-
 export default TaskList;
