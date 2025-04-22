@@ -10,6 +10,7 @@ import TaskCard from "@/components/TaskCard";
 import { useRole } from "@/hooks/useRole";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+
 const TaskList = () => {
   const {
     user,
@@ -24,6 +25,7 @@ const TaskList = () => {
     isLoading,
     error
   } = useTasks(isManager);
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/");
@@ -31,15 +33,19 @@ const TaskList = () => {
     }
     console.log("Current user in TaskList:", user);
   }, [isAuthenticated, navigate, user]);
+
   useEffect(() => {
     console.log("Tasks data in TaskList:", tasks);
   }, [tasks]);
+
   const handleCreateTask = () => {
     navigate("/tasks/create");
   };
+
   const handleViewTemplates = () => {
     navigate("/templates");
   };
+
   const parseDate = (dateString: string | undefined): Date | null => {
     if (!dateString) return null;
     try {
@@ -49,6 +55,7 @@ const TaskList = () => {
       return null;
     }
   };
+
   const now = new Date();
   const taskArray = Array.isArray(tasks) ? tasks : [];
   const activeTasks = taskArray.filter(task => task.status !== 'completed') || [];
@@ -60,6 +67,7 @@ const TaskList = () => {
     const deadlineDate = parseDate(task.deadline);
     return deadlineDate === null || deadlineDate >= now;
   });
+
   const container = {
     hidden: {
       opacity: 0
@@ -71,6 +79,7 @@ const TaskList = () => {
       }
     }
   };
+
   const item = {
     hidden: {
       opacity: 0,
@@ -81,6 +90,7 @@ const TaskList = () => {
       y: 0
     }
   };
+
   if (error) {
     return <div className="min-h-screen flex flex-col bg-background">
         <Header showBackButton={false} />
@@ -99,6 +109,7 @@ const TaskList = () => {
         <BottomNavigation />
       </div>;
   }
+
   if (isLoading) {
     return <div className="min-h-screen flex flex-col bg-background">
         <Header showBackButton={false} />
@@ -112,6 +123,7 @@ const TaskList = () => {
         <BottomNavigation />
       </div>;
   }
+
   return <div className="min-h-screen flex flex-col bg-background">
       <Header showBackButton={false} />
       
@@ -128,7 +140,8 @@ const TaskList = () => {
             </Button>
           </div>}
 
-        {!activeTasks.length ? <div className="flex flex-col items-center justify-center h-full text-center ">
+        {!activeTasks.length ? (
+          <div className="flex flex-col items-center justify-center min-h-full flex-1 text-center">
             <div className="bg-primary/10 p-5 rounded-full mb-4">
               <CheckCircle2 size={40} className="text-primary" />
             </div>
@@ -136,7 +149,9 @@ const TaskList = () => {
             <p className="mt-2 text-muted-foreground max-w-xs">
               You've completed all your tasks. Check back later or enjoy your break!
             </p>
-          </div> : <AnimatePresence>
+          </div>
+        ) : (
+          <AnimatePresence>
             <motion.div className="space-y-6" variants={container} initial="hidden" animate="show">
               {overdueTasks.length > 0 && <div>
                   <div className="flex items-center mb-4">
@@ -175,4 +190,5 @@ const TaskList = () => {
       <BottomNavigation />
     </div>;
 };
+
 export default TaskList;
