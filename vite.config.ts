@@ -37,6 +37,11 @@ export default defineConfig(({ mode }) => ({
             '@/components/ui'
           ]
         }
+      },
+      // Prevent directory imports without index.ts
+      onwarn(warning, warn) {
+        if (warning.code === 'EMPTY_BUNDLE') return;
+        warn(warning);
       }
     },
     // Reduce chunk size
