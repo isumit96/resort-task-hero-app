@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import TaskDescription from "@/components/TaskDescription";
 
 const TaskDetail = () => {
   const { taskId } = useParams<{ taskId: string }>();
@@ -48,6 +49,7 @@ const TaskDetail = () => {
       // Create translation keys for this task
       const titleKey = `tasks.${task.id}.title`;
       const locationKey = `tasks.${task.id}.location`;
+      const descriptionKey = `tasks.${task.id}.description`;
 
       console.log('Fetching task data with language:', i18n.language);
       console.log('Task ID being fetched:', task.id);
@@ -56,7 +58,7 @@ const TaskDetail = () => {
         id: task.id,
         title: task.title,
         titleKey, // Include translation key
-        dueTime: new Date(task.due_time).toLocaleString(),
+        dueTime: new Date(task.due_time).toISOString(),
         location: task.location || '',
         locationKey, // Include translation key
         status: task.status,
@@ -64,6 +66,10 @@ const TaskDetail = () => {
         createdAt: task.created_at,
         completedAt: task.completed_at,
         deadline: task.deadline,
+        description: task.description || '',
+        descriptionKey,
+        photoUrl: task.photo_url,
+        videoUrl: task.video_url,
         steps: (task.steps || []).map((step: any) => {
           const stepTitleKey = `tasks.${task.id}.step.${step.id}.title`;
           const stepCommentKey = step.comment ? `tasks.${task.id}.step.${step.id}.comment` : undefined;
@@ -138,6 +144,21 @@ const TaskDetail = () => {
     });
   };
 
+  const handleDescriptionChange = () => {
+    // This would be implemented if editing task descriptions was a feature
+    console.log("Description change not implemented yet");
+  };
+
+  const handlePhotoUpload = () => {
+    // This would be implemented if uploading photos to tasks was a feature
+    console.log("Photo upload not implemented yet");
+  };
+
+  const handleVideoUpload = () => {
+    // This would be implemented if uploading videos to tasks was a feature
+    console.log("Video upload not implemented yet");
+  };
+
   if (isLoading || !task) {
     return <LoadingState title={t('tasks.taskDetails')} />;
   }
@@ -152,6 +173,20 @@ const TaskDetail = () => {
       
       <div className="flex-1 overflow-y-auto pb-24 bg-background dark:bg-[#121212]">
         <TaskHeader task={task} />
+        
+        {task.description && (
+          <div className="px-4 py-4 bg-card border-b border-border">
+            <TaskDescription
+              description={task.description}
+              descriptionKey={task.descriptionKey}
+              onDescriptionChange={handleDescriptionChange}
+              onPhotoUpload={handlePhotoUpload}
+              onVideoUpload={handleVideoUpload}
+              photoUrl={task.photoUrl}
+              videoUrl={task.videoUrl}
+            />
+          </div>
+        )}
         
         <TaskStepsList
           steps={task.steps}

@@ -25,22 +25,16 @@ const TaskStepsList = ({ steps, onComplete, onAddComment, onAddPhoto }: TaskStep
           // Log for debugging
           console.log("Step ID:", step.id, "Title key:", step.titleKey);
           
-          // Always ensure we have a valid title by using the original title
+          // Always ensure we have a valid title by using the original title as fallback
           const stepTitle = step.title || "Untitled Step";
-          
-          // Preserve original comment
-          const stepComment = step.comment || "";
-          
-          const translatedStep = {
-            ...step,
-            title: stepTitle,
-            comment: stepComment
-          };
           
           return (
             <TaskStep 
               key={step.id} 
-              step={translatedStep} 
+              step={{
+                ...step,
+                title: step.titleKey ? t(step.titleKey, { defaultValue: stepTitle }) : stepTitle,
+              }}
               onComplete={onComplete}
               onAddComment={onAddComment}
               onAddPhoto={onAddPhoto}

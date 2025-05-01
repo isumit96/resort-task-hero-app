@@ -65,6 +65,9 @@ export const useTasks = (isManager: boolean = false) => {
           createdAt: task.created_at,
           completedAt: task.completed_at,
           deadline: task.deadline,
+          description: task.description || '',
+          photoUrl: task.photo_url,
+          videoUrl: task.video_url,
           steps: (task.steps || []).map((step: any) => {
             const stepTitleKey = `tasks.${task.id}.step.${step.id}.title`;
             const stepCommentKey = step.comment ? `tasks.${task.id}.step.${step.id}.comment` : undefined;

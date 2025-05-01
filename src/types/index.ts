@@ -30,12 +30,16 @@ export interface Task {
   dueTime: string;
   location: string;
   locationKey?: string; // Added for translation
+  description?: string; // Added description field
+  descriptionKey?: string; // Added translation key for description
   status: TaskStatus;
   assignedTo: string;
   assigneeName?: string;
   createdAt: string;
   completedAt?: string | null;
   deadline?: string | null;
+  photoUrl?: string | null; // Added photo URL for task
+  videoUrl?: string | null; // Added video URL for task
   steps: TaskStep[];
   department?: DepartmentType;
 }

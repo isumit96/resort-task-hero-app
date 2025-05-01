@@ -26,7 +26,7 @@ const TaskHeader = ({ task }: TaskHeaderProps) => {
   console.log("Translation key for title:", task.titleKey);
   console.log("Translation key for location:", task.locationKey);
   
-  // Always prioritize showing the original title if translation is not available
+  // Always display the original title if translation is not available
   const taskTitle = task.title || "Untitled Task";
   const taskLocation = task.location || "No location specified";
   
@@ -34,7 +34,7 @@ const TaskHeader = ({ task }: TaskHeaderProps) => {
     <div className="bg-card px-4 py-4 border-b border-border">
       <div className="flex justify-between items-start">
         <h1 className="text-xl font-semibold text-foreground">
-          {t(task.titleKey || '', { defaultValue: taskTitle })}
+          {task.titleKey ? t(task.titleKey, { defaultValue: taskTitle }) : taskTitle}
         </h1>
         <TaskStatusBadge status={task.status} />
       </div>
@@ -48,7 +48,7 @@ const TaskHeader = ({ task }: TaskHeaderProps) => {
         <div className="flex items-center text-muted-foreground">
           <MapPin size={16} className="mr-1" />
           <span className="text-sm">
-            {t(task.locationKey || '', { defaultValue: taskLocation })}
+            {task.locationKey ? t(task.locationKey, { defaultValue: taskLocation }) : taskLocation}
           </span>
         </div>
       </div>
