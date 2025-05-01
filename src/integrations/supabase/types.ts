@@ -183,6 +183,8 @@ export type Database = {
       task_steps: {
         Row: {
           comment: string | null
+          comment_hi: string | null
+          comment_kn: string | null
           created_at: string | null
           id: string
           interaction_type:
@@ -194,9 +196,13 @@ export type Database = {
           requires_photo: boolean | null
           task_id: string | null
           title: string
+          title_hi: string | null
+          title_kn: string | null
         }
         Insert: {
           comment?: string | null
+          comment_hi?: string | null
+          comment_kn?: string | null
           created_at?: string | null
           id?: string
           interaction_type?:
@@ -208,9 +214,13 @@ export type Database = {
           requires_photo?: boolean | null
           task_id?: string | null
           title: string
+          title_hi?: string | null
+          title_kn?: string | null
         }
         Update: {
           comment?: string | null
+          comment_hi?: string | null
+          comment_kn?: string | null
           created_at?: string | null
           id?: string
           interaction_type?:
@@ -222,6 +232,8 @@ export type Database = {
           requires_photo?: boolean | null
           task_id?: string | null
           title?: string
+          title_hi?: string | null
+          title_kn?: string | null
         }
         Relationships: [
           {
@@ -239,27 +251,45 @@ export type Database = {
           created_by: string | null
           department: Database["public"]["Enums"]["department_type"] | null
           description: string | null
+          description_hi: string | null
+          description_kn: string | null
           id: string
           location: string | null
+          location_hi: string | null
+          location_kn: string | null
           title: string
+          title_hi: string | null
+          title_kn: string | null
         }
         Insert: {
           created_at?: string | null
           created_by?: string | null
           department?: Database["public"]["Enums"]["department_type"] | null
           description?: string | null
+          description_hi?: string | null
+          description_kn?: string | null
           id?: string
           location?: string | null
+          location_hi?: string | null
+          location_kn?: string | null
           title: string
+          title_hi?: string | null
+          title_kn?: string | null
         }
         Update: {
           created_at?: string | null
           created_by?: string | null
           department?: Database["public"]["Enums"]["department_type"] | null
           description?: string | null
+          description_hi?: string | null
+          description_kn?: string | null
           id?: string
           location?: string | null
+          location_hi?: string | null
+          location_kn?: string | null
           title?: string
+          title_hi?: string | null
+          title_kn?: string | null
         }
         Relationships: [
           {
@@ -279,12 +309,18 @@ export type Database = {
           deadline: string | null
           department: Database["public"]["Enums"]["department_type"] | null
           description: string | null
+          description_hi: string | null
+          description_kn: string | null
           due_time: string
           id: string
           location: string
+          location_hi: string | null
+          location_kn: string | null
           photo_url: string | null
           status: Database["public"]["Enums"]["task_status"] | null
           title: string
+          title_hi: string | null
+          title_kn: string | null
           video_url: string | null
         }
         Insert: {
@@ -294,12 +330,18 @@ export type Database = {
           deadline?: string | null
           department?: Database["public"]["Enums"]["department_type"] | null
           description?: string | null
+          description_hi?: string | null
+          description_kn?: string | null
           due_time: string
           id?: string
           location: string
+          location_hi?: string | null
+          location_kn?: string | null
           photo_url?: string | null
           status?: Database["public"]["Enums"]["task_status"] | null
           title: string
+          title_hi?: string | null
+          title_kn?: string | null
           video_url?: string | null
         }
         Update: {
@@ -309,12 +351,18 @@ export type Database = {
           deadline?: string | null
           department?: Database["public"]["Enums"]["department_type"] | null
           description?: string | null
+          description_hi?: string | null
+          description_kn?: string | null
           due_time?: string
           id?: string
           location?: string
+          location_hi?: string | null
+          location_kn?: string | null
           photo_url?: string | null
           status?: Database["public"]["Enums"]["task_status"] | null
           title?: string
+          title_hi?: string | null
+          title_kn?: string | null
           video_url?: string | null
         }
         Relationships: [
@@ -338,6 +386,8 @@ export type Database = {
           requires_photo: boolean | null
           template_id: string | null
           title: string
+          title_hi: string | null
+          title_kn: string | null
         }
         Insert: {
           id?: string
@@ -349,6 +399,8 @@ export type Database = {
           requires_photo?: boolean | null
           template_id?: string | null
           title: string
+          title_hi?: string | null
+          title_kn?: string | null
         }
         Update: {
           id?: string
@@ -360,6 +412,8 @@ export type Database = {
           requires_photo?: boolean | null
           template_id?: string | null
           title?: string
+          title_hi?: string | null
+          title_kn?: string | null
         }
         Relationships: [
           {
@@ -370,6 +424,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      translation_jobs: {
+        Row: {
+          completed_at: string | null
+          content_items: Json
+          created_at: string | null
+          error_message: string | null
+          id: string
+          status: Database["public"]["Enums"]["translation_job_status"]
+          target_langs: string[]
+        }
+        Insert: {
+          completed_at?: string | null
+          content_items: Json
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["translation_job_status"]
+          target_langs: string[]
+        }
+        Update: {
+          completed_at?: string | null
+          content_items?: Json
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["translation_job_status"]
+          target_langs?: string[]
+        }
+        Relationships: []
+      }
+      translations: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string | null
+          id: string
+          source_lang: string
+          source_text: string
+          target_lang: string
+          translated_text: string
+          updated_at: string | null
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string | null
+          id?: string
+          source_lang?: string
+          source_text: string
+          target_lang: string
+          translated_text: string
+          updated_at?: string | null
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          id?: string
+          source_lang?: string
+          source_text?: string
+          target_lang?: string
+          translated_text?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -387,6 +507,7 @@ export type Database = {
         | "Gardening"
       step_interaction_type: "checkbox" | "yes_no"
       task_status: "pending" | "inprogress" | "completed"
+      translation_job_status: "pending" | "completed" | "failed"
       user_role: "employee" | "manager"
     }
     CompositeTypes: {
@@ -512,6 +633,7 @@ export const Constants = {
       ],
       step_interaction_type: ["checkbox", "yes_no"],
       task_status: ["pending", "inprogress", "completed"],
+      translation_job_status: ["pending", "completed", "failed"],
       user_role: ["employee", "manager"],
     },
   },

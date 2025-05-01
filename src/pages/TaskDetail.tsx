@@ -17,7 +17,6 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { dynamicTranslations } from "@/i18n/config";
 
 const TaskDetail = () => {
   const { taskId } = useParams<{ taskId: string }>();
@@ -27,11 +26,6 @@ const TaskDetail = () => {
   const { handleStepComplete, handleAddComment, handleAddPhoto, handleTaskStatusUpdate } = useTaskOperations(taskId);
   const [allRequiredStepsCompleted, setAllRequiredStepsCompleted] = useState(false);
   const { t, i18n } = useTranslation();
-
-  // Debug function to log all registered dynamic translations
-  const logDynamicTranslations = () => {
-    console.log('Current dynamic translations:', dynamicTranslations.getAllContent());
-  };
 
   const { data: task, error, isLoading } = useQuery({
     queryKey: ["task", taskId],
@@ -50,34 +44,15 @@ const TaskDetail = () => {
       if (error) throw error;
       if (!task) return null;
 
-      // Ensure dynamic translations are registered immediately for all supported languages
-      const taskTitleKey = `task_title_${task.id}`;
-      const taskLocationKey = `task_location_${task.id}`;
-      
-      // Register content with original language
-      console.log(`Registering task title: ${taskTitleKey} = "${task.title}"`);
-      console.log(`Registering task location: ${taskLocationKey} = "${task.location}"`);
-      
-      dynamicTranslations.registerContent(taskTitleKey, task.title);
-      dynamicTranslations.registerContent(taskLocationKey, task.location);
-      
-      // Register each step title as well
-      if (task.steps && Array.isArray(task.steps)) {
-        task.steps.forEach((step: any) => {
-          const stepKey = `step_${step.id}`;
-          console.log(`Registering step: ${stepKey} = "${step.title}"`);
-          dynamicTranslations.registerContent(stepKey, step.title);
-        });
-      }
-
-      // Log all registered translations for debugging
-      logDynamicTranslations();
-
       return {
         id: task.id,
         title: task.title,
+        title_hi: task.title_hi,
+        title_kn: task.title_kn,
         dueTime: new Date(task.due_time).toISOString(),
         location: task.location,
+        location_hi: task.location_hi,
+        location_kn: task.location_kn,
         status: task.status,
         assignedTo: task.assigned_to,
         createdAt: task.created_at,
@@ -85,9 +60,13 @@ const TaskDetail = () => {
         steps: task.steps.map((step: any) => ({
           id: step.id,
           title: step.title,
+          title_hi: step.title_hi,
+          title_kn: step.title_kn,
           isCompleted: step.is_completed,
           requiresPhoto: step.requires_photo,
           comment: step.comment,
+          comment_hi: step.comment_hi,
+          comment_kn: step.comment_kn,
           photoUrl: step.photo_url,
           isOptional: step.is_optional || false,
           interactionType: step.interaction_type || 'checkbox'
@@ -97,29 +76,6 @@ const TaskDetail = () => {
     staleTime: 1000,
     refetchOnWindowFocus: true,
   });
-
-  // Effect to refresh translations whenever the language changes
-  useEffect(() => {
-    if (!task) return;
-    
-    // Re-register translations when task data is available or language changes
-    const taskTitleKey = `task_title_${task.id}`;
-    const taskLocationKey = `task_location_${task.id}`;
-    
-    dynamicTranslations.registerContent(taskTitleKey, task.title, i18n.language);
-    dynamicTranslations.registerContent(taskLocationKey, task.location, i18n.language);
-    
-    // Register each step's title
-    if (task.steps) {
-      task.steps.forEach(step => {
-        const stepKey = `step_${step.id}`;
-        dynamicTranslations.registerContent(stepKey, step.title, i18n.language);
-      });
-    }
-    
-    // Log all registered translations for debugging
-    logDynamicTranslations();
-  }, [task, i18n.language]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -180,15 +136,24 @@ const TaskDetail = () => {
     return <ErrorState error={error} title={t('tasks.taskDetails')} />;
   }
 
+  // Get localized title based on current language
+  const getLocalizedText = (baseText: string, hiText?: string | null, knText?: string | null) => {
+    if (i18n.language === 'hi' && hiText) {
+      return hiText;
+    }
+    if (i18n.language === 'kn' && knText) {
+      return knText;
+    }
+    return baseText;
+  };
+
+  const title = getLocalizedText(task.title, task.title_hi, task.title_kn);
   const completedSteps = task.steps.filter(s => s.isCompleted === true).length;
   const isCompleted = task.status === 'completed';
 
   return (
     <div className="flex flex-col h-screen bg-background dark:bg-[#121212]">
-      <Header showBackButton title={t(
-        `task_title_${task.id}`, 
-        { format: 'dynamic', defaultValue: task.title }
-      )} />
+      <Header showBackButton title={title} />
       
       <div className="flex-1 overflow-y-auto pb-24 bg-background dark:bg-[#121212]">
         <TaskHeader task={task} />

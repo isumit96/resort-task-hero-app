@@ -2,8 +2,6 @@
 import { TaskStep as TaskStepType } from "@/types";
 import TaskStep from "./TaskStep";
 import { useTranslation } from "react-i18next";
-import { dynamicTranslations } from "@/i18n/config";
-import { useEffect } from "react";
 
 interface TaskStepsListProps {
   steps: TaskStepType[];
@@ -15,32 +13,29 @@ interface TaskStepsListProps {
 const TaskStepsList = ({ steps, onComplete, onAddComment, onAddPhoto }: TaskStepsListProps) => {
   const { t, i18n } = useTranslation();
   
-  // Register step titles for translation as soon as steps data is available
-  useEffect(() => {
-    // Register each step title for translation
-    steps.forEach(step => {
-      const stepKey = `step_${step.id}`;
-      dynamicTranslations.registerContent(stepKey, step.title);
-      console.log(`[TaskStepsList] Registered ${stepKey} = "${step.title}"`);
-    });
-  }, [steps, i18n.language]);
+  // Get the localized title based on current language
+  const getLocalizedTitle = (step: TaskStepType) => {
+    if (i18n.language === 'hi' && step.title_hi) {
+      return step.title_hi;
+    }
+    if (i18n.language === 'kn' && step.title_kn) {
+      return step.title_kn;
+    }
+    return step.title;
+  };
   
   return (
     <div className="bg-background dark:bg-background mt-2 px-4">
       <h2 className="text-lg font-medium py-3 border-b dark:border-border">{t('tasks.stepsToComplete')}</h2>
       
       <div className="divide-y divide-gray-100 dark:divide-gray-800">
-        {steps.map(step => {
-          // Create a consistent key for the step
-          const stepKey = `step_${step.id}`;
-          
+        {steps.map(step => {          
           return (
             <TaskStep 
               key={step.id} 
               step={{
                 ...step,
-                // Use dynamic translation with fallback to original title
-                title: t(stepKey, { format: 'dynamic', defaultValue: step.title })
+                title: getLocalizedTitle(step)
               }} 
               onComplete={onComplete}
               onAddComment={onAddComment}

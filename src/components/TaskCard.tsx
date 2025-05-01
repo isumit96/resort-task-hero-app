@@ -15,7 +15,7 @@ interface TaskCardProps {
 
 const TaskCard = ({ task, showAssignee = true }: TaskCardProps) => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   
   const handleClick = () => {
     navigate(`/task/${task.id}`);
@@ -33,6 +33,19 @@ const TaskCard = ({ task, showAssignee = true }: TaskCardProps) => {
     }
   };
 
+  // Get localized text based on current language
+  const getLocalizedText = (baseText: string, hiText?: string | null, knText?: string | null) => {
+    if (i18n.language === 'hi' && hiText) {
+      return hiText;
+    }
+    if (i18n.language === 'kn' && knText) {
+      return knText;
+    }
+    return baseText;
+  };
+
+  const title = getLocalizedText(task.title, task.title_hi, task.title_kn);
+  const location = getLocalizedText(task.location, task.location_hi, task.location_kn);
   const { relativeTime, isOverdue } = getRelativeTime(task.dueTime);
   const completedSteps = task.steps.filter(step => step.isCompleted).length;
   const progress = (completedSteps / task.steps.length) * 100;
@@ -65,7 +78,7 @@ const TaskCard = ({ task, showAssignee = true }: TaskCardProps) => {
           <div className="flex justify-between items-start">
             <div className="flex-1 pr-3">
               <div className="flex items-center gap-2">
-                <h3 className="font-medium text-lg text-gray-900 dark:text-gray-100">{task.title}</h3>
+                <h3 className="font-medium text-lg text-gray-900 dark:text-gray-100">{title}</h3>
                 {task.department && (
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent text-accent-foreground whitespace-nowrap">
                     {task.department}
@@ -85,7 +98,7 @@ const TaskCard = ({ task, showAssignee = true }: TaskCardProps) => {
                 
                 <div className="flex items-center text-muted-foreground text-sm dark:text-gray-300">
                   <MapPin size={14} className="mr-1 flex-shrink-0" />
-                  <span>{task.location}</span>
+                  <span>{location}</span>
                 </div>
 
                 {showAssignee && task.assigneeName && (

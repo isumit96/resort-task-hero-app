@@ -12,6 +12,46 @@ export const useTaskCreation = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
 
+  // Helper function to translate text
+  const translateText = async (text: string, targetLang: string) => {
+    if (!text) return null;
+    
+    try {
+      const response = await supabase.functions.invoke('translate', {
+        body: { text, target: targetLang }
+      });
+      
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+      
+      return response.data?.translations?.[0]?.translatedText || null;
+    } catch (error) {
+      console.error(`Translation error (${targetLang}):`, error);
+      return null;
+    }
+  };
+
+  // Helper function to translate batch of texts
+  const translateBatch = async (texts: string[], targetLang: string) => {
+    if (!texts || texts.length === 0) return [];
+    
+    try {
+      const response = await supabase.functions.invoke('translate', {
+        body: { text: texts, target: targetLang }
+      });
+      
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+      
+      return response.data?.translations?.map(t => t.translatedText) || [];
+    } catch (error) {
+      console.error(`Batch translation error (${targetLang}):`, error);
+      return texts.map(() => null);
+    }
+  };
+
   const ensureUniqueStepTitles = (steps: TaskFormData['steps']) => {
     const titleCounts: Record<string, number> = {};
     
@@ -38,12 +78,34 @@ export const useTaskCreation = () => {
     
     setIsSubmitting(true);
     try {
+      // Translate title, description, and location to supported languages
+      const [title_hi, title_kn] = await Promise.all([
+        translateText(data.title, 'hi'),
+        translateText(data.title, 'kn')
+      ]);
+      
+      const [location_hi, location_kn] = await Promise.all([
+        translateText(data.location, 'hi'),
+        translateText(data.location, 'kn')
+      ]);
+      
+      const [description_hi, description_kn] = data.description ? await Promise.all([
+        translateText(data.description, 'hi'),
+        translateText(data.description, 'kn')
+      ]) : [null, null];
+
       const { data: task, error: taskError } = await supabase
         .from("tasks")
         .insert({
           title: data.title,
+          title_hi,
+          title_kn,
           description: data.description,
+          description_hi,
+          description_kn,
           location: data.location,
+          location_hi,
+          location_kn,
           due_time: data.dueTime,
           assigned_to: data.assignedTo,
           deadline: data.deadline || null,
@@ -59,9 +121,18 @@ export const useTaskCreation = () => {
 
       const processedSteps = ensureUniqueStepTitles(data.steps);
       
-      const taskSteps = processedSteps.map((step) => ({
+      // Translate all step titles in batch for efficiency
+      const stepTitles = processedSteps.map(step => step.title);
+      const [hiTitles, knTitles] = await Promise.all([
+        translateBatch(stepTitles, 'hi'),
+        translateBatch(stepTitles, 'kn')
+      ]);
+
+      const taskSteps = processedSteps.map((step, index) => ({
         task_id: task.id,
         title: step.title,
+        title_hi: hiTitles[index],
+        title_kn: knTitles[index],
         requires_photo: step.requiresPhoto,
         is_optional: step.isOptional,
         interaction_type: step.interactionType,
@@ -95,12 +166,34 @@ export const useTaskCreation = () => {
     try {
       setIsSavingTemplate(true);
       
+      // Translate title, description, and location to supported languages
+      const [title_hi, title_kn] = await Promise.all([
+        translateText(data.title, 'hi'),
+        translateText(data.title, 'kn')
+      ]);
+      
+      const [location_hi, location_kn] = data.location ? await Promise.all([
+        translateText(data.location, 'hi'),
+        translateText(data.location, 'kn')
+      ]) : [null, null];
+      
+      const [description_hi, description_kn] = data.description ? await Promise.all([
+        translateText(data.description, 'hi'),
+        translateText(data.description, 'kn')
+      ]) : [null, null];
+      
       const { data: template, error: templateError } = await supabase
         .from('task_templates')
         .insert({
           title: data.title,
+          title_hi,
+          title_kn,
           description: data.description,
+          description_hi,
+          description_kn,
           location: data.location,
+          location_hi,
+          location_kn,
           department: data.department as DepartmentType,
         })
         .select()
@@ -108,9 +201,18 @@ export const useTaskCreation = () => {
 
       if (templateError) throw templateError;
 
+      // Translate all step titles in batch for efficiency
+      const stepTitles = data.steps.map(step => step.title);
+      const [hiTitles, knTitles] = await Promise.all([
+        translateBatch(stepTitles, 'hi'),
+        translateBatch(stepTitles, 'kn')
+      ]);
+
       const templateSteps = data.steps.map((step, index) => ({
         template_id: template.id,
         title: step.title,
+        title_hi: hiTitles[index],
+        title_kn: knTitles[index],
         requires_photo: step.requiresPhoto,
         is_optional: step.isOptional,
         interaction_type: step.interactionType,

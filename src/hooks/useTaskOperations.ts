@@ -10,6 +10,26 @@ export const useTaskOperations = (taskId: string | undefined) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  // Helper function to translate text
+  const translateText = async (text: string, targetLang: string) => {
+    if (!text) return null;
+    
+    try {
+      const response = await supabase.functions.invoke('translate', {
+        body: { text, target: targetLang }
+      });
+      
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+      
+      return response.data?.translations?.[0]?.translatedText || null;
+    } catch (error) {
+      console.error(`Translation error (${targetLang}):`, error);
+      return null;
+    }
+  };
+
   // Use useCallback to memoize these functions and prevent unnecessary re-renders
   const handleStepComplete = useCallback(async (stepId: string, isCompleted: boolean) => {
     if (!taskId) return;
@@ -37,12 +57,18 @@ export const useTaskOperations = (taskId: string | undefined) => {
   }, [taskId, queryClient, toast]);
   
   const handleAddComment = useCallback(async (stepId: string, comment: string) => {
-    if (!taskId) return;
+    if (!taskId || !comment) return;
     
     try {
+      // Translate the comment to supported languages
+      const [comment_hi, comment_kn] = await Promise.all([
+        translateText(comment, 'hi'),
+        translateText(comment, 'kn')
+      ]);
+      
       const { error } = await supabase
         .from('task_steps')
-        .update({ comment })
+        .update({ comment, comment_hi, comment_kn })
         .eq('id', stepId);
       
       if (error) throw error;

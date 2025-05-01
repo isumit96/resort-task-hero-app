@@ -1,3 +1,4 @@
+
 export type TaskStatus = "pending" | "inprogress" | "completed";
 export type UserRole = "employee" | "manager" | "admin";
 export type StepInteractionType = "checkbox" | "yes_no";
@@ -12,9 +13,13 @@ export type DepartmentType =
 export interface TaskStep {
   id: string;
   title: string;
+  title_hi?: string | null;
+  title_kn?: string | null;
   isCompleted: boolean;
   requiresPhoto: boolean;
   comment?: string | null;
+  comment_hi?: string | null;
+  comment_kn?: string | null;
   photoUrl?: string | null;
   isOptional: boolean;
   interactionType?: StepInteractionType;
@@ -23,8 +28,12 @@ export interface TaskStep {
 export interface Task {
   id: string;
   title: string;
+  title_hi?: string | null;
+  title_kn?: string | null;
   dueTime: string;
   location: string;
+  location_hi?: string | null;
+  location_kn?: string | null;
   status: TaskStatus;
   assignedTo: string;
   assigneeName?: string;
