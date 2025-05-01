@@ -17,9 +17,17 @@ i18n
       kn: { translation: knTranslations }
     },
     fallbackLng: 'en',
+    debug: true, // Enable debug mode to see more logs
     interpolation: {
       escapeValue: false
+    },
+    detection: {
+      order: ['localStorage', 'navigator'],
+      caches: ['localStorage']
     }
   });
+
+// Log current language on initialization
+console.log('i18n initialized with language:', i18n.language);
 
 export default i18n;
