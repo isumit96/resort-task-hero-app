@@ -20,14 +20,13 @@ const TaskHeader = ({ task }: TaskHeaderProps) => {
   
   // Register task title and location for translation as soon as task data is available
   useEffect(() => {
-    // Always register in English (default)
+    // Make sure we register the original content
     dynamicTranslations.registerContent(taskTitleKey, task.title);
     dynamicTranslations.registerContent(taskLocationKey, task.location);
     
-    // You could add translations for other languages here if available
-    // For example, if we had translations from the backend:
-    // if (task.titleHi) dynamicTranslations.registerContent(taskTitleKey, task.titleHi, 'hi');
-    // if (task.titleKn) dynamicTranslations.registerContent(taskTitleKey, task.titleKn, 'kn');
+    // Log registrations for debugging
+    console.log(`[TaskHeader] Registered ${taskTitleKey} = "${task.title}"`);
+    console.log(`[TaskHeader] Registered ${taskLocationKey} = "${task.location}"`);
   }, [task.id, task.title, task.location, taskTitleKey, taskLocationKey]);
   
   const getRelativeTime = (dateString: string) => {
@@ -43,7 +42,8 @@ const TaskHeader = ({ task }: TaskHeaderProps) => {
     <div className="bg-card px-4 py-4 border-b border-border">
       <div className="flex justify-between items-start">
         <h1 className="text-xl font-semibold text-foreground">
-          {t(taskTitleKey, { format: 'dynamic' })}
+          {/* Use dynamic translation with fallback to original value */}
+          {t(taskTitleKey, { format: 'dynamic', defaultValue: task.title })}
         </h1>
         <TaskStatusBadge status={task.status} />
       </div>
@@ -56,7 +56,10 @@ const TaskHeader = ({ task }: TaskHeaderProps) => {
         
         <div className="flex items-center text-muted-foreground">
           <MapPin size={16} className="mr-1" />
-          <span className="text-sm">{t(taskLocationKey, { format: 'dynamic' })}</span>
+          <span className="text-sm">
+            {/* Use dynamic translation with fallback to original value */}
+            {t(taskLocationKey, { format: 'dynamic', defaultValue: task.location })}
+          </span>
         </div>
       </div>
     </div>

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
@@ -27,6 +28,11 @@ const TaskDetail = () => {
   const [allRequiredStepsCompleted, setAllRequiredStepsCompleted] = useState(false);
   const { t, i18n } = useTranslation();
 
+  // Debug function to log all registered dynamic translations
+  const logDynamicTranslations = () => {
+    console.log('Current dynamic translations:', dynamicTranslations.getAllContent());
+  };
+
   const { data: task, error, isLoading } = useQuery({
     queryKey: ["task", taskId],
     queryFn: async (): Promise<Task | null> => {
@@ -48,7 +54,11 @@ const TaskDetail = () => {
       const taskTitleKey = `task_title_${task.id}`;
       const taskLocationKey = `task_location_${task.id}`;
       
-      // Register content in English (or whatever language the content is in from the DB)
+      // Register content in the database language (assumed to be English)
+      // This ensures we always have content immediately instead of placeholder keys
+      console.log(`Registering task title: ${taskTitleKey} = "${task.title}"`);
+      console.log(`Registering task location: ${taskLocationKey} = "${task.location}"`);
+      
       dynamicTranslations.registerContent(taskTitleKey, task.title);
       dynamicTranslations.registerContent(taskLocationKey, task.location);
       
@@ -56,9 +66,13 @@ const TaskDetail = () => {
       if (task.steps && Array.isArray(task.steps)) {
         task.steps.forEach((step: any) => {
           const stepKey = `step_${step.id}`;
+          console.log(`Registering step: ${stepKey} = "${step.title}"`);
           dynamicTranslations.registerContent(stepKey, step.title);
         });
       }
+
+      // Log all registered translations for debugging
+      logDynamicTranslations();
 
       return {
         id: task.id,
@@ -84,6 +98,29 @@ const TaskDetail = () => {
     staleTime: 1000,
     refetchOnWindowFocus: true,
   });
+
+  // Effect to register translations whenever the task data changes
+  useEffect(() => {
+    if (!task) return;
+    
+    // Re-register translations when task data is available or language changes
+    const taskTitleKey = `task_title_${task.id}`;
+    const taskLocationKey = `task_location_${task.id}`;
+    
+    dynamicTranslations.registerContent(taskTitleKey, task.title);
+    dynamicTranslations.registerContent(taskLocationKey, task.location);
+    
+    // Register each step's title
+    if (task.steps) {
+      task.steps.forEach(step => {
+        const stepKey = `step_${step.id}`;
+        dynamicTranslations.registerContent(stepKey, step.title);
+      });
+    }
+    
+    // Log all registered translations for debugging
+    logDynamicTranslations();
+  }, [task, i18n.language]);
 
   useEffect(() => {
     if (!isAuthenticated) {

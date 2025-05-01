@@ -21,13 +21,9 @@ const TaskStepsList = ({ steps, onComplete, onAddComment, onAddPhoto }: TaskStep
     steps.forEach(step => {
       const stepKey = `step_${step.id}`;
       dynamicTranslations.registerContent(stepKey, step.title);
-      
-      // You could add translations for other languages here if available
-      // Example if we had translations from backend:
-      // if (step.titleHi) dynamicTranslations.registerContent(stepKey, step.titleHi, 'hi');
-      // if (step.titleKn) dynamicTranslations.registerContent(stepKey, step.titleKn, 'kn');
+      console.log(`[TaskStepsList] Registered ${stepKey} = "${step.title}"`);
     });
-  }, [steps]);
+  }, [steps, i18n.language]);
   
   return (
     <div className="bg-background dark:bg-background mt-2 px-4">
@@ -43,8 +39,8 @@ const TaskStepsList = ({ steps, onComplete, onAddComment, onAddPhoto }: TaskStep
               key={step.id} 
               step={{
                 ...step,
-                // Use dynamic translation format for title
-                title: t(stepKey, { format: 'dynamic' })
+                // Use dynamic translation with fallback to original title
+                title: t(stepKey, { format: 'dynamic', defaultValue: step.title })
               }} 
               onComplete={onComplete}
               onAddComment={onAddComment}
