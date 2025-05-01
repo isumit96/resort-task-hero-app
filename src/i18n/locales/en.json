@@ -38,6 +38,11 @@
     "assignedTo": "Assigned to",
     "department": "Department",
     "status": "Status",
+    "status": {
+      "pending": "Pending",
+      "inprogress": "In Progress",
+      "completed": "Completed" 
+    },
     "todaysTasks": "Today's Tasks",
     "activeTasks": "Active Tasks",
     "pendingTasks": "Pending Tasks",

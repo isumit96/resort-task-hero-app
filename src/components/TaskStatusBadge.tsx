@@ -2,6 +2,7 @@
 import { TaskStatus } from "@/types";
 import { cn } from "@/lib/utils";
 import { Clock, CheckCircle, RotateCw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface TaskStatusBadgeProps {
   status: TaskStatus;
@@ -9,6 +10,8 @@ interface TaskStatusBadgeProps {
 }
 
 const TaskStatusBadge = ({ status, size = "md" }: TaskStatusBadgeProps) => {
+  const { t } = useTranslation();
+  
   const getStatusDetails = (status: TaskStatus) => {
     switch (status) {
       case "pending":
@@ -17,7 +20,7 @@ const TaskStatusBadge = ({ status, size = "md" }: TaskStatusBadgeProps) => {
           textColor: "text-blue-700 dark:text-blue-300",
           borderColor: "border-blue-200 dark:border-blue-700",
           icon: <Clock size={size === "sm" ? 10 : 14} className="mr-1" />,
-          label: "Pending"
+          label: t('tasks.status.pending', 'Pending')
         };
       case "inprogress":
         return {
@@ -25,7 +28,7 @@ const TaskStatusBadge = ({ status, size = "md" }: TaskStatusBadgeProps) => {
           textColor: "text-amber-700 dark:text-amber-300",
           borderColor: "border-amber-200 dark:border-amber-700",
           icon: <RotateCw size={size === "sm" ? 10 : 14} className="mr-1 animate-spin" />,
-          label: "In Progress"
+          label: t('tasks.status.inprogress', 'In Progress')
         };
       case "completed":
         return {
@@ -33,7 +36,7 @@ const TaskStatusBadge = ({ status, size = "md" }: TaskStatusBadgeProps) => {
           textColor: "text-green-700 dark:text-green-300",
           borderColor: "border-green-200 dark:border-green-700",
           icon: <CheckCircle size={size === "sm" ? 10 : 14} className="mr-1" />,
-          label: "Completed"
+          label: t('tasks.status.completed', 'Completed')
         };
       default:
         return {
@@ -41,7 +44,7 @@ const TaskStatusBadge = ({ status, size = "md" }: TaskStatusBadgeProps) => {
           textColor: "text-gray-700 dark:text-gray-300",
           borderColor: "border-gray-200 dark:border-gray-700",
           icon: null,
-          label: status
+          label: t(`tasks.status.${status}`, status)
         };
     }
   };
