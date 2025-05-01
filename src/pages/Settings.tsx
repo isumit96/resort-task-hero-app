@@ -1,74 +1,181 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
+import { useUser } from "@/context/UserContext";
+import { useNavigate } from "react-router-dom";
+import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { LogOut, User, Moon, Sun, Mail, Shield } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { motion } from "framer-motion";
+import { Switch } from "@/components/ui/switch";
+import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import TranslateExistingData from "@/components/TranslateExistingData";
 
 const Settings = () => {
-  const [isLoading, setIsLoading] = useState(false);
+  const { user, logout } = useUser();
+  const navigate = useNavigate();
   const { toast } = useToast();
+  const [darkMode, setDarkMode] = useState(false);
 
-  const clearLocalStorage = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      localStorage.clear();
-      setIsLoading(false);
-      toast({
-        title: "Local storage cleared",
-        description: "All local data has been cleared successfully.",
-      });
-    }, 1000);
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    const isDarkMode = localStorage.getItem('darkMode') === 'true' || 
+                      (!('darkMode' in localStorage) && 
+                       window.matchMedia('(prefers-color-scheme: dark)').matches);
+    
+    setDarkMode(isDarkMode);
+    
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
+  const { data: profile } = useQuery({
+    queryKey: ["userProfile", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id as any)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user
+  });
+
+  const handleLogout = async () => {
+    await logout();
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out."
+    });
+    navigate("/");
+  };
+
+  const toggleDarkMode = () => {
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    
+    if (newDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    
+    localStorage.setItem('darkMode', newDarkMode.toString());
+    
+    toast({
+      title: newDarkMode ? "Dark mode enabled" : "Light mode enabled",
+      description: newDarkMode 
+        ? "The application is now using dark theme" 
+        : "The application is now using light theme"
+    });
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Header title="Settings" showBackButton={true} />
+      <Header title="Settings" showBackButton showSettings={false} />
       
-      <div className="flex-1 p-4 pb-24">
-        <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid grid-cols-2 mb-4">
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="translations">Translations</TabsTrigger>
-          </TabsList>
+      <div className="flex-1 overflow-y-auto px-4 py-6 pb-24 max-w-2xl mx-auto w-full">
+        <motion.div 
+          initial={{ y: 10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="space-y-6"
+        >
+          {user && (
+            <Card className="overflow-hidden border-border/40 shadow-card">
+              <CardHeader className="bg-primary/5 border-b border-border/40 pb-4">
+                <div className="flex items-center gap-4">
+                  <div className="bg-primary/10 h-16 w-16 rounded-full flex items-center justify-center">
+                    <User className="h-8 w-8 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl">{profile?.username || 'User'}</CardTitle>
+                    <CardDescription className="text-sm">
+                      {profile?.role || 'Resort Staff'}
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-4">
+                <div className="flex items-center gap-3 p-2">
+                  <Mail className="text-muted-foreground h-5 w-5" />
+                  <div>
+                    <div className="text-sm font-medium">Email</div>
+                    <div className="text-sm text-muted-foreground">{user.email}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-2">
+                  <Shield className="text-muted-foreground h-5 w-5" />
+                  <div>
+                    <div className="text-sm font-medium">Account Type</div>
+                    <div className="text-sm text-muted-foreground">{profile?.role === 'manager' ? 'Manager' : 'Employee'}</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
           
-          <TabsContent value="general" className="space-y-6">
-            <div className="bg-card rounded-lg p-4 space-y-4">
-              <h3 className="text-lg font-medium">Language</h3>
-              <LanguageSwitcher />
-            </div>
-            
-            <div className="bg-card rounded-lg p-4 space-y-4">
-              <h3 className="text-lg font-medium">Storage</h3>
-              <p className="text-sm text-muted-foreground">
-                Clear all locally stored data. This will not affect server data.
-              </p>
-              <Button 
-                variant="destructive" 
-                onClick={clearLocalStorage} 
-                disabled={isLoading}
-              >
-                {isLoading ? "Clearing..." : "Clear Local Storage"}
-              </Button>
-            </div>
-          </TabsContent>
+          <Card className="border-border/40 shadow-card">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                {darkMode ? (
+                  <Moon className="h-5 w-5 text-primary" />
+                ) : (
+                  <Sun className="h-5 w-5 text-amber-500" />
+                )}
+                {t('settings.appearance')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <div className="font-medium">{t('settings.darkMode')}</div>
+                    <div className="text-sm text-muted-foreground">{t('settings.darkModeDescription')}</div>
+                  </div>
+                  <Switch
+                    checked={darkMode}
+                    onCheckedChange={toggleDarkMode}
+                    className="data-[state=checked]:bg-primary"
+                  />
+                </div>
+                
+                <div className="border-t pt-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <div className="font-medium">{t('settings.language')}</div>
+                      <div className="text-sm text-muted-foreground">{t('settings.languageDescription')}</div>
+                    </div>
+                    <LanguageSwitcher />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           
-          <TabsContent value="translations" className="space-y-6">
-            <div className="bg-card rounded-lg p-4 space-y-4">
-              <h3 className="text-lg font-medium">Translate Existing Data</h3>
-              <p className="text-sm text-muted-foreground">
-                Use this utility to translate all existing task templates and steps
-                to supported languages (Hindi and Kannada).
-              </p>
-              <TranslateExistingData />
-            </div>
-          </TabsContent>
-        </Tabs>
+          <Button 
+            variant="destructive" 
+            className="w-full shadow-lg hover:shadow-destructive/25 transition-all"
+            onClick={handleLogout}
+          >
+            <LogOut size={18} className="mr-2" />
+            Log Out
+          </Button>
+        </motion.div>
       </div>
       
+      <div className="h-16" />
       <BottomNavigation />
     </div>
   );

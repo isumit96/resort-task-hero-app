@@ -3,6 +3,3 @@ project_id = "btpyziqdiayfezhvcfof"
 
 [functions.translate]
 verify_jwt = false
-
-[functions.translate-existing-data]
-verify_jwt = false
