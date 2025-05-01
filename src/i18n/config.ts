@@ -32,6 +32,7 @@ i18n
       if (debugMode) {
         console.log(`Missing translation key: [${lng}] ${ns}:${key} => fallback: "${fallbackValue}"`);
       }
+      // Always return the fallback value (original text) if available
       return fallbackValue || key;
     },
     returnNull: false,
@@ -40,7 +41,7 @@ i18n
     keySeparator: '.',
     nsSeparator: ':',
     parseMissingKeyHandler: (key) => {
-      // Return the original key as a reasonable fallback
+      // Return the original key as fallback
       return key;
     }
   });

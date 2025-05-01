@@ -54,9 +54,9 @@ export const useTasks = (isManager: boolean = false) => {
         
         return {
           id: task.id,
-          title: task.title, // Original title from DB
+          title: task.title || '', // Ensure we never have null/undefined
           titleKey, // Translation key for this specific task
-          dueTime: task.due_time ? new Date(task.due_time).toLocaleString() : '',
+          dueTime: task.due_time ? new Date(task.due_time).toISOString() : '',
           location: task.location || '',
           locationKey, // Translation key for the location
           status: task.status,
@@ -71,11 +71,11 @@ export const useTasks = (isManager: boolean = false) => {
             
             return {
               id: step.id,
-              title: step.title, // Original title from DB
+              title: step.title || '', // Ensure we never have null/undefined
               titleKey: stepTitleKey, // Translation key for this step
               isCompleted: step.is_completed,
               requiresPhoto: step.requires_photo,
-              comment: step.comment,
+              comment: step.comment || '',
               commentKey: stepCommentKey, // Translation key for the comment
               photoUrl: step.photo_url,
               isOptional: step.is_optional || false,
