@@ -4,19 +4,18 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Task } from "@/types";
 import { useUser } from "@/context/UserContext";
 import { useToast } from "@/hooks/use-toast";
-import { useTranslation } from "react-i18next";
 
 export const useTasks = (isManager: boolean = false) => {
   const { user } = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { t, i18n } = useTranslation();
   
   return useQuery({
-    queryKey: ["tasks", user?.id, isManager, i18n.language],
+    queryKey: ["tasks", user?.id, isManager],
     queryFn: async (): Promise<Task[]> => {
       if (!user) return [];
       
+      // Create a single query based on role to reduce redundant API calls
       let query = supabase
         .from("tasks")
         .select(`
@@ -26,6 +25,7 @@ export const useTasks = (isManager: boolean = false) => {
         `)
         .order('created_at', { ascending: false });
 
+      // If not a manager, only fetch tasks assigned to the user
       if (!isManager) {
         query = query.eq('assigned_to', user.id as any);
       }
@@ -36,61 +36,43 @@ export const useTasks = (isManager: boolean = false) => {
         console.error("Error fetching tasks:", error);
         toast({
           variant: "destructive",
-          title: t("errors.loadingTasks"),
+          title: "Error loading tasks",
           description: error.message,
         });
         throw error;
       }
 
+      // Handle empty data case more efficiently
       if (!data || !Array.isArray(data)) {
         return [];
       }
-      
-      // Process tasks and prepare for translation
-      return data.map((task: any) => {
-        // Generate translation keys based on task ID
-        const titleKey = `tasks.${task.id}.title`;
-        const locationKey = `tasks.${task.id}.location`;
-        
-        return {
-          id: task.id,
-          title: task.title || '', // Ensure we never have null/undefined
-          titleKey, // Translation key for this specific task
-          dueTime: task.due_time ? new Date(task.due_time).toISOString() : '',
-          location: task.location || '',
-          locationKey, // Translation key for the location
-          status: task.status,
-          assignedTo: task.assigned_to,
-          assigneeName: task.profiles?.username || t('tasks.unassigned'),
-          createdAt: task.created_at,
-          completedAt: task.completed_at,
-          deadline: task.deadline,
-          description: task.description || '',
-          photoUrl: task.photo_url,
-          videoUrl: task.video_url,
-          steps: (task.steps || []).map((step: any) => {
-            const stepTitleKey = `tasks.${task.id}.step.${step.id}.title`;
-            const stepCommentKey = step.comment ? `tasks.${task.id}.step.${step.id}.comment` : undefined;
-            
-            return {
-              id: step.id,
-              title: step.title || '', // Ensure we never have null/undefined
-              titleKey: stepTitleKey, // Translation key for this step
-              isCompleted: step.is_completed,
-              requiresPhoto: step.requires_photo,
-              comment: step.comment || '',
-              commentKey: stepCommentKey, // Translation key for the comment
-              photoUrl: step.photo_url,
-              isOptional: step.is_optional || false,
-              interactionType: step.interaction_type || 'checkbox'
-            };
-          })
-        };
-      });
+
+      // Transform the data once and reuse to avoid repeated transformations
+      return data.map((task: any) => ({
+        id: task.id,
+        title: task.title,
+        dueTime: task.due_time ? new Date(task.due_time).toLocaleString() : '',
+        location: task.location || '',
+        status: task.status,
+        assignedTo: task.assigned_to,
+        assigneeName: task.profiles?.username || 'Unassigned',
+        createdAt: task.created_at,
+        completedAt: task.completed_at,
+        deadline: task.deadline,
+        steps: (task.steps || []).map((step: any) => ({
+          id: step.id,
+          title: step.title,
+          isCompleted: step.is_completed,
+          requiresPhoto: step.requires_photo,
+          comment: step.comment,
+          photoUrl: step.photo_url,
+          isOptional: step.is_optional || false
+        }))
+      }));
     },
     enabled: !!user?.id,
-    staleTime: 1000 * 60,
-    refetchOnWindowFocus: false,
-    refetchOnMount: true
+    staleTime: 1000 * 60, // Cache data for 1 minute before refetching
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
+    refetchOnMount: true // But do refetch when component mounts
   });
 };

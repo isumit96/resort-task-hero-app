@@ -7,8 +7,6 @@ import enTranslations from './locales/en.json';
 import hiTranslations from './locales/hi.json';
 import knTranslations from './locales/kn.json';
 
-const debugMode = true;
-
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
@@ -19,34 +17,9 @@ i18n
       kn: { translation: knTranslations }
     },
     fallbackLng: 'en',
-    debug: debugMode,
     interpolation: {
       escapeValue: false
-    },
-    detection: {
-      order: ['localStorage', 'navigator'],
-      caches: ['localStorage']
-    },
-    saveMissing: false,
-    missingKeyHandler: (lng, ns, key, fallbackValue) => {
-      if (debugMode) {
-        console.log(`Missing translation key: [${lng}] ${ns}:${key} => fallback: "${fallbackValue}"`);
-      }
-      // Always return the fallback value (original text) if available
-      return fallbackValue || key;
-    },
-    returnNull: false,
-    returnEmptyString: false,
-    returnObjects: true,
-    keySeparator: '.',
-    nsSeparator: ':',
-    parseMissingKeyHandler: (key) => {
-      // Return the original key as fallback
-      return key;
     }
   });
-
-// Log current language on initialization
-console.log('i18n initialized with language:', i18n.language);
 
 export default i18n;

@@ -53,12 +53,7 @@
     "stepsCompleted": "steps completed",
     "completed": "Task Completed",
     "incomplete": "Task Incomplete",
-    "no": "No",
-    "unassigned": "Unassigned",
-    "fetchError": "Failed to fetch task details",
-    "noTaskId": "No task ID provided",
-    "taskNotFound": "Task not found",
-    "noSteps": "No steps available for this task"
+    "no": "No"
   },
   "settings": {
     "appearance": "Appearance",

@@ -17,8 +17,6 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import TaskDescription from "@/components/TaskDescription";
 
 const TaskDetail = () => {
   const { taskId } = useParams<{ taskId: string }>();
@@ -27,14 +25,14 @@ const TaskDetail = () => {
   const { toast } = useToast();
   const { handleStepComplete, handleAddComment, handleAddPhoto, handleTaskStatusUpdate } = useTaskOperations(taskId);
   const [allRequiredStepsCompleted, setAllRequiredStepsCompleted] = useState(false);
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
   const { data: task, error, isLoading } = useQuery({
-    queryKey: ["task", taskId, i18n.language], // Add language as dependency to refetch when language changes
+    queryKey: ["task", taskId],
     queryFn: async (): Promise<Task | null> => {
-      if (!taskId) throw new Error(t("tasks.noTaskId"));
+      if (!taskId) throw new Error("No task ID provided");
 
-      const { data: task, error: taskError } = await supabase
+      const { data: task, error } = await supabase
         .from("tasks")
         .select(`
           *,
@@ -43,50 +41,28 @@ const TaskDetail = () => {
         .eq('id', taskId)
         .single();
 
-      if (taskError) throw taskError;
+      if (error) throw error;
       if (!task) return null;
-
-      // Create translation keys for this task
-      const titleKey = `tasks.${task.id}.title`;
-      const locationKey = `tasks.${task.id}.location`;
-      const descriptionKey = `tasks.${task.id}.description`;
-
-      console.log('Fetching task data with language:', i18n.language);
-      console.log('Task ID being fetched:', task.id);
 
       return {
         id: task.id,
         title: task.title,
-        titleKey, // Include translation key
-        dueTime: new Date(task.due_time).toISOString(),
-        location: task.location || '',
-        locationKey, // Include translation key
+        dueTime: new Date(task.due_time).toLocaleString(),
+        location: task.location,
         status: task.status,
         assignedTo: task.assigned_to,
         createdAt: task.created_at,
         completedAt: task.completed_at,
-        deadline: task.deadline,
-        description: task.description || '',
-        descriptionKey,
-        photoUrl: task.photo_url,
-        videoUrl: task.video_url,
-        steps: (task.steps || []).map((step: any) => {
-          const stepTitleKey = `tasks.${task.id}.step.${step.id}.title`;
-          const stepCommentKey = step.comment ? `tasks.${task.id}.step.${step.id}.comment` : undefined;
-          
-          return {
-            id: step.id,
-            title: step.title, // Original title from DB
-            titleKey: stepTitleKey,
-            isCompleted: step.is_completed,
-            requiresPhoto: step.requires_photo,
-            comment: step.comment,
-            commentKey: stepCommentKey,
-            photoUrl: step.photo_url,
-            isOptional: step.is_optional || false,
-            interactionType: step.interaction_type || 'checkbox'
-          };
-        })
+        steps: task.steps.map((step: any) => ({
+          id: step.id,
+          title: step.title,
+          isCompleted: step.is_completed,
+          requiresPhoto: step.requires_photo,
+          comment: step.comment,
+          photoUrl: step.photo_url,
+          isOptional: step.is_optional || false,
+          interactionType: step.interaction_type || 'checkbox'
+        }))
       };
     },
     staleTime: 1000,
@@ -144,21 +120,6 @@ const TaskDetail = () => {
     });
   };
 
-  const handleDescriptionChange = () => {
-    // This would be implemented if editing task descriptions was a feature
-    console.log("Description change not implemented yet");
-  };
-
-  const handlePhotoUpload = () => {
-    // This would be implemented if uploading photos to tasks was a feature
-    console.log("Photo upload not implemented yet");
-  };
-
-  const handleVideoUpload = () => {
-    // This would be implemented if uploading videos to tasks was a feature
-    console.log("Video upload not implemented yet");
-  };
-
   if (isLoading || !task) {
     return <LoadingState title={t('tasks.taskDetails')} />;
   }
@@ -167,26 +128,15 @@ const TaskDetail = () => {
     return <ErrorState error={error} title={t('tasks.taskDetails')} />;
   }
 
+  const completedSteps = task.steps.filter(s => s.isCompleted === true).length;
+  const isCompleted = task.status === 'completed';
+
   return (
     <div className="flex flex-col h-screen bg-background dark:bg-[#121212]">
-      <Header showBackButton title={t('tasks.taskDetails')} />
+      <Header showBackButton title={`${task.title} - ${task.location}`} />
       
       <div className="flex-1 overflow-y-auto pb-24 bg-background dark:bg-[#121212]">
         <TaskHeader task={task} />
-        
-        {task.description && (
-          <div className="px-4 py-4 bg-card border-b border-border">
-            <TaskDescription
-              description={task.description}
-              descriptionKey={task.descriptionKey}
-              onDescriptionChange={handleDescriptionChange}
-              onPhotoUpload={handlePhotoUpload}
-              onVideoUpload={handleVideoUpload}
-              photoUrl={task.photoUrl}
-              videoUrl={task.videoUrl}
-            />
-          </div>
-        )}
         
         <TaskStepsList
           steps={task.steps}
@@ -198,36 +148,23 @@ const TaskDetail = () => {
         <div className="px-4 py-4 bg-background dark:bg-[#121212]">
           <TaskStatus
             status={task.status}
-            completedSteps={task.steps.filter(s => s.isCompleted === true).length}
+            completedSteps={completedSteps}
             totalSteps={task.steps.length}
           />
         
-          {task.status !== 'completed' && (
+          {!isCompleted && (
             <div className="mt-6 bg-background dark:bg-[#121212]">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="w-full">
-                      <Button 
-                        className="w-full py-6 text-base shadow-lg hover:shadow-primary/25 transition-all duration-300 animate-fade-in hover:bg-primary/90" 
-                        disabled={!allRequiredStepsCompleted}
-                        onClick={handleMarkComplete}
-                        type="button"
-                        variant="default"
-                        size="default"
-                      >
-                        <CheckCircle2 className="mr-2" />
-                        {t('tasks.markComplete')}
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  {!allRequiredStepsCompleted && (
-                    <TooltipContent>
-                      <p>{t('tasks.completeRequiredSteps')}</p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
+              <Button 
+                className="w-full py-6 text-base shadow-lg hover:shadow-primary/25 transition-all duration-300 animate-fade-in hover:bg-primary/90" 
+                disabled={!allRequiredStepsCompleted}
+                onClick={handleMarkComplete}
+                type="button"
+                variant="default"
+                size="default"
+              >
+                <CheckCircle2 className="mr-2" />
+                {t('tasks.markComplete')}
+              </Button>
               {!allRequiredStepsCompleted && (
                 <p className="text-sm text-muted-foreground dark:text-muted-foreground/80 mt-2 text-center">
                   {t('tasks.completeRequiredSteps')}

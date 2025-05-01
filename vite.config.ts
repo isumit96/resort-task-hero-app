@@ -23,12 +23,6 @@ export default defineConfig(({ mode }) => ({
   build: {
     // Enable minification in production
     minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: mode === 'production',
-        drop_debugger: mode === 'production'
-      }
-    },
     // Cache busting
     rollupOptions: {
       output: {
@@ -43,11 +37,6 @@ export default defineConfig(({ mode }) => ({
             '@/components/ui'
           ]
         }
-      },
-      // Prevent directory imports without index.ts
-      onwarn(warning, warn) {
-        if (warning.code === 'EMPTY_BUNDLE') return;
-        warn(warning);
       }
     },
     // Reduce chunk size
