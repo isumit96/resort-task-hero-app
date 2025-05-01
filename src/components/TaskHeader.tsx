@@ -39,10 +39,14 @@ const TaskHeader = ({ task }: TaskHeaderProps) => {
     }
   };
 
+  // Check if translations are still loading
+  const isTitleLoading = i18n.language !== 'en' && dynamicTranslations.isTranslationLoading(taskTitleKey);
+  const isLocationLoading = i18n.language !== 'en' && dynamicTranslations.isTranslationLoading(taskLocationKey);
+
   return (
     <div className="bg-card px-4 py-4 border-b border-border">
       <div className="flex justify-between items-start">
-        <h1 className="text-xl font-semibold text-foreground">
+        <h1 className={`text-xl font-semibold text-foreground ${isTitleLoading ? 'animate-pulse' : ''}`}>
           {/* Use dynamic translation with fallback to original title */}
           {t(taskTitleKey, { format: 'dynamic', defaultValue: task.title })}
         </h1>
@@ -57,7 +61,7 @@ const TaskHeader = ({ task }: TaskHeaderProps) => {
         
         <div className="flex items-center text-muted-foreground">
           <MapPin size={16} className="mr-1" />
-          <span className="text-sm">
+          <span className={`text-sm ${isLocationLoading ? 'animate-pulse' : ''}`}>
             {/* Use dynamic translation with fallback to original location */}
             {t(taskLocationKey, { format: 'dynamic', defaultValue: task.location })}
           </span>

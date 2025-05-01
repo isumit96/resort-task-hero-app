@@ -50,7 +50,15 @@ const TaskDetail = () => {
       if (error) throw error;
       if (!task) return null;
 
-      // Ensure dynamic translations are registered immediately for all supported languages
+      // Query existing translations for this task
+      const { data: translations } = await supabase
+        .from("translations")
+        .select('*')
+        .or(`content_id.eq.${task.id},content_id.in.(${task.steps.map(s => s.id).join(',')})`);
+      
+      console.log(`[TaskDetail] Found ${translations?.length || 0} existing translations`);
+
+      // Ensure dynamic translations are registered immediately for task data
       const taskTitleKey = `task_title_${task.id}`;
       const taskLocationKey = `task_location_${task.id}`;
       
@@ -72,6 +80,38 @@ const TaskDetail = () => {
 
       // Log all registered translations for debugging
       logDynamicTranslations();
+
+      // If this is a new task without translations, queue it for translation
+      if (!translations || translations.length === 0) {
+        console.log('[TaskDetail] No existing translations found, queueing translation job');
+        
+        try {
+          // Create a translation job for the task and its steps
+          const items = [
+            { contentType: 'task_title', contentId: task.id, text: task.title },
+            { contentType: 'task_location', contentId: task.id, text: task.location }
+          ];
+          
+          // Add steps to the translation job
+          if (task.steps && Array.isArray(task.steps)) {
+            task.steps.forEach((step: any) => {
+              items.push({ contentType: 'step', contentId: step.id, text: step.title });
+            });
+          }
+          
+          // Call the translation edge function
+          const response = await supabase.functions.invoke('translate', {
+            body: {
+              items,
+              targetLanguages: ['hi', 'kn']
+            }
+          });
+          
+          console.log('[TaskDetail] Created translation job:', response);
+        } catch (error) {
+          console.error('[TaskDetail] Error queueing translations:', error);
+        }
+      }
 
       return {
         id: task.id,

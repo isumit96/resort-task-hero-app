@@ -371,6 +371,72 @@ export type Database = {
           },
         ]
       }
+      translation_jobs: {
+        Row: {
+          completed_at: string | null
+          content_items: Json
+          created_at: string | null
+          error_message: string | null
+          id: string
+          status: Database["public"]["Enums"]["translation_job_status"]
+          target_langs: string[]
+        }
+        Insert: {
+          completed_at?: string | null
+          content_items: Json
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["translation_job_status"]
+          target_langs: string[]
+        }
+        Update: {
+          completed_at?: string | null
+          content_items?: Json
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["translation_job_status"]
+          target_langs?: string[]
+        }
+        Relationships: []
+      }
+      translations: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string | null
+          id: string
+          source_lang: string
+          source_text: string
+          target_lang: string
+          translated_text: string
+          updated_at: string | null
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string | null
+          id?: string
+          source_lang?: string
+          source_text: string
+          target_lang: string
+          translated_text: string
+          updated_at?: string | null
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          id?: string
+          source_lang?: string
+          source_text?: string
+          target_lang?: string
+          translated_text?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -387,6 +453,7 @@ export type Database = {
         | "Gardening"
       step_interaction_type: "checkbox" | "yes_no"
       task_status: "pending" | "inprogress" | "completed"
+      translation_job_status: "pending" | "completed" | "failed"
       user_role: "employee" | "manager"
     }
     CompositeTypes: {
@@ -512,6 +579,7 @@ export const Constants = {
       ],
       step_interaction_type: ["checkbox", "yes_no"],
       task_status: ["pending", "inprogress", "completed"],
+      translation_job_status: ["pending", "completed", "failed"],
       user_role: ["employee", "manager"],
     },
   },
