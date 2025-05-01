@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
@@ -16,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const TaskDetail = () => {
   const { taskId } = useParams<{ taskId: string }>();
@@ -29,7 +31,7 @@ const TaskDetail = () => {
   const { data: task, error, isLoading } = useQuery({
     queryKey: ["task", taskId],
     queryFn: async (): Promise<Task | null> => {
-      if (!taskId) throw new Error("No task ID provided");
+      if (!taskId) throw new Error(t("tasks.noTaskId"));
 
       const { data: task, error: taskError } = await supabase
         .from("tasks")
@@ -150,17 +152,30 @@ const TaskDetail = () => {
         
           {task.status !== 'completed' && (
             <div className="mt-6 bg-background dark:bg-[#121212]">
-              <Button 
-                className="w-full py-6 text-base shadow-lg hover:shadow-primary/25 transition-all duration-300 animate-fade-in hover:bg-primary/90" 
-                disabled={!allRequiredStepsCompleted}
-                onClick={() => handleTaskStatusUpdate('completed')}
-                type="button"
-                variant="default"
-                size="default"
-              >
-                <CheckCircle2 className="mr-2" />
-                {t('tasks.markComplete')}
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="w-full">
+                      <Button 
+                        className="w-full py-6 text-base shadow-lg hover:shadow-primary/25 transition-all duration-300 animate-fade-in hover:bg-primary/90" 
+                        disabled={!allRequiredStepsCompleted}
+                        onClick={() => handleTaskStatusUpdate('completed')}
+                        type="button"
+                        variant="default"
+                        size="default"
+                      >
+                        <CheckCircle2 className="mr-2" />
+                        {t('tasks.markComplete')}
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  {!allRequiredStepsCompleted && (
+                    <TooltipContent>
+                      <p>{t('tasks.completeRequiredSteps')}</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
               {!allRequiredStepsCompleted && (
                 <p className="text-sm text-muted-foreground dark:text-muted-foreground/80 mt-2 text-center">
                   {t('tasks.completeRequiredSteps')}

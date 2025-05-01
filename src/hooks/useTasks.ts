@@ -46,11 +46,14 @@ export const useTasks = (isManager: boolean = false) => {
         return [];
       }
 
+      // Process tasks and prepare for translation
       return data.map((task: any) => ({
         id: task.id,
-        title: task.title,
+        title: task.title, // Original title from DB
+        titleKey: `task.${task.id}.title`, // Translation key if needed
         dueTime: task.due_time ? new Date(task.due_time).toLocaleString() : '',
         location: task.location || '',
+        locationKey: `task.${task.id}.location`, // Translation key if needed
         status: task.status,
         assignedTo: task.assigned_to,
         assigneeName: task.profiles?.username || t('tasks.unassigned'),
@@ -59,10 +62,12 @@ export const useTasks = (isManager: boolean = false) => {
         deadline: task.deadline,
         steps: (task.steps || []).map((step: any) => ({
           id: step.id,
-          title: step.title,
+          title: step.title, // Original title from DB
+          titleKey: `task.${task.id}.step.${step.id}.title`, // Translation key if needed
           isCompleted: step.is_completed,
           requiresPhoto: step.requires_photo,
           comment: step.comment,
+          commentKey: step.comment ? `task.${task.id}.step.${step.id}.comment` : undefined,
           photoUrl: step.photo_url,
           isOptional: step.is_optional || false,
           interactionType: step.interaction_type || 'checkbox'

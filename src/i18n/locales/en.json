@@ -1,3 +1,4 @@
+
 {
   "common": {
     "loading": "Loading...",
@@ -56,7 +57,8 @@
     "unassigned": "Unassigned",
     "fetchError": "Failed to fetch task details",
     "noTaskId": "No task ID provided",
-    "taskNotFound": "Task not found"
+    "taskNotFound": "Task not found",
+    "noSteps": "No steps available for this task"
   },
   "settings": {
     "appearance": "Appearance",

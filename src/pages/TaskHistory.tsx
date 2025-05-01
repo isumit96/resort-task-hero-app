@@ -45,7 +45,7 @@ const TaskHistory = () => {
         location: task.location,
         status: task.status,
         assignedTo: task.assigned_to,
-        assigneeName: task.profiles?.username || 'Unassigned',
+        assigneeName: task.profiles?.username || t('tasks.unassigned'),
         createdAt: task.created_at,
         completedAt: task.completed_at,
         deadline: task.deadline,
@@ -56,7 +56,8 @@ const TaskHistory = () => {
           requiresPhoto: step.requires_photo,
           comment: step.comment,
           photoUrl: step.photo_url,
-          isOptional: step.is_optional
+          isOptional: step.is_optional || false,
+          interactionType: step.interaction_type || 'checkbox'
         }))
       }));
     }

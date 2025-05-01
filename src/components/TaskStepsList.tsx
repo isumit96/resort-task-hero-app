@@ -28,6 +28,12 @@ const TaskStepsList = ({ steps, onComplete, onAddComment, onAddPhoto }: TaskStep
           />
         ))}
       </div>
+      
+      {steps.length === 0 && (
+        <div className="py-6 text-center text-muted-foreground">
+          {t('tasks.noSteps')}
+        </div>
+      )}
     </div>
   );
 };

@@ -1,3 +1,4 @@
+
 {
   "common": {
     "loading": "ಲೋಡ್ ಆಗುತ್ತಿದೆ...",
@@ -56,14 +57,15 @@
     "unassigned": "ನಿಯೋಜಿಸಲಾಗಿಲ್ಲ",
     "fetchError": "ಕಾರ್ಯ ವಿವರಗಳನ್ನು ಪಡೆಯಲು ವಿಫಲವಾಗಿದೆ",
     "noTaskId": "ಯಾವುದೇ ಕಾರ್ಯ ID ಒದಗಿಸಲಾಗಿಲ್ಲ",
-    "taskNotFound": "ಕಾರ್ಯ ಕಂಡುಬಂದಿಲ್ಲ"
+    "taskNotFound": "ಕಾರ್ಯ ಕಂಡುಬಂದಿಲ್ಲ",
+    "noSteps": "ಈ ಕಾರ್ಯಕ್ಕೆ ಯಾವುದೇ ಹಂತಗಳು ಲಭ್ಯವಿಲ್ಲ"
   },
   "settings": {
     "appearance": "ನೋಟ",
     "darkMode": "ಡಾರ್ಕ್ ಮೋಡ್",
     "darkModeDescription": "ಡಾರ್ಕ್ ಥೀಮ್ ಟಾಗಲ್ ಮಾಡಿ",
     "language": "ಭಾಷೆ",
-    "languageDescription": "ನಿಮ್ಮ ಆದ���ಯತೆಯ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+    "languageDescription": "ನಿಮ್ಮ ಆದಯತೆಯ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ",
     "profile": "ಪ್ರೊಫೈಲ್",
     "accountType": "ಖಾತೆ ಪ್ರಕಾರ",
     "logout": "ಲಾಗ್ ಔಟ್",
