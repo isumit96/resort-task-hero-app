@@ -52,10 +52,10 @@ const TaskDetail = () => {
       return {
         id: task.id,
         title: task.title,
-        titleKey: titleKey, // Include translation key
+        titleKey, // Include translation key
         dueTime: new Date(task.due_time).toLocaleString(),
         location: task.location || '',
-        locationKey: locationKey, // Include translation key
+        locationKey, // Include translation key
         status: task.status,
         assignedTo: task.assigned_to,
         createdAt: task.created_at,
