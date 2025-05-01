@@ -25,8 +25,8 @@ export default defineConfig(({ mode }) => ({
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.json']
   },
   build: {
-    // Enable minification in production
-    minify: 'terser',
+    // Use esbuild for minification instead of terser
+    minify: mode === 'production' ? 'esbuild' : false,
     // Cache busting
     rollupOptions: {
       output: {

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
@@ -17,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { dynamicTranslations } from "@/i18n/config";
 
 const TaskDetail = () => {
   const { taskId } = useParams<{ taskId: string }>();
@@ -25,7 +25,7 @@ const TaskDetail = () => {
   const { toast } = useToast();
   const { handleStepComplete, handleAddComment, handleAddPhoto, handleTaskStatusUpdate } = useTaskOperations(taskId);
   const [allRequiredStepsCompleted, setAllRequiredStepsCompleted] = useState(false);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const { data: task, error, isLoading } = useQuery({
     queryKey: ["task", taskId],
@@ -43,6 +43,22 @@ const TaskDetail = () => {
 
       if (error) throw error;
       if (!task) return null;
+
+      // Register dynamic translations immediately after fetching task data
+      const taskTitleKey = `task_title_${task.id}`;
+      const taskLocationKey = `task_location_${task.id}`;
+      
+      // Register content in English (or whatever language the content is in from the DB)
+      dynamicTranslations.registerContent(taskTitleKey, task.title);
+      dynamicTranslations.registerContent(taskLocationKey, task.location);
+      
+      // Register each step's title as well
+      if (task.steps && Array.isArray(task.steps)) {
+        task.steps.forEach((step: any) => {
+          const stepKey = `step_${step.id}`;
+          dynamicTranslations.registerContent(stepKey, step.title);
+        });
+      }
 
       return {
         id: task.id,
