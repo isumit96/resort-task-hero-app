@@ -21,16 +21,17 @@ const TaskHeader = ({ task }: TaskHeaderProps) => {
     }
   };
 
-  // Log the task data for debugging
-  console.log('Task in Header:', task);
-  console.log('Task ID:', task.id, 'Title:', task.title, 'TitleKey:', task.titleKey);
-  console.log('Current language:', i18n.language);
-
-  // Get the translated task title, first trying the translation key
-  const taskTitle = task.titleKey ? t(task.titleKey, { defaultValue: task.title || '' }) : task.title;
+  // Get the translated task title
+  // First try to use the translation, if it exists
+  // If there's no translation available, fall back to the original title
+  const taskTitle = task.titleKey 
+    ? t(task.titleKey, { defaultValue: task.title || '' }) 
+    : task.title;
   
-  // Get the translated location, first trying the translation key
-  const taskLocation = task.locationKey ? t(task.locationKey, { defaultValue: task.location || '' }) : task.location;
+  // Get the translated location
+  const taskLocation = task.locationKey 
+    ? t(task.locationKey, { defaultValue: task.location || '' }) 
+    : task.location;
 
   return (
     <div className="bg-card px-4 py-4 border-b border-border">

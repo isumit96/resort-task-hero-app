@@ -47,11 +47,10 @@ export const useTasks = (isManager: boolean = false) => {
       }
 
       console.log('Processing tasks for language:', i18n.language);
-      console.log('Task data sample:', data.length ? data[0].id : 'No tasks');
       
       // Process tasks and prepare for translation
       return data.map((task: any) => {
-        // Generate translation keys based on task ID
+        // Generate simple translation keys based on task ID
         const titleKey = `tasks.${task.id}.title`;
         const locationKey = `tasks.${task.id}.location`;
         const descriptionKey = `tasks.${task.id}.description`;
@@ -72,7 +71,7 @@ export const useTasks = (isManager: boolean = false) => {
           completedAt: task.completed_at,
           deadline: task.deadline,
           steps: (task.steps || []).map((step: any) => {
-            // Create proper translation keys for steps
+            // Create proper translation keys for steps as strings (not objects)
             const stepTitleKey = `tasks.${task.id}.step.${step.id}.title`;
             const stepCommentKey = step.comment ? `tasks.${task.id}.step.${step.id}.comment` : undefined;
             

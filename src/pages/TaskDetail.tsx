@@ -48,6 +48,7 @@ const TaskDetail = () => {
       // Create translation keys for this task
       const titleKey = `tasks.${task.id}.title`;
       const locationKey = `tasks.${task.id}.location`;
+      const descriptionKey = `tasks.${task.id}.description`;
 
       console.log('Fetching task data with language:', i18n.language);
       console.log('Task ID being fetched:', task.id);
@@ -59,15 +60,17 @@ const TaskDetail = () => {
         dueTime: new Date(task.due_time).toLocaleString(),
         location: task.location || '',
         locationKey, // Include translation key
+        description: task.description || '',
+        descriptionKey, // Include translation key for description
         status: task.status,
         assignedTo: task.assigned_to,
         createdAt: task.created_at,
         completedAt: task.completed_at,
         deadline: task.deadline,
         steps: (task.steps || []).map((step: any) => {
-          // Fix: Create proper translation keys as strings instead of objects
+          // Create proper translation keys as strings
           const stepTitleKey = `tasks.${task.id}.step.${step.id}.title`;
-          // Fix: Create comment key as string only when there is a comment
+          // Create comment key as string only when there is a comment
           const stepCommentKey = step.comment ? `tasks.${task.id}.step.${step.id}.comment` : undefined;
           
           return {
@@ -76,7 +79,7 @@ const TaskDetail = () => {
             titleKey: stepTitleKey, // Translation key as string
             isCompleted: step.is_completed,
             requiresPhoto: step.requires_photo,
-            comment: step.comment,
+            comment: step.comment || '',
             commentKey: stepCommentKey, // Translation key as string or undefined
             photoUrl: step.photo_url,
             isOptional: step.is_optional || false,

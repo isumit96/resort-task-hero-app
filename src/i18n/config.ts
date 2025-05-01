@@ -33,10 +33,17 @@ i18n
       console.log(`Missing translation key: [${lng}] ${ns}:${key} => fallback: "${fallbackValue}"`);
     },
     parseMissingKeyHandler: (key) => {
-      // Return the last segment after the last period as a reasonable fallback
+      // For dynamic keys (like task.{id}.title), extract and return the original title
+      // which is typically the last segment in the key
       const segments = key.split('.');
-      const lastSegment = segments[segments.length - 1];
-      return lastSegment || key;
+      if (segments.length >= 4 && segments[2] === 'step') {
+        // For task step keys: tasks.{taskId}.step.{stepId}.title
+        return "Step";  // Generic fallback
+      } else if (segments.length >= 3) {
+        // For task keys: tasks.{taskId}.title
+        return segments[segments.length - 1] || key;
+      }
+      return key;
     }
   });
 
@@ -59,22 +66,6 @@ i18n.on('languageChanged', (lng) => {
         );
         
         console.log(`Found ${taskIds.length} task translations for language ${lng}:`, taskIds);
-        
-        // For each task, check if it has steps
-        taskIds.forEach(taskId => {
-          const taskObj = tasksObject[taskId];
-          if (taskObj && typeof taskObj === 'object' && 'step' in taskObj) {
-            const stepObj = taskObj.step;
-            if (stepObj && typeof stepObj === 'object') {
-              const stepIds = Object.keys(stepObj);
-              console.log(`Task ${taskId} has ${stepIds.length} step translations:`, stepIds);
-            } else {
-              console.log(`Task ${taskId} has no valid step translations`);
-            }
-          } else {
-            console.log(`Task ${taskId} found but has no step object`);
-          }
-        });
       } else {
         console.log(`No task translations found for language ${lng}`);
       }

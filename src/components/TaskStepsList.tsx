@@ -11,10 +11,7 @@ interface TaskStepsListProps {
 }
 
 const TaskStepsList = ({ steps, onComplete, onAddComment, onAddPhoto }: TaskStepsListProps) => {
-  const { t, i18n } = useTranslation();
-  
-  console.log('Steps in TaskStepsList:', steps.length);
-  console.log('Current language:', i18n.language);
+  const { t } = useTranslation();
   
   return (
     <div className="bg-background dark:bg-background mt-2 px-4">
@@ -22,20 +19,17 @@ const TaskStepsList = ({ steps, onComplete, onAddComment, onAddPhoto }: TaskStep
       
       <div className="divide-y divide-gray-100 dark:divide-gray-800">
         {steps.map(step => {
-          console.log('Step:', step.id, 'Title:', step.title, 'TitleKey:', step.titleKey);
+          // Get translated step title, falling back to original title
+          const displayTitle = step.titleKey 
+            ? t(step.titleKey, { defaultValue: step.title }) 
+            : step.title;
           
-          // First try to use the translation key, if it exists
-          let displayTitle = step.title || '';
-          if (step.titleKey) {
-            displayTitle = t(step.titleKey, { defaultValue: step.title || '' });
-          }
+          // Get translated comment, falling back to original comment
+          const displayComment = step.commentKey 
+            ? t(step.commentKey, { defaultValue: step.comment }) 
+            : step.comment;
           
-          // For comments, try the translation key first, then fall back to the raw comment
-          let displayComment = step.comment || '';
-          if (step.commentKey) {
-            displayComment = t(step.commentKey, { defaultValue: step.comment || '' });
-          }
-          
+          // Create a new step object with translated values
           const translatedStep = {
             ...step,
             title: displayTitle,
