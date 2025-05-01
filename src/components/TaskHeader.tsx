@@ -26,14 +26,9 @@ const TaskHeader = ({ task }: TaskHeaderProps) => {
   console.log('Translation key for title:', task.titleKey);
   console.log('Translation key for location:', task.locationKey);
   
-  // Use the task ID specific translation keys
-  const taskTitle = task.titleKey ? 
-    t(task.titleKey, { defaultValue: task.title }) : 
-    task.title;
-    
-  const taskLocation = task.locationKey ? 
-    t(task.locationKey, { defaultValue: task.location }) : 
-    task.location;
+  // Use the task ID specific translation keys with fallback to original text
+  const taskTitle = task.titleKey ? t(task.titleKey, { defaultValue: task.title }) : task.title;
+  const taskLocation = task.locationKey ? t(task.locationKey, { defaultValue: task.location }) : task.location;
 
   return (
     <div className="bg-card px-4 py-4 border-b border-border">

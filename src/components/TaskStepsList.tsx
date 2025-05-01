@@ -24,19 +24,20 @@ const TaskStepsList = ({ steps, onComplete, onAddComment, onAddPhoto }: TaskStep
         {steps.map(step => {
           console.log('Step ID:', step.id, 'Title key:', step.titleKey);
           
-          // Translate using titleKey with fallback to original title
+          // Always use original title as fallback
           const translatedTitle = step.titleKey ? 
             t(step.titleKey, { defaultValue: step.title }) : 
             step.title;
           
-          // Translate comment if it exists and has a translation key
+          // Always use original comment as fallback
           const translatedComment = step.commentKey && step.comment ? 
             t(step.commentKey, { defaultValue: step.comment }) : 
             step.comment;
           
+          // Create a new step object with translated content
           const translatedStep = {
             ...step,
-            title: translatedTitle,
+            title: translatedTitle || step.title, // Make sure title is never empty
             comment: translatedComment
           };
           

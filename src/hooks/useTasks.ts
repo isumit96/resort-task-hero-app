@@ -56,7 +56,7 @@ export const useTasks = (isManager: boolean = false) => {
         
         return {
           id: task.id,
-          title: task.title, // Original title from DB
+          title: task.title || '', // Never return null/undefined for title
           titleKey, // Translation key for this specific task
           dueTime: task.due_time ? new Date(task.due_time).toLocaleString() : '',
           location: task.location || '',
@@ -73,11 +73,11 @@ export const useTasks = (isManager: boolean = false) => {
             
             return {
               id: step.id,
-              title: step.title, // Original title from DB
+              title: step.title || '', // Never return null/undefined for title
               titleKey: stepTitleKey, // Translation key for this step
               isCompleted: step.is_completed,
               requiresPhoto: step.requires_photo,
-              comment: step.comment,
+              comment: step.comment || null,
               commentKey: stepCommentKey, // Translation key for the comment
               photoUrl: step.photo_url,
               isOptional: step.is_optional || false,

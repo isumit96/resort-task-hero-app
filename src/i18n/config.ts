@@ -28,17 +28,18 @@ i18n
       order: ['localStorage', 'navigator'],
       caches: ['localStorage']
     },
-    // Add these options for better debugging and smoother language switching
+    // These settings ensure we always fall back to the original text
     saveMissing: debugMode,
     missingKeyHandler: (lng, ns, key, fallbackValue) => {
       console.log(`Missing translation key: [${lng}] ${ns}:${key} => fallback: "${fallbackValue}"`);
     },
     parseMissingKeyHandler: (key) => {
-      // Return the last segment after the last period as a reasonable fallback
-      const segments = key.split('.');
-      const lastSegment = segments[segments.length - 1];
-      return lastSegment || key;
-    }
+      // Return the original text as fallback
+      return undefined;
+    },
+    // This ensures the original key is returned instead of the last segment
+    returnEmptyString: false,
+    returnNull: false
   });
 
 // Force reload when language changes to ensure all components update correctly
