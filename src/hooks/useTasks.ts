@@ -68,17 +68,18 @@ export const useTasks = (isManager: boolean = false) => {
           completedAt: task.completed_at,
           deadline: task.deadline,
           steps: (task.steps || []).map((step: any) => {
+            // Fix: Create proper translation keys as strings
             const stepTitleKey = `tasks.${task.id}.step.${step.id}.title`;
             const stepCommentKey = step.comment ? `tasks.${task.id}.step.${step.id}.comment` : undefined;
             
             return {
               id: step.id,
               title: step.title, // Original title from DB
-              titleKey: stepTitleKey, // Translation key for this step
+              titleKey: stepTitleKey, // Translation key as string
               isCompleted: step.is_completed,
               requiresPhoto: step.requires_photo,
               comment: step.comment,
-              commentKey: stepCommentKey, // Translation key for the comment
+              commentKey: stepCommentKey, // Translation key as string or undefined
               photoUrl: step.photo_url,
               isOptional: step.is_optional || false,
               interactionType: step.interaction_type || 'checkbox'

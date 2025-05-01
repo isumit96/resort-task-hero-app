@@ -28,7 +28,6 @@ i18n
       order: ['localStorage', 'navigator'],
       caches: ['localStorage']
     },
-    // Add these options for better debugging and smoother language switching
     saveMissing: debugMode,
     missingKeyHandler: (lng, ns, key, fallbackValue) => {
       console.log(`Missing translation key: [${lng}] ${ns}:${key} => fallback: "${fallbackValue}"`);
@@ -44,53 +43,40 @@ i18n
 // Force reload when language changes to ensure all components update correctly
 i18n.on('languageChanged', (lng) => {
   console.log(`Language changed to: ${lng}`);
-  // Explicitly log translation availability
+  
+  // Log translation availability for debugging
   if (debugMode) {
-    // Fix the TypeScript error by checking if resources and translation exist
-    // and using type assertion to access tasks property safely
     const resources = i18n.options.resources?.[lng];
     const translation = resources?.translation as Record<string, any> | undefined;
-    const taskKeys = translation && typeof translation === 'object' && 'tasks' in translation ? 
-      Object.keys(translation.tasks as Record<string, any>).filter(k => k.includes('-')) : 
-      [];
     
-    console.log(`Available task-specific translations: ${taskKeys.length}`, taskKeys);
-    
-    // Add more detailed logging for Hindi translations to help diagnose the issue
-    if (lng === 'hi' && translation && typeof translation === 'object' && 'tasks' in translation) {
-      const tasks = translation.tasks as Record<string, any>;
-      console.log('Hindi tasks available:', Object.keys(tasks));
-      
-      // Check if the specific task ID exists in the Hindi translations
-      const taskId = '6af83dbc-b9f4-4e00-a6b6-a4055324a29c';
-      if (taskId in tasks) {
-        console.log(`Task ${taskId} found in Hindi translations`);
-        if ('step' in tasks[taskId]) {
-          console.log('Steps found for this task:', Object.keys(tasks[taskId].step));
-        } else {
-          console.log('No steps found for this task in Hindi translations');
-        }
+    if (translation && typeof translation === 'object') {
+      // Check for task translations
+      const tasksObject = translation.tasks;
+      if (tasksObject && typeof tasksObject === 'object') {
+        // Find task IDs (guid format)
+        const taskIds = Object.keys(tasksObject).filter(key => 
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(key)
+        );
+        
+        console.log(`Found ${taskIds.length} task translations for language ${lng}:`, taskIds);
+        
+        // For each task, check if it has steps
+        taskIds.forEach(taskId => {
+          const taskObj = tasksObject[taskId];
+          if (taskObj && typeof taskObj === 'object' && 'step' in taskObj) {
+            const stepObj = taskObj.step;
+            if (stepObj && typeof stepObj === 'object') {
+              const stepIds = Object.keys(stepObj);
+              console.log(`Task ${taskId} has ${stepIds.length} step translations:`, stepIds);
+            } else {
+              console.log(`Task ${taskId} has no valid step translations`);
+            }
+          } else {
+            console.log(`Task ${taskId} found but has no step object`);
+          }
+        });
       } else {
-        console.log(`Task ${taskId} not found in Hindi translations`);
-      }
-    }
-    
-    // Similar check for Kannada translations
-    if (lng === 'kn' && translation && typeof translation === 'object' && 'tasks' in translation) {
-      const tasks = translation.tasks as Record<string, any>;
-      console.log('Kannada tasks available:', Object.keys(tasks));
-      
-      // Check if the specific task ID exists in the Kannada translations
-      const taskId = '6af83dbc-b9f4-4e00-a6b6-a4055324a29c';
-      if (taskId in tasks) {
-        console.log(`Task ${taskId} found in Kannada translations`);
-        if ('step' in tasks[taskId]) {
-          console.log('Steps found for this task in Kannada:', Object.keys(tasks[taskId].step));
-        } else {
-          console.log('No steps found for this task in Kannada translations');
-        }
-      } else {
-        console.log(`Task ${taskId} not found in Kannada translations`);
+        console.log(`No task translations found for language ${lng}`);
       }
     }
   }
