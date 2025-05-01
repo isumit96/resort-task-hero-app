@@ -2,6 +2,7 @@
 import { TaskStep as TaskStepType } from "@/types";
 import TaskStep from "./TaskStep";
 import { useTranslation } from "react-i18next";
+import { dynamicTranslations } from "@/i18n/config";
 
 interface TaskStepsListProps {
   steps: TaskStepType[];
@@ -11,7 +12,13 @@ interface TaskStepsListProps {
 }
 
 const TaskStepsList = ({ steps, onComplete, onAddComment, onAddPhoto }: TaskStepsListProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  
+  // Register step titles for translation
+  steps.forEach(step => {
+    const stepKey = `step_${step.id}`;
+    dynamicTranslations.registerContent(stepKey, step.title);
+  });
   
   return (
     <div className="bg-background dark:bg-background mt-2 px-4">
@@ -21,7 +28,11 @@ const TaskStepsList = ({ steps, onComplete, onAddComment, onAddPhoto }: TaskStep
         {steps.map(step => (
           <TaskStep 
             key={step.id} 
-            step={step} 
+            step={{
+              ...step,
+              // Use dynamic translation format for title
+              title: t(`step_${step.id}`, { format: 'dynamic' })
+            }} 
             onComplete={onComplete}
             onAddComment={onAddComment}
             onAddPhoto={onAddPhoto}

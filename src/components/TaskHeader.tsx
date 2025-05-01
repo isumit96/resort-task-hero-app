@@ -4,13 +4,21 @@ import { Clock, MapPin } from "lucide-react";
 import TaskStatusBadge from "./TaskStatusBadge";
 import { formatDistanceToNow } from "date-fns";
 import { useTranslation } from "react-i18next";
+import { dynamicTranslations } from "@/i18n/config";
 
 interface TaskHeaderProps {
   task: Task;
 }
 
 const TaskHeader = ({ task }: TaskHeaderProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  
+  // Register task title and location for translation
+  const taskTitleKey = `task_title_${task.id}`;
+  const taskLocationKey = `task_location_${task.id}`;
+  
+  dynamicTranslations.registerContent(taskTitleKey, task.title);
+  dynamicTranslations.registerContent(taskLocationKey, task.location);
   
   const getRelativeTime = (dateString: string) => {
     try {
@@ -24,7 +32,9 @@ const TaskHeader = ({ task }: TaskHeaderProps) => {
   return (
     <div className="bg-card px-4 py-4 border-b border-border">
       <div className="flex justify-between items-start">
-        <h1 className="text-xl font-semibold text-foreground">{task.title}</h1>
+        <h1 className="text-xl font-semibold text-foreground">
+          {t(taskTitleKey, { format: 'dynamic' })}
+        </h1>
         <TaskStatusBadge status={task.status} />
       </div>
       
@@ -36,7 +46,7 @@ const TaskHeader = ({ task }: TaskHeaderProps) => {
         
         <div className="flex items-center text-muted-foreground">
           <MapPin size={16} className="mr-1" />
-          <span className="text-sm">{task.location}</span>
+          <span className="text-sm">{t(taskLocationKey, { format: 'dynamic' })}</span>
         </div>
       </div>
     </div>
