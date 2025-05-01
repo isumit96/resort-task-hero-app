@@ -103,14 +103,13 @@
   html, body {
     @apply bg-background text-foreground font-inter;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-    overscroll-behavior: contain;
     -webkit-tap-highlight-color: transparent;
-    touch-action: pan-y;
+    /* Fixed positioning approach was causing issues - switch to standard flow */
     height: 100%;
-    width: 100%;
     margin: 0;
     padding: 0;
-    position: fixed;
+    overscroll-behavior: none;
+    position: relative;
     overflow: hidden;
   }
   
@@ -161,6 +160,9 @@
   
   .native-scroll {
     -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+    height: 100%;
+    width: 100%;
   }
   
   /* Helper to prevent text selection on mobile */

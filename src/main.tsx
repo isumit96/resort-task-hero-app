@@ -33,13 +33,20 @@ const setupAndroidBackButton = () => {
 
 // Fix WebView scrolling issues
 const fixWebViewScrolling = () => {
-  // Prevent default touch behavior that might interfere with scrolling
-  document.addEventListener('touchmove', (e) => {
-    // Don't prevent default to allow scrolling
-  }, { passive: true });
-  
   // Enable momentum scrolling on iOS
   document.addEventListener('touchstart', () => {}, { passive: true });
+  
+  // Allow scrolling on Android WebView
+  document.addEventListener('touchmove', (e) => {}, { passive: true });
+  
+  // Fix specific Android WebView scroll issues
+  if (window.navigator.userAgent.includes('Android')) {
+    // Add special handling for Android WebView
+    document.documentElement.style.height = 'initial';
+    document.documentElement.style.overflowY = 'auto';
+    document.body.style.height = 'initial';
+    document.body.style.overflowY = 'auto';
+  }
 };
 
 // Initialize dark mode before rendering
