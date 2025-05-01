@@ -42,8 +42,10 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
       else if (step.isCompleted === false) setYesNoValue("no");
       else setYesNoValue(undefined);
     }
+
+    setComment(step.comment || "");
     // eslint-disable-next-line
-  }, [step.isCompleted]);
+  }, [step.isCompleted, step.comment]);
 
   // Checkbox logic
   const handleCheck = (e: React.ChangeEvent<HTMLInputElement>) => {

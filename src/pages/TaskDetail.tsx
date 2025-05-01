@@ -26,10 +26,10 @@ const TaskDetail = () => {
   const { toast } = useToast();
   const { handleStepComplete, handleAddComment, handleAddPhoto, handleTaskStatusUpdate } = useTaskOperations(taskId);
   const [allRequiredStepsCompleted, setAllRequiredStepsCompleted] = useState(false);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const { data: task, error, isLoading } = useQuery({
-    queryKey: ["task", taskId],
+    queryKey: ["task", taskId, i18n.language], // Add language as dependency to refetch when language changes
     queryFn: async (): Promise<Task | null> => {
       if (!taskId) throw new Error(t("tasks.noTaskId"));
 
@@ -45,21 +45,30 @@ const TaskDetail = () => {
       if (taskError) throw taskError;
       if (!task) return null;
 
+      // Create translation keys for this task
+      const titleKey = `tasks.${task.id}.title`;
+      const locationKey = `tasks.${task.id}.location`;
+
       return {
         id: task.id,
         title: task.title,
+        titleKey: titleKey, // Include translation key
         dueTime: new Date(task.due_time).toLocaleString(),
-        location: task.location,
+        location: task.location || '',
+        locationKey: locationKey, // Include translation key
         status: task.status,
         assignedTo: task.assigned_to,
         createdAt: task.created_at,
         completedAt: task.completed_at,
-        steps: task.steps.map((step: any) => ({
+        deadline: task.deadline,
+        steps: (task.steps || []).map((step: any) => ({
           id: step.id,
           title: step.title,
+          titleKey: `tasks.${task.id}.step.${step.id}.title`,
           isCompleted: step.is_completed,
           requiresPhoto: step.requires_photo,
           comment: step.comment,
+          commentKey: step.comment ? `tasks.${task.id}.step.${step.id}.comment` : undefined,
           photoUrl: step.photo_url,
           isOptional: step.is_optional || false,
           interactionType: step.interaction_type || 'checkbox'
@@ -129,12 +138,20 @@ const TaskDetail = () => {
     return <ErrorState error={error} title={t('tasks.taskDetails')} />;
   }
 
+  // Get translated values
+  const translatedTitle = task.titleKey ? t(task.titleKey, task.title) : task.title;
+  const translatedLocation = task.locationKey ? t(task.locationKey, task.location) : task.location;
+
   return (
     <div className="flex flex-col h-screen bg-background dark:bg-[#121212]">
-      <Header showBackButton title={`${task.title} - ${task.location}`} />
+      <Header showBackButton title={`${translatedTitle} - ${translatedLocation}`} />
       
       <div className="flex-1 overflow-y-auto pb-24 bg-background dark:bg-[#121212]">
-        <TaskHeader task={task} />
+        <TaskHeader task={{
+          ...task,
+          title: translatedTitle,
+          location: translatedLocation
+        }} />
         
         <TaskStepsList
           steps={task.steps}

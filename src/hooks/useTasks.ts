@@ -50,10 +50,10 @@ export const useTasks = (isManager: boolean = false) => {
       return data.map((task: any) => ({
         id: task.id,
         title: task.title, // Original title from DB
-        titleKey: `task.${task.id}.title`, // Translation key if needed
+        titleKey: `tasks.${task.id}.title`, // Translation key if needed
         dueTime: task.due_time ? new Date(task.due_time).toLocaleString() : '',
         location: task.location || '',
-        locationKey: `task.${task.id}.location`, // Translation key if needed
+        locationKey: `tasks.${task.id}.location`, // Translation key if needed
         status: task.status,
         assignedTo: task.assigned_to,
         assigneeName: task.profiles?.username || t('tasks.unassigned'),
@@ -63,11 +63,11 @@ export const useTasks = (isManager: boolean = false) => {
         steps: (task.steps || []).map((step: any) => ({
           id: step.id,
           title: step.title, // Original title from DB
-          titleKey: `task.${task.id}.step.${step.id}.title`, // Translation key if needed
+          titleKey: `tasks.${task.id}.step.${step.id}.title`, // Translation key if needed
           isCompleted: step.is_completed,
           requiresPhoto: step.requires_photo,
           comment: step.comment,
-          commentKey: step.comment ? `task.${task.id}.step.${step.id}.comment` : undefined,
+          commentKey: step.comment ? `tasks.${task.id}.step.${step.id}.comment` : undefined,
           photoUrl: step.photo_url,
           isOptional: step.is_optional || false,
           interactionType: step.interaction_type || 'checkbox'
