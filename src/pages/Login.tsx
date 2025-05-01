@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -19,6 +20,7 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   // Get the redirect location from state, or default to /tasks
   const from = location.state?.from?.pathname || "/tasks";
@@ -34,13 +36,13 @@ const Login = () => {
       } else {
         await signup(email, password);
         toast({
-          title: "Account created",
-          description: "Please check your email to verify your account",
+          title: t('auth.accountCreated'),
+          description: t('auth.checkEmail'),
         });
       }
     } catch (error: any) {
       toast({
-        title: isLogin ? "Login Failed" : "Signup Failed",
+        title: isLogin ? t('errors.loginFailed') : t('errors.signupFailed'),
         description: error.message,
         variant: "destructive",
       });
@@ -72,12 +74,12 @@ const Login = () => {
             </div>
           </div>
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            {isLogin ? "Welcome Back" : "Create Account"}
+            {isLogin ? t('auth.welcome') : t('auth.createAccount')}
           </h1>
           <p className="text-muted-foreground">
             {isLogin 
-              ? "Sign in to access your tasks" 
-              : "Sign up to start managing your tasks"}
+              ? t('auth.loginPrompt')
+              : t('auth.signupPrompt')}
           </p>
         </motion.div>
 
@@ -89,7 +91,7 @@ const Login = () => {
           <div className="bg-card border border-border/40 rounded-xl shadow-card p-6 md:p-8">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-foreground">Email</Label>
+                <Label htmlFor="email" className="text-foreground">{t('auth.emailLabel')}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -97,7 +99,7 @@ const Login = () => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
+                    placeholder={t('auth.emailPlaceholder')}
                     required
                     className="pl-10"
                   />
@@ -105,7 +107,7 @@ const Login = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-foreground">Password</Label>
+                <Label htmlFor="password" className="text-foreground">{t('auth.passwordLabel')}</Label>
                 <div className="relative">
                   <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -128,9 +130,9 @@ const Login = () => {
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : isLogin ? (
-                  "Sign In"
+                  t('auth.signIn')
                 ) : (
-                  "Create Account"
+                  t('auth.createAccount')
                 )}
               </Button>
             </form>
@@ -142,8 +144,8 @@ const Login = () => {
                 className="text-sm text-primary hover:text-primary/80 hover:underline font-medium transition-colors"
               >
                 {isLogin 
-                  ? "Need an account? Sign up" 
-                  : "Already have an account? Sign in"}
+                  ? t('auth.needAccount')
+                  : t('auth.alreadyHaveAccount')}
               </button>
             </div>
           </div>

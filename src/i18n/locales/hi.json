@@ -113,17 +113,25 @@
   },
   "auth": {
     "welcome": "वापसी पर स्वागत है",
-    "loginPrompt": "जारी रखने के लिए साइन इन करें",
-    "emailLabel": "ईमेल पता",
+    "loginPrompt": "अपने कार्यों तक पहुंचने के लिए साइन इन करें",
+    "emailLabel": "ईमेल",
     "passwordLabel": "पासवर्ड",
     "signIn": "साइन इन करें",
     "forgotPassword": "पासवर्ड भूल गए?",
-    "logoutSuccess": "आप सफलतापूर्वक लॉग आउट हो गए हैं।"
+    "logoutSuccess": "आप सफलतापूर्वक लॉग आउट हो गए हैं।",
+    "createAccount": "खाता बनाएँ",
+    "signupPrompt": "अपने कार्यों को प्रबंधित करना शुरू करने के लिए साइन अप करें",
+    "needAccount": "खाता चाहिए? साइन अप करें",
+    "alreadyHaveAccount": "पहले से ही खाता है? साइन इन करें",
+    "emailPlaceholder": "you@example.com",
+    "accountCreated": "खाता बनाया गया",
+    "checkEmail": "कृपया अपना खाता सत्यापित करने के लिए अपना ईमेल देखें"
   },
   "errors": {
     "loadingTasks": "कार्य लोड करने में त्रुटि",
     "generic": "कुछ गलत हो गया",
     "loginFailed": "लॉगिन विफल",
+    "signupFailed": "साइन अप विफल",
     "unauthorized": "अनधिकृत पहुंच",
     "loadingData": "डेटा लोड करने में त्रुटि"
   },

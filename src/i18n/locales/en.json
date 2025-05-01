@@ -112,18 +112,26 @@
     "duplicate": "Duplicate"
   },
   "auth": {
-    "welcome": "Welcome back",
-    "loginPrompt": "Please sign in to continue",
-    "emailLabel": "Email address",
+    "welcome": "Welcome Back",
+    "loginPrompt": "Sign in to access your tasks",
+    "emailLabel": "Email",
     "passwordLabel": "Password",
     "signIn": "Sign In",
     "forgotPassword": "Forgot password?",
-    "logoutSuccess": "You have been successfully logged out."
+    "logoutSuccess": "You have been successfully logged out.",
+    "createAccount": "Create Account",
+    "signupPrompt": "Sign up to start managing your tasks",
+    "needAccount": "Need an account? Sign up",
+    "alreadyHaveAccount": "Already have an account? Sign in",
+    "emailPlaceholder": "you@example.com",
+    "accountCreated": "Account created",
+    "checkEmail": "Please check your email to verify your account"
   },
   "errors": {
     "loadingTasks": "Error loading tasks",
     "generic": "Something went wrong",
-    "loginFailed": "Login failed",
+    "loginFailed": "Login Failed",
+    "signupFailed": "Signup Failed",
     "unauthorized": "Unauthorized access",
     "loadingData": "Error loading data"
   },
