@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
@@ -55,8 +56,8 @@ const Settings = () => {
   const handleLogout = async () => {
     await logout();
     toast({
-      title: "Logged out",
-      description: "You have been successfully logged out."
+      title: t('common.loggedOut'),
+      description: t('auth.logoutSuccess')
     });
     navigate("/");
   };
@@ -74,16 +75,16 @@ const Settings = () => {
     localStorage.setItem('darkMode', newDarkMode.toString());
     
     toast({
-      title: newDarkMode ? "Dark mode enabled" : "Light mode enabled",
+      title: newDarkMode ? t('settings.darkModeEnabled') : t('settings.lightModeEnabled'),
       description: newDarkMode 
-        ? "The application is now using dark theme" 
-        : "The application is now using light theme"
+        ? t('settings.darkModeEnabledDesc') 
+        : t('settings.lightModeEnabledDesc')
     });
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Header title="Settings" showBackButton showSettings={false} />
+      <Header title={t('navigation.settings')} showBackButton showSettings={false} />
       
       <div className="flex-1 overflow-y-auto px-4 py-6 pb-24 max-w-2xl mx-auto w-full">
         <motion.div 
@@ -100,9 +101,9 @@ const Settings = () => {
                     <User className="h-8 w-8 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className="text-xl">{profile?.username || 'User'}</CardTitle>
+                    <CardTitle className="text-xl">{profile?.username || t('common.user')}</CardTitle>
                     <CardDescription className="text-sm">
-                      {profile?.role || 'Resort Staff'}
+                      {profile?.role === 'manager' ? t('settings.manager') : t('settings.employee')}
                     </CardDescription>
                   </div>
                 </div>
@@ -111,15 +112,15 @@ const Settings = () => {
                 <div className="flex items-center gap-3 p-2">
                   <Mail className="text-muted-foreground h-5 w-5" />
                   <div>
-                    <div className="text-sm font-medium">Email</div>
+                    <div className="text-sm font-medium">{t('settings.email')}</div>
                     <div className="text-sm text-muted-foreground">{user.email}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-2">
                   <Shield className="text-muted-foreground h-5 w-5" />
                   <div>
-                    <div className="text-sm font-medium">Account Type</div>
-                    <div className="text-sm text-muted-foreground">{profile?.role === 'manager' ? 'Manager' : 'Employee'}</div>
+                    <div className="text-sm font-medium">{t('settings.accountType')}</div>
+                    <div className="text-sm text-muted-foreground">{profile?.role === 'manager' ? t('settings.manager') : t('settings.employee')}</div>
                   </div>
                 </div>
               </CardContent>
@@ -170,7 +171,7 @@ const Settings = () => {
             onClick={handleLogout}
           >
             <LogOut size={18} className="mr-2" />
-            Log Out
+            {t('settings.logout')}
           </Button>
         </motion.div>
       </div>

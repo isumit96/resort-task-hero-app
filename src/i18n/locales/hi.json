@@ -13,7 +13,10 @@
     "create": "बनाएं",
     "appName": "रिसॉर्ट कार्य",
     "of": "में से",
-    "optional": "वैकल्पिक"
+    "optional": "वैकल्पिक",
+    "user": "उपयोगकर्ता",
+    "unassigned": "असाइन नहीं किया गया",
+    "loggedOut": "लॉग आउट हो गया"
   },
   "navigation": {
     "tasks": "कार्य",
@@ -53,7 +56,10 @@
     "stepsCompleted": "चरण पूरे हुए",
     "completed": "कार्य पूर्ण",
     "incomplete": "कार्य अपूर्ण",
-    "no": "नहीं"
+    "no": "नहीं",
+    "assigned": "कार्य सौंप दिया गया",
+    "assignSuccess": "कार्य सफलतापूर्वक बनाया और सौंपा गया है।",
+    "assignFailed": "कार्य सौंपने में विफल।"
   },
   "settings": {
     "appearance": "दिखावट",
@@ -65,7 +71,13 @@
     "accountType": "खाता प्रकार",
     "logout": "लॉग आउट",
     "logoutConfirm": "क्या आप लॉग आउट करना चाहते हैं?",
-    "email": "ईमेल"
+    "email": "ईमेल",
+    "manager": "प्रबंधक",
+    "employee": "कर्मचारी",
+    "darkModeEnabled": "डार्क मोड सक्षम",
+    "darkModeEnabledDesc": "अब एप्लिकेशन डार्क थीम का उपयोग कर रहा है",
+    "lightModeEnabled": "लाइट मोड सक्षम",
+    "lightModeEnabledDesc": "अब एप्लिकेशन लाइट थीम का उपयोग कर रहा है"
   },
   "templates": {
     "search": "टेम्पलेट्स खोजें...",
@@ -85,7 +97,19 @@
     "yes": "हां",
     "no": "नहीं",
     "addComment": "टिप्पणी जोड़ें...",
-    "editComment": "टिप्पणी संपादित करें"
+    "editComment": "टिप्पणी संपादित करें",
+    "taskTemplates": "कार्य टेम्पलेट्स",
+    "copy": "प्रतिलिपि",
+    "deleted": "टेम्पलेट हटाया गया",
+    "deleteSuccess": "टेम्पलेट सफलतापूर्वक हटा दिया गया है।",
+    "deleteFailed": "टेम्पलेट हटाने में विफल।",
+    "duplicated": "टेम्पलेट की प्रतिलिपि बनाई गई",
+    "duplicateSuccess": "टेम्पलेट की प्रतिलिपि सफलतापूर्वक बनाई गई है।",
+    "duplicateFailed": "टेम्पलेट की प्रतिलिपि बनाने में विफल।",
+    "quickAssign": "त्वरित असाइन",
+    "deleteTemplate": "टेम्पलेट हटाएं",
+    "deleteTemplateConfirm": "क्या आप वाकई इस टेम्पलेट को हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।",
+    "duplicate": "प्रतिलिपि"
   },
   "auth": {
     "welcome": "वापसी पर स्वागत है",
@@ -93,7 +117,8 @@
     "emailLabel": "ईमेल पता",
     "passwordLabel": "पासवर्ड",
     "signIn": "साइन इन करें",
-    "forgotPassword": "पासवर्ड भूल गए?"
+    "forgotPassword": "पासवर्ड भूल गए?",
+    "logoutSuccess": "आप सफलतापूर्वक लॉग आउट हो गए हैं।"
   },
   "errors": {
     "loadingTasks": "कार्य लोड करने में त्रुटि",

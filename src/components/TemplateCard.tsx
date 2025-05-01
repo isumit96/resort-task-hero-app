@@ -1,11 +1,12 @@
 
 import { Button } from "@/components/ui/button";
-import { FileEdit, CopyPlus, Trash2 } from "lucide-react"; // Removed duplicate CopyPlus
+import { FileEdit, CopyPlus, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { QuickAssignDialog } from "@/components/QuickAssignDialog";
 import { useState } from "react";
 import { Profile } from "@/types";
 import DepartmentLabel from "./DepartmentLabel";
+import { useTranslation } from "react-i18next";
 
 interface TemplateCardProps {
   template: {
@@ -36,6 +37,8 @@ const TemplateCard = ({
   isLoadingEmployees
 }: TemplateCardProps) => {
   const [isQuickAssignOpen, setIsQuickAssignOpen] = useState(false);
+  const { t } = useTranslation();
+  
   const handleQuickAssign = ({
     employeeId,
     dueDate
@@ -53,7 +56,6 @@ const TemplateCard = ({
       <div className="flex-1">
         <div className="flex justify-between items-start gap-2">
           <h3 className="font-medium text-lg">{template.title}</h3>
-          {/* Removed DepartmentLabel from here */}
         </div>
         {template.description && (
           <>
@@ -66,7 +68,7 @@ const TemplateCard = ({
               )}
               {template.step_count !== undefined && (
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary/20 text-secondary-foreground whitespace-nowrap">
-                  {template.step_count} steps
+                  {template.step_count} {t('tasks.steps')}
                 </span>
               )}
             </div>
@@ -82,7 +84,7 @@ const TemplateCard = ({
               )}
               {template.step_count !== undefined && (
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary/20 text-secondary-foreground whitespace-nowrap">
-                  {template.step_count} steps
+                  {template.step_count} {t('tasks.steps')}
                 </span>
               )}
             </div>
@@ -94,10 +96,10 @@ const TemplateCard = ({
         {/* CTAs (always side by side) */}
         <div className="flex flex-row gap-2 w-full">
           <Button onClick={() => onUse(template.id)} className="flex-1" size="sm">
-            Use Template
+            {t('templates.useTemplate')}
           </Button>
           <Button onClick={() => setIsQuickAssignOpen(true)} variant="outline" size="sm" className="flex-1">
-            Quick Assign
+            {t('templates.quickAssign')}
           </Button>
         </div>
 
@@ -107,13 +109,13 @@ const TemplateCard = ({
 
           {/* Icons Buttons on the right */}
           <div className="flex justify-end gap-2" aria-label="Template Actions">
-            <Button variant="ghost" size="sm" className="h-9 w-9 p-0" onClick={() => onEdit(template.id)} title="Edit">
+            <Button variant="ghost" size="sm" className="h-9 w-9 p-0" onClick={() => onEdit(template.id)} title={t('common.edit')}>
               <FileEdit className="h-4 w-4" />
-              <span className="sr-only">Edit</span>
+              <span className="sr-only">{t('common.edit')}</span>
             </Button>
-            <Button variant="ghost" size="sm" className="h-9 w-9 p-0" onClick={() => onDuplicate(template.id)} title="Duplicate">
+            <Button variant="ghost" size="sm" className="h-9 w-9 p-0" onClick={() => onDuplicate(template.id)} title={t('templates.duplicate')}>
               <CopyPlus className="h-4 w-4" />
-              <span className="sr-only">Duplicate</span>
+              <span className="sr-only">{t('templates.duplicate')}</span>
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -121,22 +123,22 @@ const TemplateCard = ({
                   variant="ghost"
                   size="sm"
                   className="h-9 w-9 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  title="Delete">
+                  title={t('common.delete')}>
                   <Trash2 className="h-4 w-4" />
-                  <span className="sr-only">Delete</span>
+                  <span className="sr-only">{t('common.delete')}</span>
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Template</AlertDialogTitle>
+                  <AlertDialogTitle>{t('templates.deleteTemplate')}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to delete this template? This action cannot be undone.
+                    {t('templates.deleteTemplateConfirm')}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                   <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => onDelete(template.id)}>
-                    Delete
+                    {t('common.delete')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -151,4 +153,3 @@ const TemplateCard = ({
 };
 
 export default TemplateCard;
-

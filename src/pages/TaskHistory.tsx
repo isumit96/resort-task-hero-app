@@ -45,7 +45,7 @@ const TaskHistory = () => {
         location: task.location,
         status: task.status,
         assignedTo: task.assigned_to,
-        assigneeName: task.profiles?.username || 'Unassigned',
+        assigneeName: task.profiles?.username || t('common.unassigned'),
         createdAt: task.created_at,
         completedAt: task.completed_at,
         deadline: task.deadline,
