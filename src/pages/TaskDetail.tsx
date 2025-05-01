@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
@@ -49,8 +48,7 @@ const TaskDetail = () => {
       const titleKey = `tasks.${task.id}.title`;
       const locationKey = `tasks.${task.id}.location`;
 
-      console.log('Fetching task data with language:', i18n.language);
-      console.log('Task ID being fetched:', task.id);
+      console.log('Creating task with translation keys:', titleKey, locationKey);
 
       return {
         id: task.id,
@@ -67,6 +65,8 @@ const TaskDetail = () => {
         steps: (task.steps || []).map((step: any) => {
           const stepTitleKey = `tasks.${task.id}.step.${step.id}.title`;
           const stepCommentKey = step.comment ? `tasks.${task.id}.step.${step.id}.comment` : undefined;
+          
+          console.log('Creating step with translation keys:', stepTitleKey, stepCommentKey);
           
           return {
             id: step.id,
@@ -176,7 +176,7 @@ const TaskDetail = () => {
                       <Button 
                         className="w-full py-6 text-base shadow-lg hover:shadow-primary/25 transition-all duration-300 animate-fade-in hover:bg-primary/90" 
                         disabled={!allRequiredStepsCompleted}
-                        onClick={handleMarkComplete}
+                        onClick={() => handleTaskStatusUpdate('completed')}
                         type="button"
                         variant="default"
                         size="default"

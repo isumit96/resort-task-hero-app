@@ -46,11 +46,10 @@ export const useTasks = (isManager: boolean = false) => {
         return [];
       }
 
-      console.log('Current language:', i18n.language);
+      console.log('Fetched tasks data with language:', i18n.language);
       
       // Process tasks and prepare for translation
       return data.map((task: any) => {
-        // Generate translation keys based on task ID
         const titleKey = `tasks.${task.id}.title`;
         const locationKey = `tasks.${task.id}.location`;
         
