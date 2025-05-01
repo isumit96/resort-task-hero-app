@@ -63,7 +63,7 @@ const TaskDetail = () => {
         deadline: task.deadline,
         steps: (task.steps || []).map((step: any) => ({
           id: step.id,
-          title: step.title,
+          title: step.title, // Original title from DB
           titleKey: `tasks.${task.id}.step.${step.id}.title`,
           isCompleted: step.is_completed,
           requiresPhoto: step.requires_photo,
@@ -138,9 +138,9 @@ const TaskDetail = () => {
     return <ErrorState error={error} title={t('tasks.taskDetails')} />;
   }
 
-  // Get translated values
-  const translatedTitle = task.titleKey ? t(task.titleKey, task.title) : task.title;
-  const translatedLocation = task.locationKey ? t(task.locationKey, task.location) : task.location;
+  // Get translated values with fallback to original content
+  const translatedTitle = task.titleKey ? t(task.titleKey, { defaultValue: task.title }) : task.title;
+  const translatedLocation = task.locationKey ? t(task.locationKey, { defaultValue: task.location }) : task.location;
 
   return (
     <div className="flex flex-col h-screen bg-background dark:bg-[#121212]">
