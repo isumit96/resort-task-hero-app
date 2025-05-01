@@ -7,10 +7,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTranslation } from "react-i18next";
 
-/**
- * Renders an individual task step with support for checkbox or yes/no.
- * For yes/no steps, defaults to unselected initially and requires response.
- */
 interface TaskStepProps {
   step: TaskStepType;
   onComplete: (stepId: string, isCompleted: boolean) => void;
@@ -197,7 +193,6 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
               <ToggleGroup
                 type="single"
                 value={yesNoValue}
-                className=""
                 onValueChange={v => {
                   if (v === 'yes' || v === 'no') handleYesNoResponse(v);
                 }}

@@ -45,8 +45,6 @@ export const useTasks = (isManager: boolean = false) => {
       if (!data || !Array.isArray(data)) {
         return [];
       }
-
-      console.log('Current language:', i18n.language);
       
       // Process tasks and prepare for translation
       return data.map((task: any) => {
@@ -67,6 +65,8 @@ export const useTasks = (isManager: boolean = false) => {
           createdAt: task.created_at,
           completedAt: task.completed_at,
           deadline: task.deadline,
+          description: task.description,
+          descriptionKey: task.description ? `tasks.${task.id}.description` : undefined,
           steps: (task.steps || []).map((step: any) => {
             const stepTitleKey = `tasks.${task.id}.step.${step.id}.title`;
             const stepCommentKey = step.comment ? `tasks.${task.id}.step.${step.id}.comment` : undefined;

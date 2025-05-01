@@ -11,10 +11,7 @@ interface TaskStepsListProps {
 }
 
 const TaskStepsList = ({ steps, onComplete, onAddComment, onAddPhoto }: TaskStepsListProps) => {
-  const { t, i18n } = useTranslation();
-  
-  console.log('Steps in TaskStepsList:', steps.length);
-  console.log('Current language:', i18n.language);
+  const { t } = useTranslation();
   
   return (
     <div className="bg-background dark:bg-background mt-2 px-4">
@@ -22,16 +19,14 @@ const TaskStepsList = ({ steps, onComplete, onAddComment, onAddPhoto }: TaskStep
       
       <div className="divide-y divide-gray-100 dark:divide-gray-800">
         {steps.map(step => {
-          console.log('Step ID:', step.id, 'Title key:', step.titleKey);
-          
-          // Translate using titleKey with fallback to original title
+          // Use the translated title with fallback to original title
           const translatedTitle = step.titleKey ? 
-            t(step.titleKey, { defaultValue: step.title }) : 
+            t(step.titleKey, step.title) : 
             step.title;
           
-          // Translate comment if it exists and has a translation key
+          // Same for comment if it exists
           const translatedComment = step.commentKey && step.comment ? 
-            t(step.commentKey, { defaultValue: step.comment }) : 
+            t(step.commentKey, step.comment) : 
             step.comment;
           
           const translatedStep = {
