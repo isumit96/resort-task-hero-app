@@ -42,8 +42,12 @@ const TaskHistory = () => {
       return data.map((task: any): Task => ({
         id: task.id,
         title: task.title,
+        title_hi: task.title_hi,
+        title_kn: task.title_kn,
         dueTime: new Date(task.due_time).toLocaleString(),
         location: task.location,
+        location_hi: task.location_hi,
+        location_kn: task.location_kn,
         status: task.status,
         assignedTo: task.assigned_to,
         assigneeName: task.profiles?.username || t('common.unassigned'),
@@ -53,9 +57,13 @@ const TaskHistory = () => {
         steps: task.steps.map((step: any) => ({
           id: step.id,
           title: step.title,
+          title_hi: step.title_hi,
+          title_kn: step.title_kn,
           isCompleted: step.is_completed,
           requiresPhoto: step.requires_photo,
           comment: step.comment,
+          comment_hi: step.comment_hi,
+          comment_kn: step.comment_kn,
           photoUrl: step.photo_url,
           isOptional: step.is_optional
         }))
