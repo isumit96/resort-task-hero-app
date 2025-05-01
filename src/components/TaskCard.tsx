@@ -4,6 +4,7 @@ import { Clock, MapPin, ChevronRight, User, Calendar } from "lucide-react";
 import TaskStatusBadge from "./TaskStatusBadge";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow, isAfter } from "date-fns";
+import { enUS, hi, kn } from 'date-fns/locale';
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
@@ -21,11 +22,27 @@ const TaskCard = ({ task, showAssignee = true }: TaskCardProps) => {
     navigate(`/task/${task.id}`);
   };
 
+  // Get appropriate locale for date formatting
+  const getLocale = () => {
+    switch (i18n.language) {
+      case 'hi':
+        return hi;
+      case 'kn':
+        return kn;
+      default:
+        return enUS;
+    }
+  };
+
   const getRelativeTime = (dateString: string) => {
     try {
       const date = new Date(dateString);
       const isOverdue = isAfter(new Date(), date) && task.status !== 'completed';
-      const relativeTime = formatDistanceToNow(date, { addSuffix: true });
+      // Use proper locale for date formatting
+      const relativeTime = formatDistanceToNow(date, { 
+        addSuffix: true,
+        locale: getLocale()
+      });
       return { relativeTime, isOverdue };
     } catch (error) {
       console.error('Error formatting date:', error);
