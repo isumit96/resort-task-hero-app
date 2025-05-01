@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
 import { format, parseISO, formatDistanceToNow } from "date-fns";
+import { enUS, hi, kn } from 'date-fns/locale';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import TaskCard from "@/components/TaskCard";
@@ -14,7 +15,7 @@ import { useTranslation } from "react-i18next";
 const TaskHistory = () => {
   const { isAuthenticated } = useUser();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   
   useEffect(() => {
     if (!isAuthenticated) {
@@ -62,6 +63,18 @@ const TaskHistory = () => {
     }
   });
   
+  // Get appropriate locale based on current language
+  const getLocale = () => {
+    switch (i18n.language) {
+      case 'hi':
+        return hi;
+      case 'kn':
+        return kn;
+      default:
+        return enUS;
+    }
+  };
+  
   const groupTasksByDate = () => {
     if (!tasks) return [];
     
@@ -81,7 +94,11 @@ const TaskHistory = () => {
       .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
       .map(([date, tasks]) => {
         const firstDate = parseISO(date);
-        const relativeDate = formatDistanceToNow(firstDate, { addSuffix: true });
+        // Use the appropriate locale for date formatting
+        const relativeDate = formatDistanceToNow(firstDate, { 
+          addSuffix: true,
+          locale: getLocale()
+        });
         return {
           date,
           formattedDate: relativeDate,
@@ -98,6 +115,19 @@ const TaskHistory = () => {
         <Header title={t('navigation.history')} showBackButton={false} />
         <div className="flex-1 flex items-center justify-center text-foreground">
           <p>{t('common.loading')}</p>
+        </div>
+        <div className="h-16"></div>
+        <BottomNavigation />
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="h-screen flex flex-col bg-background">
+        <Header title={t('navigation.history')} showBackButton={false} />
+        <div className="flex-1 flex items-center justify-center text-foreground">
+          <p>{t('errors.loadingData')}</p>
         </div>
         <div className="h-16"></div>
         <BottomNavigation />
