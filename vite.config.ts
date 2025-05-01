@@ -19,6 +19,10 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+    // Add mainFields to ensure proper module resolution
+    mainFields: ['browser', 'module', 'main'],
+    // Add extensions to explicitly tell Vite which file extensions to look for
+    extensions: ['.js', '.jsx', '.ts', '.tsx', '.json']
   },
   build: {
     // Enable minification in production
@@ -37,15 +41,29 @@ export default defineConfig(({ mode }) => ({
             '@/components/ui'
           ]
         }
+      },
+      // Add onwarn to handle circular dependency warnings
+      onwarn(warning, warn) {
+        // Ignore certain warnings
+        if (warning.code === 'CIRCULAR_DEPENDENCY') {
+          return;
+        }
+        warn(warning);
       }
     },
     // Reduce chunk size
     chunkSizeWarningLimit: 1000,
     // Enable source maps only in development
-    sourcemap: mode === 'development'
+    sourcemap: mode === 'development',
+    // Add commonjsOptions to handle modules that use require
+    commonjsOptions: {
+      transformMixedEsModules: true
+    }
   },
   // Optimize dependency pre-bundling
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query']
+    include: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query'],
+    // Force prebundle for problematic dependencies
+    force: true
   }
 }));
