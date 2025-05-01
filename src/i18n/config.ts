@@ -46,13 +46,8 @@ i18n.on('languageChanged', (lng) => {
   console.log(`Language changed to: ${lng}`);
   // Explicitly log translation availability
   if (debugMode) {
-    // Fix the TypeScript error by checking if resources and translation exist
-    // and using type assertion to access tasks property safely
-    const resources = i18n.options.resources?.[lng];
-    const translation = resources?.translation as Record<string, any> | undefined;
-    const taskKeys = translation && typeof translation === 'object' && 'tasks' in translation ? 
-      Object.keys(translation.tasks || {}).filter(k => k.includes('-')) : 
-      [];
+    const taskKeys = Object.keys(i18n.options.resources?.[lng]?.translation?.tasks || {})
+      .filter(k => k.includes('-'));
     
     console.log(`Available task-specific translations: ${taskKeys.length}`, taskKeys);
   }
