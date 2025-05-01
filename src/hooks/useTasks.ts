@@ -10,10 +10,10 @@ export const useTasks = (isManager: boolean = false) => {
   const { user } = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   
   return useQuery({
-    queryKey: ["tasks", user?.id, isManager],
+    queryKey: ["tasks", user?.id, isManager, i18n.language],
     queryFn: async (): Promise<Task[]> => {
       if (!user) return [];
       
@@ -46,33 +46,45 @@ export const useTasks = (isManager: boolean = false) => {
         return [];
       }
 
+      console.log('Fetched tasks data with language:', i18n.language);
+      
       // Process tasks and prepare for translation
-      return data.map((task: any) => ({
-        id: task.id,
-        title: task.title, // Original title from DB
-        titleKey: `tasks.${task.id}.title`, // Translation key if needed
-        dueTime: task.due_time ? new Date(task.due_time).toLocaleString() : '',
-        location: task.location || '',
-        locationKey: `tasks.${task.id}.location`, // Translation key if needed
-        status: task.status,
-        assignedTo: task.assigned_to,
-        assigneeName: task.profiles?.username || t('tasks.unassigned'),
-        createdAt: task.created_at,
-        completedAt: task.completed_at,
-        deadline: task.deadline,
-        steps: (task.steps || []).map((step: any) => ({
-          id: step.id,
-          title: step.title, // Original title from DB
-          titleKey: `tasks.${task.id}.step.${step.id}.title`, // Translation key if needed
-          isCompleted: step.is_completed,
-          requiresPhoto: step.requires_photo,
-          comment: step.comment,
-          commentKey: step.comment ? `tasks.${task.id}.step.${step.id}.comment` : undefined,
-          photoUrl: step.photo_url,
-          isOptional: step.is_optional || false,
-          interactionType: step.interaction_type || 'checkbox'
-        }))
-      }));
+      return data.map((task: any) => {
+        const titleKey = `tasks.${task.id}.title`;
+        const locationKey = `tasks.${task.id}.location`;
+        
+        return {
+          id: task.id,
+          title: task.title, // Original title from DB
+          titleKey, // Translation key for this specific task
+          dueTime: task.due_time ? new Date(task.due_time).toLocaleString() : '',
+          location: task.location || '',
+          locationKey, // Translation key for the location
+          status: task.status,
+          assignedTo: task.assigned_to,
+          assigneeName: task.profiles?.username || t('tasks.unassigned'),
+          createdAt: task.created_at,
+          completedAt: task.completed_at,
+          deadline: task.deadline,
+          steps: (task.steps || []).map((step: any) => {
+            const stepTitleKey = `tasks.${task.id}.step.${step.id}.title`;
+            const stepCommentKey = step.comment ? `tasks.${task.id}.step.${step.id}.comment` : undefined;
+            
+            return {
+              id: step.id,
+              title: step.title, // Original title from DB
+              titleKey: stepTitleKey, // Translation key for this step
+              isCompleted: step.is_completed,
+              requiresPhoto: step.requires_photo,
+              comment: step.comment,
+              commentKey: stepCommentKey, // Translation key for the comment
+              photoUrl: step.photo_url,
+              isOptional: step.is_optional || false,
+              interactionType: step.interaction_type || 'checkbox'
+            };
+          })
+        };
+      });
     },
     enabled: !!user?.id,
     staleTime: 1000 * 60,

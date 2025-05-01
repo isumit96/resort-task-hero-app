@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
@@ -49,6 +48,8 @@ const TaskDetail = () => {
       const titleKey = `tasks.${task.id}.title`;
       const locationKey = `tasks.${task.id}.location`;
 
+      console.log('Creating task with translation keys:', titleKey, locationKey);
+
       return {
         id: task.id,
         title: task.title,
@@ -61,18 +62,25 @@ const TaskDetail = () => {
         createdAt: task.created_at,
         completedAt: task.completed_at,
         deadline: task.deadline,
-        steps: (task.steps || []).map((step: any) => ({
-          id: step.id,
-          title: step.title, // Original title from DB
-          titleKey: `tasks.${task.id}.step.${step.id}.title`,
-          isCompleted: step.is_completed,
-          requiresPhoto: step.requires_photo,
-          comment: step.comment,
-          commentKey: step.comment ? `tasks.${task.id}.step.${step.id}.comment` : undefined,
-          photoUrl: step.photo_url,
-          isOptional: step.is_optional || false,
-          interactionType: step.interaction_type || 'checkbox'
-        }))
+        steps: (task.steps || []).map((step: any) => {
+          const stepTitleKey = `tasks.${task.id}.step.${step.id}.title`;
+          const stepCommentKey = step.comment ? `tasks.${task.id}.step.${step.id}.comment` : undefined;
+          
+          console.log('Creating step with translation keys:', stepTitleKey, stepCommentKey);
+          
+          return {
+            id: step.id,
+            title: step.title, // Original title from DB
+            titleKey: stepTitleKey,
+            isCompleted: step.is_completed,
+            requiresPhoto: step.requires_photo,
+            comment: step.comment,
+            commentKey: stepCommentKey,
+            photoUrl: step.photo_url,
+            isOptional: step.is_optional || false,
+            interactionType: step.interaction_type || 'checkbox'
+          };
+        })
       };
     },
     staleTime: 1000,
@@ -138,20 +146,12 @@ const TaskDetail = () => {
     return <ErrorState error={error} title={t('tasks.taskDetails')} />;
   }
 
-  // Get translated values with fallback to original content
-  const translatedTitle = task.titleKey ? t(task.titleKey, { defaultValue: task.title }) : task.title;
-  const translatedLocation = task.locationKey ? t(task.locationKey, { defaultValue: task.location }) : task.location;
-
   return (
     <div className="flex flex-col h-screen bg-background dark:bg-[#121212]">
-      <Header showBackButton title={`${translatedTitle} - ${translatedLocation}`} />
+      <Header showBackButton title={t('tasks.taskDetails')} />
       
       <div className="flex-1 overflow-y-auto pb-24 bg-background dark:bg-[#121212]">
-        <TaskHeader task={{
-          ...task,
-          title: translatedTitle,
-          location: translatedLocation
-        }} />
+        <TaskHeader task={task} />
         
         <TaskStepsList
           steps={task.steps}

@@ -21,15 +21,19 @@ const TaskHeader = ({ task }: TaskHeaderProps) => {
     }
   };
 
-  // Make sure to use the already translated values passed from TaskDetail
-  // or translate them here if they're not already translated
-  const title = task.title;
-  const location = task.location;
+  // Use translation keys if available, with fallback to original values
+  const taskTitle = task.titleKey ? 
+    t(task.titleKey, { defaultValue: task.title }) : 
+    task.title;
+    
+  const taskLocation = task.locationKey ? 
+    t(task.locationKey, { defaultValue: task.location }) : 
+    task.location;
 
   return (
     <div className="bg-card px-4 py-4 border-b border-border">
       <div className="flex justify-between items-start">
-        <h1 className="text-xl font-semibold text-foreground">{title}</h1>
+        <h1 className="text-xl font-semibold text-foreground">{taskTitle}</h1>
         <TaskStatusBadge status={task.status} />
       </div>
       
@@ -41,7 +45,7 @@ const TaskHeader = ({ task }: TaskHeaderProps) => {
         
         <div className="flex items-center text-muted-foreground">
           <MapPin size={16} className="mr-1" />
-          <span className="text-sm">{location}</span>
+          <span className="text-sm">{taskLocation}</span>
         </div>
       </div>
     </div>
