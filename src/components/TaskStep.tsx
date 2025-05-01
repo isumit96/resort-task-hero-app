@@ -13,13 +13,12 @@ import { useTranslation } from "react-i18next";
  */
 interface TaskStepProps {
   step: TaskStepType;
-  isLoading?: boolean;
   onComplete: (stepId: string, isCompleted: boolean) => void;
   onAddComment?: (stepId: string, comment: string) => void;
   onAddPhoto?: (stepId: string, photoUrl: string) => void;
 }
 
-const TaskStep = ({ step, isLoading = false, onComplete, onAddComment, onAddPhoto }: TaskStepProps) => {
+const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps) => {
   const { t } = useTranslation();
   
   // Unselected (undefined), explicitly true/false after selection
@@ -101,7 +100,7 @@ const TaskStep = ({ step, isLoading = false, onComplete, onAddComment, onAddPhot
         {/* Main content to the right */}
         <div className="ml-3 w-full">
           <div className="flex justify-between items-start">
-            <label className={`text-base ${step.isCompleted ? 'line-through text-muted-foreground' : ''} ${isLoading ? 'animate-pulse' : ''}`}>
+            <label className={`text-base ${step.isCompleted ? 'line-through text-muted-foreground' : ''}`}>
               {step.title}
             </label>
             {step.isOptional && (

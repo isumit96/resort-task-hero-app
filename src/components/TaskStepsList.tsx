@@ -23,11 +23,6 @@ const TaskStepsList = ({ steps, onComplete, onAddComment, onAddPhoto }: TaskStep
       dynamicTranslations.registerContent(stepKey, step.title);
       console.log(`[TaskStepsList] Registered ${stepKey} = "${step.title}"`);
     });
-    
-    // Preload translations for all steps
-    if (steps.length > 0) {
-      dynamicTranslations.preloadTranslations('step', steps.map(step => step.id));
-    }
   }, [steps, i18n.language]);
   
   return (
@@ -39,9 +34,6 @@ const TaskStepsList = ({ steps, onComplete, onAddComment, onAddPhoto }: TaskStep
           // Create a consistent key for the step
           const stepKey = `step_${step.id}`;
           
-          // Check if this step's translation is still loading
-          const isLoading = i18n.language !== 'en' && dynamicTranslations.isTranslationLoading(stepKey);
-          
           return (
             <TaskStep 
               key={step.id} 
@@ -50,7 +42,6 @@ const TaskStepsList = ({ steps, onComplete, onAddComment, onAddPhoto }: TaskStep
                 // Use dynamic translation with fallback to original title
                 title: t(stepKey, { format: 'dynamic', defaultValue: step.title })
               }} 
-              isLoading={isLoading}
               onComplete={onComplete}
               onAddComment={onAddComment}
               onAddPhoto={onAddPhoto}
