@@ -64,10 +64,27 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    setIsLoading(true);
-    const { error } = await supabase.auth.signOut();
-    setIsLoading(false);
-    if (error) throw error;
+    try {
+      setIsLoading(true);
+      // First check if we have a session before attempting to sign out
+      const { data } = await supabase.auth.getSession();
+      
+      if (data.session) {
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+      } else {
+        // If no session, just clear the local state
+        setSession(null);
+        setUser(null);
+      }
+      setIsLoading(false);
+    } catch (error) {
+      setIsLoading(false);
+      console.error("Logout error:", error);
+      // Clear the local state even if the API call fails
+      setSession(null);
+      setUser(null);
+    }
   };
 
   const value = {
