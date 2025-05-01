@@ -55,6 +55,25 @@ i18n.on('languageChanged', (lng) => {
       [];
     
     console.log(`Available task-specific translations: ${taskKeys.length}`, taskKeys);
+    
+    // Add more detailed logging for Hindi translations to help diagnose the issue
+    if (lng === 'hi' && translation && typeof translation === 'object' && 'tasks' in translation) {
+      const tasks = translation.tasks as Record<string, any>;
+      console.log('Hindi tasks available:', Object.keys(tasks));
+      
+      // Check if the specific task ID exists in the Hindi translations
+      const taskId = '6af83dbc-b9f4-4e00-a6b6-a4055324a29c';
+      if (taskId in tasks) {
+        console.log(`Task ${taskId} found in Hindi translations`);
+        if ('step' in tasks[taskId]) {
+          console.log('Steps found for this task:', Object.keys(tasks[taskId].step));
+        } else {
+          console.log('No steps found for this task in Hindi translations');
+        }
+      } else {
+        console.log(`Task ${taskId} not found in Hindi translations`);
+      }
+    }
   }
 });
 
