@@ -33,7 +33,6 @@ import BottomNavigation from "@/components/BottomNavigation";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useDepartments } from "@/hooks/useDepartments";
 import TemplateCard from "@/components/TemplateCard";
-import { useTranslation } from "react-i18next";
 
 interface Template {
   id: string;
@@ -54,7 +53,6 @@ const TemplateList = () => {
   const [departmentFilter, setDepartmentFilter] = useState<string>("all-departments");
   const { employees, isLoading: isLoadingEmployees } = useEmployees();
   const { data: departments, isLoading: isLoadingDepartments } = useDepartments();
-  const { t } = useTranslation();
   
   const [locations, setLocations] = useState<string[]>([]);
 
@@ -292,7 +290,7 @@ const TemplateList = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Header title={t('navigation.templates')} showBackButton={true} />
+      <Header title="Task Templates" showBackButton={true} />
       
       <div className="flex-1 overflow-y-auto px-4 py-6 pb-20 max-w-2xl mx-auto w-full">
         <div className="mb-6 flex flex-col gap-3">
@@ -300,7 +298,7 @@ const TemplateList = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               className="pl-10"
-              placeholder={t('templates.search')}
+              placeholder="Search templates..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -309,10 +307,10 @@ const TemplateList = () => {
           <div className="flex gap-2 items-center">
             <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder={t('templates.filterByDepartment')} />
+                <SelectValue placeholder="Filter by department" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all-departments">{t('templates.allDepartments')}</SelectItem>
+                <SelectItem value="all-departments">All Departments</SelectItem>
                 {departments?.map(dep => (
                   <SelectItem key={dep} value={dep}>
                     {dep}
@@ -327,7 +325,7 @@ const TemplateList = () => {
               onClick={() => navigate('/tasks/create')}
             >
               <PlusCircle className="h-4 w-4 mr-2" />
-              {t('tasks.createNew')}
+              New Task
             </Button>
           </div>
         </div>
@@ -339,7 +337,7 @@ const TemplateList = () => {
             </div>
           ) : filteredTemplates?.length === 0 ? (
             <div className="text-center py-10 border rounded-lg bg-muted/20">
-              <p className="text-muted-foreground">{t('templates.noTemplates')}</p>
+              <p className="text-muted-foreground">No templates found</p>
             </div>
           ) : (
             filteredTemplates?.map((template) => (

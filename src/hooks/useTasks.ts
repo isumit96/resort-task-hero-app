@@ -45,42 +45,40 @@ export const useTasks = (isManager: boolean = false) => {
       if (!data || !Array.isArray(data)) {
         return [];
       }
+
+      console.log('Current language:', i18n.language);
       
       // Process tasks and prepare for translation
       return data.map((task: any) => {
         // Generate translation keys based on task ID
         const titleKey = `tasks.${task.id}.title`;
         const locationKey = `tasks.${task.id}.location`;
-        const descriptionKey = `tasks.${task.id}.description`;
         
         return {
           id: task.id,
-          title: task.title,
+          title: task.title, // Original title from DB
           titleKey, // Translation key for this specific task
-          dueTime: task.due_time ? new Date(task.due_time).toISOString() : '',
+          dueTime: task.due_time ? new Date(task.due_time).toLocaleString() : '',
           location: task.location || '',
           locationKey, // Translation key for the location
-          description: task.description || '',
-          descriptionKey, // Translation key for the description
           status: task.status,
           assignedTo: task.assigned_to,
-          assigneeName: task.profiles?.username || t('tasks.unassigned', { silent: true }),
+          assigneeName: task.profiles?.username || t('tasks.unassigned'),
           createdAt: task.created_at,
           completedAt: task.completed_at,
           deadline: task.deadline,
           steps: (task.steps || []).map((step: any) => {
-            // Create translation keys for steps
             const stepTitleKey = `tasks.${task.id}.step.${step.id}.title`;
             const stepCommentKey = step.comment ? `tasks.${task.id}.step.${step.id}.comment` : undefined;
             
             return {
               id: step.id,
-              title: step.title,
-              titleKey: stepTitleKey,
+              title: step.title, // Original title from DB
+              titleKey: stepTitleKey, // Translation key for this step
               isCompleted: step.is_completed,
               requiresPhoto: step.requires_photo,
-              comment: step.comment || '',
-              commentKey: stepCommentKey,
+              comment: step.comment,
+              commentKey: stepCommentKey, // Translation key for the comment
               photoUrl: step.photo_url,
               isOptional: step.is_optional || false,
               interactionType: step.interaction_type || 'checkbox'
