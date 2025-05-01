@@ -7,6 +7,9 @@ import enTranslations from './locales/en.json';
 import hiTranslations from './locales/hi.json';
 import knTranslations from './locales/kn.json';
 
+// Add more detailed logging for development
+const debugMode = true;
+
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
@@ -17,15 +20,38 @@ i18n
       kn: { translation: knTranslations }
     },
     fallbackLng: 'en',
-    debug: true, // Enable debug mode to see more logs
+    debug: debugMode,
     interpolation: {
       escapeValue: false
     },
     detection: {
       order: ['localStorage', 'navigator'],
       caches: ['localStorage']
+    },
+    // Add these options for better debugging and smoother language switching
+    saveMissing: debugMode,
+    missingKeyHandler: (lng, ns, key, fallbackValue) => {
+      console.log(`Missing translation key: [${lng}] ${ns}:${key} => fallback: "${fallbackValue}"`);
+    },
+    parseMissingKeyHandler: (key) => {
+      // Return the last segment after the last period as a reasonable fallback
+      const segments = key.split('.');
+      const lastSegment = segments[segments.length - 1];
+      return lastSegment || key;
     }
   });
+
+// Force reload when language changes to ensure all components update correctly
+i18n.on('languageChanged', (lng) => {
+  console.log(`Language changed to: ${lng}`);
+  // Explicitly log translation availability
+  if (debugMode) {
+    const taskKeys = Object.keys(i18n.options.resources?.[lng]?.translation?.tasks || {})
+      .filter(k => k.includes('-'));
+    
+    console.log(`Available task-specific translations: ${taskKeys.length}`, taskKeys);
+  }
+});
 
 // Log current language on initialization
 console.log('i18n initialized with language:', i18n.language);
