@@ -10,7 +10,7 @@ interface TaskHeaderProps {
 }
 
 const TaskHeader = ({ task }: TaskHeaderProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   
   const getRelativeTime = (dateString: string) => {
     try {
@@ -21,7 +21,12 @@ const TaskHeader = ({ task }: TaskHeaderProps) => {
     }
   };
 
-  // Use translation keys if available, with fallback to original values
+  // Check if we have translations for this specific task
+  console.log('Current task in header:', task.id, 'Language:', i18n.language);
+  console.log('Translation key for title:', task.titleKey);
+  console.log('Translation key for location:', task.locationKey);
+  
+  // Use the task ID specific translation keys
   const taskTitle = task.titleKey ? 
     t(task.titleKey, { defaultValue: task.title }) : 
     task.title;
