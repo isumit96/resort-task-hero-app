@@ -31,18 +31,25 @@ const setupAndroidBackButton = () => {
   }
 };
 
+// Fix WebView scrolling issues
+const fixWebViewScrolling = () => {
+  // Prevent default touch behavior that might interfere with scrolling
+  document.addEventListener('touchmove', (e) => {
+    // Don't prevent default to allow scrolling
+  }, { passive: true });
+  
+  // Enable momentum scrolling on iOS
+  document.addEventListener('touchstart', () => {}, { passive: true });
+};
+
 // Initialize dark mode before rendering
 initializeDarkMode();
 
 // Setup mobile-specific handlers
 setupAndroidBackButton();
 
-// Prevent pull-to-refresh behavior in mobile wrapper
-document.body.addEventListener('touchmove', (e) => {
-  if (isMobileApp() && document.documentElement.scrollTop === 0) {
-    e.preventDefault();
-  }
-}, { passive: false });
+// Fix WebView scrolling
+fixWebViewScrolling();
 
 // Create root once and store in a variable - optimize render process
 const container = document.getElementById("root");
