@@ -166,9 +166,10 @@ const createDynamicContentHandler = () => {
   // Poll for completed translation jobs
   const pollTranslationJobs = async () => {
     try {
+      // Fix: Remove the 'path' property and use the correct method syntax
       const response = await supabase.functions.invoke('translate', {
-        method: 'GET',
-        path: '/process-jobs'
+        method: 'GET'
+        // Remove the incorrect 'path' parameter
       });
       
       if (response.error) {
