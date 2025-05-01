@@ -7,7 +7,6 @@ import enTranslations from './locales/en.json';
 import hiTranslations from './locales/hi.json';
 import knTranslations from './locales/kn.json';
 
-// Add more detailed logging for development
 const debugMode = true;
 
 i18n
@@ -28,35 +27,23 @@ i18n
       order: ['localStorage', 'navigator'],
       caches: ['localStorage']
     },
-    // Add these options for better debugging and smoother language switching
-    saveMissing: debugMode,
+    saveMissing: false,
     missingKeyHandler: (lng, ns, key, fallbackValue) => {
-      console.log(`Missing translation key: [${lng}] ${ns}:${key} => fallback: "${fallbackValue}"`);
+      if (debugMode) {
+        console.log(`Missing translation key: [${lng}] ${ns}:${key} => fallback: "${fallbackValue}"`);
+      }
+      return fallbackValue || key;
     },
+    returnNull: false,
+    returnEmptyString: false,
+    returnObjects: true,
+    keySeparator: '.',
+    nsSeparator: ':',
     parseMissingKeyHandler: (key) => {
-      // Return the last segment after the last period as a reasonable fallback
-      const segments = key.split('.');
-      const lastSegment = segments[segments.length - 1];
-      return lastSegment || key;
+      // Return the original key as a reasonable fallback
+      return key;
     }
   });
-
-// Force reload when language changes to ensure all components update correctly
-i18n.on('languageChanged', (lng) => {
-  console.log(`Language changed to: ${lng}`);
-  // Explicitly log translation availability
-  if (debugMode) {
-    // Fix the TypeScript error by checking if resources and translation exist
-    // and using type assertion to access tasks property safely
-    const resources = i18n.options.resources?.[lng];
-    const translation = resources?.translation as Record<string, any> | undefined;
-    const taskKeys = translation && typeof translation === 'object' && 'tasks' in translation ? 
-      Object.keys(translation.tasks || {}).filter(k => k.includes('-')) : 
-      [];
-    
-    console.log(`Available task-specific translations: ${taskKeys.length}`, taskKeys);
-  }
-});
 
 // Log current language on initialization
 console.log('i18n initialized with language:', i18n.language);

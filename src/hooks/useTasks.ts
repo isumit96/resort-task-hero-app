@@ -45,8 +45,6 @@ export const useTasks = (isManager: boolean = false) => {
       if (!data || !Array.isArray(data)) {
         return [];
       }
-
-      console.log('Current language:', i18n.language);
       
       // Process tasks and prepare for translation
       return data.map((task: any) => {
