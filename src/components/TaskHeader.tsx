@@ -20,14 +20,15 @@ const TaskHeader = ({ task }: TaskHeaderProps) => {
   
   // Register task title and location for translation as soon as task data is available
   useEffect(() => {
-    // Make sure we register the original content
+    if (!task.title || !task.location) return;
+    
+    // Register content in current language
     dynamicTranslations.registerContent(taskTitleKey, task.title);
     dynamicTranslations.registerContent(taskLocationKey, task.location);
     
-    // Log registrations for debugging
     console.log(`[TaskHeader] Registered ${taskTitleKey} = "${task.title}"`);
     console.log(`[TaskHeader] Registered ${taskLocationKey} = "${task.location}"`);
-  }, [task.id, task.title, task.location, taskTitleKey, taskLocationKey]);
+  }, [task.id, task.title, task.location, taskTitleKey, taskLocationKey, i18n.language]);
   
   const getRelativeTime = (dateString: string) => {
     try {
@@ -42,7 +43,7 @@ const TaskHeader = ({ task }: TaskHeaderProps) => {
     <div className="bg-card px-4 py-4 border-b border-border">
       <div className="flex justify-between items-start">
         <h1 className="text-xl font-semibold text-foreground">
-          {/* Use dynamic translation with fallback to original value */}
+          {/* Use dynamic translation with fallback to original title */}
           {t(taskTitleKey, { format: 'dynamic', defaultValue: task.title })}
         </h1>
         <TaskStatusBadge status={task.status} />
@@ -57,7 +58,7 @@ const TaskHeader = ({ task }: TaskHeaderProps) => {
         <div className="flex items-center text-muted-foreground">
           <MapPin size={16} className="mr-1" />
           <span className="text-sm">
-            {/* Use dynamic translation with fallback to original value */}
+            {/* Use dynamic translation with fallback to original location */}
             {t(taskLocationKey, { format: 'dynamic', defaultValue: task.location })}
           </span>
         </div>

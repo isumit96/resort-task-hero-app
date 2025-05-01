@@ -50,19 +50,18 @@ const TaskDetail = () => {
       if (error) throw error;
       if (!task) return null;
 
-      // Register dynamic translations immediately after fetching task data
+      // Ensure dynamic translations are registered immediately for all supported languages
       const taskTitleKey = `task_title_${task.id}`;
       const taskLocationKey = `task_location_${task.id}`;
       
-      // Register content in the database language (assumed to be English)
-      // This ensures we always have content immediately instead of placeholder keys
+      // Register content with original language
       console.log(`Registering task title: ${taskTitleKey} = "${task.title}"`);
       console.log(`Registering task location: ${taskLocationKey} = "${task.location}"`);
       
       dynamicTranslations.registerContent(taskTitleKey, task.title);
       dynamicTranslations.registerContent(taskLocationKey, task.location);
       
-      // Register each step's title as well
+      // Register each step title as well
       if (task.steps && Array.isArray(task.steps)) {
         task.steps.forEach((step: any) => {
           const stepKey = `step_${step.id}`;
@@ -77,7 +76,7 @@ const TaskDetail = () => {
       return {
         id: task.id,
         title: task.title,
-        dueTime: new Date(task.due_time).toLocaleString(),
+        dueTime: new Date(task.due_time).toISOString(),
         location: task.location,
         status: task.status,
         assignedTo: task.assigned_to,
@@ -99,7 +98,7 @@ const TaskDetail = () => {
     refetchOnWindowFocus: true,
   });
 
-  // Effect to register translations whenever the task data changes
+  // Effect to refresh translations whenever the language changes
   useEffect(() => {
     if (!task) return;
     
@@ -107,14 +106,14 @@ const TaskDetail = () => {
     const taskTitleKey = `task_title_${task.id}`;
     const taskLocationKey = `task_location_${task.id}`;
     
-    dynamicTranslations.registerContent(taskTitleKey, task.title);
-    dynamicTranslations.registerContent(taskLocationKey, task.location);
+    dynamicTranslations.registerContent(taskTitleKey, task.title, i18n.language);
+    dynamicTranslations.registerContent(taskLocationKey, task.location, i18n.language);
     
     // Register each step's title
     if (task.steps) {
       task.steps.forEach(step => {
         const stepKey = `step_${step.id}`;
-        dynamicTranslations.registerContent(stepKey, step.title);
+        dynamicTranslations.registerContent(stepKey, step.title, i18n.language);
       });
     }
     
@@ -186,7 +185,10 @@ const TaskDetail = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background dark:bg-[#121212]">
-      <Header showBackButton title={`${task.title} - ${task.location}`} />
+      <Header showBackButton title={t(
+        `task_title_${task.id}`, 
+        { format: 'dynamic', defaultValue: task.title }
+      )} />
       
       <div className="flex-1 overflow-y-auto pb-24 bg-background dark:bg-[#121212]">
         <TaskHeader task={task} />

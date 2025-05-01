@@ -1,3 +1,4 @@
+
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
@@ -7,7 +8,6 @@ import hiTranslations from './locales/hi.json';
 import knTranslations from './locales/kn.json';
 
 // Create a function to handle dynamic content translation
-// This will allow us to pass dynamic content through i18next
 const createDynamicContentHandler = () => {
   const dynamicContent: Record<string, Record<string, string>> = {
     en: {},
@@ -22,45 +22,42 @@ const createDynamicContentHandler = () => {
     // Store the content in the specified language
     dynamicContent[language][key] = content;
     
-    // Also store as English version if not explicitly added
+    // Also store as English version for fallback purposes
     if (language === 'en' && !dynamicContent['en'][key]) {
       dynamicContent['en'][key] = content;
     }
   };
 
-  // Function to retrieve content
-  const getContent = (key: string, language: string) => {
-    // Handle the case where key is not a string (should never happen but just in case)
+  // Function to retrieve content with proper fallback
+  const getContent = (key: string, language: string): string => {
+    // Handle the case where key is not a string
     if (typeof key !== 'string') {
       console.warn('Invalid key passed to getContent:', key);
       return String(key);
     }
     
-    // Check if we have the translation in requested language
+    // First priority: Get content in the requested language if it exists
     if (dynamicContent[language] && dynamicContent[language][key]) {
       return dynamicContent[language][key];
     }
     
-    // Fallback to English if translation not found
+    // Second priority: Fallback to English if translation not found
     if (language !== 'en' && dynamicContent['en'] && dynamicContent['en'][key]) {
       return dynamicContent['en'][key];
     }
     
-    // If we're dealing with a dynamic key like task_title_UUID or step_UUID
-    // Extract and return the original content rather than showing the key
+    // If this is a key like task_title_UUID, extract the original content
     const dynamicKeyMatch = key.match(/^(task_title_|task_location_|step_)([0-9a-f-]+)$/);
     if (dynamicKeyMatch) {
-      // For these patterns, return a more readable message instead of the key
-      const prefix = dynamicKeyMatch[1];
-      if (prefix === 'task_title_') return 'Task';
-      if (prefix === 'task_location_') return 'Location';
-      if (prefix === 'step_') return 'Step';
+      // Return original content from English if available
+      const englishContent = dynamicContent['en'] && dynamicContent['en'][key];
+      if (englishContent) return englishContent;
       
-      // Return the UUID part if all else fails
-      return key;
+      // If no content found, return a more readable default
+      return "";
     }
     
-    // If no translation found at all, return the key itself
+    // Last resort: return the key itself (should be avoided)
     return key;
   };
 
@@ -74,22 +71,20 @@ const createDynamicContentHandler = () => {
 
 export const dynamicTranslations = createDynamicContentHandler();
 
-// Create a custom interpolator to handle dynamic content
-const customInterpolator = (value: string, format: string, lng: string) => {
-  // If format is 'dynamic', try to find the value in our dynamic content
+// Custom interpolation function for dynamic content
+const customInterpolator = (value: string, format: string, lng: string): string => {
+  // Only process if format is 'dynamic' and value is a string
   if (format === 'dynamic' && typeof value === 'string') {
-    // Get translated content or fallback
+    // Get translated content with fallback
     const translatedContent = dynamicTranslations.getContent(value, lng);
     
-    // Return original value if translation failed and value doesn't look like a UUID key
-    if (translatedContent === value && !value.match(/^(task_title_|task_location_|step_)([0-9a-f-]+)$/)) {
-      return value;
+    // Return the translated content if found
+    if (translatedContent) {
+      return translatedContent;
     }
-    
-    return translatedContent;
   }
   
-  // Otherwise, use the default interpolator behavior
+  // Return the original value for other formats
   return value;
 };
 
