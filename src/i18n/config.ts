@@ -8,7 +8,7 @@ import hiTranslations from './locales/hi.json';
 import knTranslations from './locales/kn.json';
 
 // Add more detailed logging for development
-const debugMode = true;
+const debugMode = false; // Set to false to reduce console warnings
 
 i18n
   .use(LanguageDetector)
@@ -28,56 +28,28 @@ i18n
       order: ['localStorage', 'navigator'],
       caches: ['localStorage']
     },
-    saveMissing: debugMode,
-    missingKeyHandler: (lng, ns, key, fallbackValue) => {
-      console.log(`Missing translation key: [${lng}] ${ns}:${key} => fallback: "${fallbackValue}"`);
-    },
+    saveMissing: false, // Don't log missing keys
     parseMissingKeyHandler: (key) => {
-      // For dynamic keys (like task.{id}.title), extract and return the original title
-      // which is typically the last segment in the key
+      // For dynamic keys (like task.{id}.title), return empty string to use default value
       const segments = key.split('.');
-      if (segments.length >= 4 && segments[2] === 'step') {
-        // For task step keys: tasks.{taskId}.step.{stepId}.title
-        return "Step";  // Generic fallback
-      } else if (segments.length >= 3) {
-        // For task keys: tasks.{taskId}.title
-        return segments[segments.length - 1] || key;
+      if (segments.length >= 3) {
+        return ''; // Return empty string to use defaultValue
       }
       return key;
-    }
+    },
+    nsSeparator: false, // Allow colons in keys without treating them as namespace separators
+    keySeparator: false, // Allow dots in keys without treating them as key separators
   });
 
 // Force reload when language changes to ensure all components update correctly
 i18n.on('languageChanged', (lng) => {
   console.log(`Language changed to: ${lng}`);
   
-  // Log translation availability for debugging
-  if (debugMode) {
-    const resources = i18n.options.resources?.[lng];
-    const translation = resources?.translation as Record<string, any> | undefined;
-    
-    if (translation && typeof translation === 'object') {
-      // Check for task translations
-      const tasksObject = translation.tasks;
-      if (tasksObject && typeof tasksObject === 'object') {
-        // Find task IDs (guid format)
-        const taskIds = Object.keys(tasksObject).filter(key => 
-          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(key)
-        );
-        
-        console.log(`Found ${taskIds.length} task translations for language ${lng}:`, taskIds);
-      } else {
-        console.log(`No task translations found for language ${lng}`);
-      }
-    }
-  }
-
   // Invalidate all task-related queries to refresh translations
   const queryClient = window.queryClient;
   if (queryClient) {
     queryClient.invalidateQueries({ queryKey: ["tasks"] });
     queryClient.invalidateQueries({ queryKey: ["task"] });
-    console.log("Task queries invalidated after language change");
   }
 });
 
@@ -87,8 +59,5 @@ declare global {
     queryClient: any;
   }
 }
-
-// Log current language on initialization
-console.log('i18n initialized with language:', i18n.language);
 
 export default i18n;

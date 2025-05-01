@@ -19,14 +19,14 @@ const TaskStepsList = ({ steps, onComplete, onAddComment, onAddPhoto }: TaskStep
       
       <div className="divide-y divide-gray-100 dark:divide-gray-800">
         {steps.map(step => {
-          // Get translated step title, falling back to original title
+          // Get translated step title, falling back to original title silently
           const displayTitle = step.titleKey 
-            ? t(step.titleKey, { defaultValue: step.title }) 
+            ? t(step.titleKey, { defaultValue: step.title, silent: true }) 
             : step.title;
           
-          // Get translated comment, falling back to original comment
-          const displayComment = step.commentKey 
-            ? t(step.commentKey, { defaultValue: step.comment }) 
+          // Get translated comment, falling back to original comment silently
+          const displayComment = step.commentKey && step.comment
+            ? t(step.commentKey, { defaultValue: step.comment, silent: true }) 
             : step.comment;
           
           // Create a new step object with translated values
