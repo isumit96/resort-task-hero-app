@@ -8,7 +8,7 @@ import hiTranslations from './locales/hi.json';
 import knTranslations from './locales/kn.json';
 
 // Add more detailed logging for development
-const debugMode = false; // Setting to false to reduce console noise
+const debugMode = false; // Set to false to reduce console warnings
 
 i18n
   .use(LanguageDetector)
@@ -28,33 +28,36 @@ i18n
       order: ['localStorage', 'navigator'],
       caches: ['localStorage']
     },
-    returnNull: false,
-    returnEmptyString: false,
-    returnObjects: true,
-    saveMissing: false, // Turn off saving missing keys
-    missingKeyHandler: (lng, ns, key, fallbackValue) => {
-      if (debugMode) {
-        console.log(`Missing translation key: [${lng}] ${ns}:${key}`);
-      }
-    },
+    saveMissing: false, // Don't log missing keys
     parseMissingKeyHandler: (key) => {
-      // For dynamic task IDs, just return the original key
-      if (key.includes('.step.')) {
-        return null; // Return null to use fallback
-      }
-      
-      // Return the last segment after the last period as a reasonable fallback
+      // For dynamic keys (like task.{id}.title), return empty string to use default value
       const segments = key.split('.');
-      const lastSegment = segments[segments.length - 1];
-      return lastSegment || key;
-    }
+      if (segments.length >= 3) {
+        return ''; // Return empty string to use defaultValue
+      }
+      return key;
+    },
+    nsSeparator: false, // Allow colons in keys without treating them as namespace separators
+    keySeparator: false, // Allow dots in keys without treating them as key separators
   });
 
-// Simpler language change handler with less logging
+// Force reload when language changes to ensure all components update correctly
 i18n.on('languageChanged', (lng) => {
-  if (debugMode) {
-    console.log(`Language changed to: ${lng}`);
+  console.log(`Language changed to: ${lng}`);
+  
+  // Invalidate all task-related queries to refresh translations
+  const queryClient = window.queryClient;
+  if (queryClient) {
+    queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    queryClient.invalidateQueries({ queryKey: ["task"] });
   }
 });
+
+// Make queryClient available globally for language change handler
+declare global {
+  interface Window {
+    queryClient: any;
+  }
+}
 
 export default i18n;
