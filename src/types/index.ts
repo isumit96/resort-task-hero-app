@@ -27,8 +27,6 @@ export interface Task {
   id: string;
   title: string;
   titleKey?: string; // Added for translation
-  description?: string | null; // Added missing description property
-  descriptionKey?: string | null; // Added for description translation
   dueTime: string;
   location: string;
   locationKey?: string; // Added for translation

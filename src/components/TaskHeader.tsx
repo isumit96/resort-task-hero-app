@@ -21,42 +21,26 @@ const TaskHeader = ({ task }: TaskHeaderProps) => {
     }
   };
 
-  // Get the translated task title with silent fallback
-  const taskTitle = task.title; // Default to original title
+  // Check if we have translations for this specific task
+  console.log('Current task in header:', task.id, 'Language:', i18n.language);
+  console.log('Translation key for title:', task.titleKey);
+  console.log('Translation key for location:', task.locationKey);
   
-  // Try to get translation if titleKey exists
-  const translatedTitle = task.titleKey ? 
-    t(task.titleKey, { defaultValue: task.title, silent: true }) : 
+  // Use the task ID specific translation keys
+  const taskTitle = task.titleKey ? 
+    t(task.titleKey, { defaultValue: task.title }) : 
     task.title;
-  
-  // Get the translated location with silent fallback
-  const taskLocation = task.location; // Default to original location
-  
-  // Try to get translation if locationKey exists
-  const translatedLocation = task.locationKey ? 
-    t(task.locationKey, { defaultValue: task.location, silent: true }) : 
+    
+  const taskLocation = task.locationKey ? 
+    t(task.locationKey, { defaultValue: task.location }) : 
     task.location;
-
-  // Get the translated description with silent fallback
-  const taskDescription = task.description; // Default to original description
-  
-  // Try to get translation if descriptionKey exists
-  const translatedDescription = task.descriptionKey && task.description ? 
-    t(task.descriptionKey, { defaultValue: task.description, silent: true }) : 
-    task.description;
 
   return (
     <div className="bg-card px-4 py-4 border-b border-border">
       <div className="flex justify-between items-start">
-        <h1 className="text-xl font-semibold text-foreground">{translatedTitle || taskTitle}</h1>
+        <h1 className="text-xl font-semibold text-foreground">{taskTitle}</h1>
         <TaskStatusBadge status={task.status} />
       </div>
-      
-      {taskDescription && (
-        <div className="mt-2 text-muted-foreground">
-          <p>{translatedDescription || taskDescription}</p>
-        </div>
-      )}
       
       <div className="mt-3 flex flex-wrap gap-y-2 gap-x-4">
         <div className="flex items-center text-muted-foreground">
@@ -66,7 +50,7 @@ const TaskHeader = ({ task }: TaskHeaderProps) => {
         
         <div className="flex items-center text-muted-foreground">
           <MapPin size={16} className="mr-1" />
-          <span className="text-sm">{translatedLocation || taskLocation}</span>
+          <span className="text-sm">{taskLocation}</span>
         </div>
       </div>
     </div>
