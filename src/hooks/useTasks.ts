@@ -46,21 +46,25 @@ export const useTasks = (isManager: boolean = false) => {
         return [];
       }
 
-      console.log('Current language:', i18n.language);
+      console.log('Processing tasks for language:', i18n.language);
+      console.log('Task data sample:', data.length ? data[0].id : 'No tasks');
       
       // Process tasks and prepare for translation
       return data.map((task: any) => {
         // Generate translation keys based on task ID
         const titleKey = `tasks.${task.id}.title`;
         const locationKey = `tasks.${task.id}.location`;
+        const descriptionKey = `tasks.${task.id}.description`;
         
         return {
           id: task.id,
-          title: task.title, // Original title from DB
+          title: task.title,
           titleKey, // Translation key for this specific task
-          dueTime: task.due_time ? new Date(task.due_time).toLocaleString() : '',
+          dueTime: task.due_time ? new Date(task.due_time).toISOString() : '',
           location: task.location || '',
           locationKey, // Translation key for the location
+          description: task.description || '',
+          descriptionKey, // Translation key for the description
           status: task.status,
           assignedTo: task.assigned_to,
           assigneeName: task.profiles?.username || t('tasks.unassigned'),
@@ -68,18 +72,18 @@ export const useTasks = (isManager: boolean = false) => {
           completedAt: task.completed_at,
           deadline: task.deadline,
           steps: (task.steps || []).map((step: any) => {
-            // Fix: Create proper translation keys as strings
+            // Create proper translation keys for steps
             const stepTitleKey = `tasks.${task.id}.step.${step.id}.title`;
             const stepCommentKey = step.comment ? `tasks.${task.id}.step.${step.id}.comment` : undefined;
             
             return {
               id: step.id,
-              title: step.title, // Original title from DB
-              titleKey: stepTitleKey, // Translation key as string
+              title: step.title,
+              titleKey: stepTitleKey,
               isCompleted: step.is_completed,
               requiresPhoto: step.requires_photo,
-              comment: step.comment,
-              commentKey: stepCommentKey, // Translation key as string or undefined
+              comment: step.comment || '',
+              commentKey: stepCommentKey,
               photoUrl: step.photo_url,
               isOptional: step.is_optional || false,
               interactionType: step.interaction_type || 'checkbox'

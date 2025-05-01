@@ -22,23 +22,24 @@ const TaskStepsList = ({ steps, onComplete, onAddComment, onAddPhoto }: TaskStep
       
       <div className="divide-y divide-gray-100 dark:divide-gray-800">
         {steps.map(step => {
-          console.log('Step ID:', step.id, 'Title key:', step.titleKey);
+          console.log('Step:', step.id, 'Title:', step.title, 'TitleKey:', step.titleKey);
           
-          // Correctly translate using the titleKey with proper fallback to original title
-          // The issue was that we weren't handling the case where titleKey might be undefined
-          const translatedTitle = step.titleKey ? 
-            t(step.titleKey, { defaultValue: step.title }) : 
-            step.title;
+          // First try to use the translation key, if it exists
+          let displayTitle = step.title || '';
+          if (step.titleKey) {
+            displayTitle = t(step.titleKey, { defaultValue: step.title || '' });
+          }
           
-          // Translate comment if it exists and has a translation key
-          const translatedComment = step.commentKey && step.comment ? 
-            t(step.commentKey.toString(), { defaultValue: step.comment }) : 
-            step.comment;
+          // For comments, try the translation key first, then fall back to the raw comment
+          let displayComment = step.comment || '';
+          if (step.commentKey) {
+            displayComment = t(step.commentKey, { defaultValue: step.comment || '' });
+          }
           
           const translatedStep = {
             ...step,
-            title: translatedTitle || step.title, // Ensure we always have a title
-            comment: translatedComment
+            title: displayTitle,
+            comment: displayComment
           };
           
           return (

@@ -80,7 +80,22 @@ i18n.on('languageChanged', (lng) => {
       }
     }
   }
+
+  // Invalidate all task-related queries to refresh translations
+  const queryClient = window.queryClient;
+  if (queryClient) {
+    queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    queryClient.invalidateQueries({ queryKey: ["task"] });
+    console.log("Task queries invalidated after language change");
+  }
 });
+
+// Make queryClient available globally for language change handler
+declare global {
+  interface Window {
+    queryClient: any;
+  }
+}
 
 // Log current language on initialization
 console.log('i18n initialized with language:', i18n.language);
