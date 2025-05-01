@@ -6,7 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const API_ENDPOINT = "https://translation.googleapis.com/language/translate/v2";
+// Google Translate API constants
+const GOOGLE_TRANSLATE_BASE_URL = "https://translate.google.com/translate_a/single";
 
 interface TranslationRequest {
   text: string | string[];
@@ -77,24 +78,26 @@ serve(async (req) => {
 
 async function translateText(text: string | string[], target: string, source: string = 'en'): Promise<any> {
   try {
-    // Since we're using a simple approach without API keys, we'll use a mock translation
-    // In production, you would use a real translation API
-    
     if (Array.isArray(text)) {
       // Handle batch translation
+      const promises = text.map(item => googleTranslate(item, source, target));
+      const translations = await Promise.all(promises);
+      
       return {
-        translations: text.map(item => {
+        translations: translations.map(translatedText => {
           return {
-            translatedText: mockTranslate(item, target),
+            translatedText,
             detectedSourceLanguage: source
           };
         })
       };
     } else {
       // Handle single translation
+      const translatedText = await googleTranslate(text, source, target);
+      
       return {
         translations: [{
-          translatedText: mockTranslate(text, target),
+          translatedText,
           detectedSourceLanguage: source
         }]
       };
@@ -105,14 +108,51 @@ async function translateText(text: string | string[], target: string, source: st
   }
 }
 
-// Mock translation function - in production, replace with actual Google Translate API call
-function mockTranslate(text: string, target: string): string {
-  // In a real implementation, this would call the Google Translate API
-  // For demo purposes, we'll use a simple prefix to show translation happened
-  const prefixes = {
-    'hi': 'हिंदी: ',
-    'kn': 'ಕನ್ನಡ: ',
-  };
-  
-  return `${prefixes[target] || ''}${text}`;
+// Implementation based on the unofficial Google Translate API
+async function googleTranslate(text: string, sourceLang: string, targetLang: string): Promise<string> {
+  try {
+    // Prepare parameters for the Google Translate API
+    const params = new URLSearchParams({
+      client: 'gtx',
+      sl: sourceLang,
+      tl: targetLang,
+      dt: 't',
+      q: text,
+    });
+
+    const url = `${GOOGLE_TRANSLATE_BASE_URL}?${params.toString()}`;
+    
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36',
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // Google Translate API returns a nested array structure
+    // The translations are in the first element of the first array
+    if (data && Array.isArray(data) && data[0] && Array.isArray(data[0])) {
+      let translatedText = '';
+      
+      // Combine all the translated sentences into one string
+      for (const translationPart of data[0]) {
+        if (translationPart[0]) {
+          translatedText += translationPart[0];
+        }
+      }
+      
+      return translatedText;
+    }
+    
+    throw new Error('Invalid response format from translation service');
+  } catch (error) {
+    console.error(`Translation error for text "${text}":`, error);
+    // In case of error, return the original text to avoid breaking the app
+    return text;
+  }
 }
