@@ -33,12 +33,23 @@ const TaskHeader = ({ task }: TaskHeaderProps) => {
     ? t(task.locationKey, { defaultValue: task.location || '' }) 
     : task.location;
 
+  // Get the translated description if available
+  const taskDescription = task.descriptionKey && task.description
+    ? t(task.descriptionKey, { defaultValue: task.description })
+    : task.description;
+
   return (
     <div className="bg-card px-4 py-4 border-b border-border">
       <div className="flex justify-between items-start">
         <h1 className="text-xl font-semibold text-foreground">{taskTitle}</h1>
         <TaskStatusBadge status={task.status} />
       </div>
+      
+      {taskDescription && (
+        <div className="mt-2 text-muted-foreground">
+          <p>{taskDescription}</p>
+        </div>
+      )}
       
       <div className="mt-3 flex flex-wrap gap-y-2 gap-x-4">
         <div className="flex items-center text-muted-foreground">
