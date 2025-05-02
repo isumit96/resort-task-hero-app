@@ -71,12 +71,15 @@ export const useTaskOperations = (taskId: string | undefined) => {
         .eq('id', taskId)
         .single();
       
-      if (task && task.status !== 'inprogress') {
-        setPreviousStatus(task.status as 'completed' | 'inprogress' | 'pending');
+      // Only save the previous status once when transitioning from pending to inprogress
+      if (task && task.status === 'pending' && !previousStatus) {
+        setPreviousStatus('pending');
       }
       
       // Mark that we have interactions
-      setHasInteractions(true);
+      if (isCompleted) {
+        setHasInteractions(true);
+      }
       
       const { error: stepError } = await supabase
         .from('task_steps')
@@ -85,8 +88,8 @@ export const useTaskOperations = (taskId: string | undefined) => {
       
       if (stepError) throw stepError;
 
-      // If a step is completed, update task status to inprogress
-      if (task && task.status === 'pending') {
+      // If a step is completed and task is pending, update task status to inprogress
+      if (isCompleted && task && task.status === 'pending') {
         await handleTaskStatusUpdate('inprogress');
       }
 
@@ -95,11 +98,14 @@ export const useTaskOperations = (taskId: string | undefined) => {
       
       console.log(`Step ${stepId} marked as ${isCompleted ? 'completed' : 'not completed'}`);
       
-      // Check if all interactions have been removed
-      const hasActiveInteractions = await checkForInteractions();
-      if (!hasActiveInteractions && previousStatus === 'pending') {
-        await handleTaskStatusUpdate('pending');
-        setHasInteractions(false);
+      // Check if all interactions have been removed when unchecking
+      if (!isCompleted) {
+        const hasActiveInteractions = await checkForInteractions();
+        if (!hasActiveInteractions && previousStatus === 'pending') {
+          await handleTaskStatusUpdate('pending');
+          setPreviousStatus(null);
+          setHasInteractions(false);
+        }
       }
     } catch (error) {
       console.error('Error updating task step:', error);
@@ -122,8 +128,9 @@ export const useTaskOperations = (taskId: string | undefined) => {
         .eq('id', taskId)
         .single();
       
-      if (task && task.status !== 'inprogress') {
-        setPreviousStatus(task.status as 'completed' | 'inprogress' | 'pending');
+      // Only save the previous status once when transitioning from pending to inprogress
+      if (task && task.status === 'pending' && comment.trim() !== '' && !previousStatus) {
+        setPreviousStatus('pending');
       }
       
       // If comment is added, we have interactions
@@ -158,10 +165,13 @@ export const useTaskOperations = (taskId: string | undefined) => {
       });
       
       // Check if all interactions have been removed
-      const hasActiveInteractions = await checkForInteractions();
-      if (!hasActiveInteractions && previousStatus === 'pending' && comment.trim() === '') {
-        await handleTaskStatusUpdate('pending');
-        setHasInteractions(false);
+      if (comment.trim() === '') {
+        const hasActiveInteractions = await checkForInteractions();
+        if (!hasActiveInteractions && previousStatus === 'pending') {
+          await handleTaskStatusUpdate('pending');
+          setPreviousStatus(null);
+          setHasInteractions(false);
+        }
       }
     } catch (error) {
       console.error('Error saving comment:', error);
@@ -184,8 +194,9 @@ export const useTaskOperations = (taskId: string | undefined) => {
         .eq('id', taskId)
         .single();
       
-      if (task && task.status !== 'inprogress') {
-        setPreviousStatus(task.status as 'completed' | 'inprogress' | 'pending');
+      // Only save the previous status once when transitioning from pending to inprogress
+      if (task && task.status === 'pending' && photoUrl && !previousStatus) {
+        setPreviousStatus('pending');
       }
       
       // If photo is added, we have interactions
@@ -214,10 +225,13 @@ export const useTaskOperations = (taskId: string | undefined) => {
       });
       
       // Check if all interactions have been removed
-      const hasActiveInteractions = await checkForInteractions();
-      if (!hasActiveInteractions && previousStatus === 'pending' && !photoUrl) {
-        await handleTaskStatusUpdate('pending');
-        setHasInteractions(false);
+      if (!photoUrl) {
+        const hasActiveInteractions = await checkForInteractions();
+        if (!hasActiveInteractions && previousStatus === 'pending') {
+          await handleTaskStatusUpdate('pending');
+          setPreviousStatus(null);
+          setHasInteractions(false);
+        }
       }
     } catch (error) {
       console.error('Error saving photo:', error);
