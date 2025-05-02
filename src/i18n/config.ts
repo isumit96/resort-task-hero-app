@@ -1,3 +1,4 @@
+
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
@@ -87,13 +88,6 @@ const customInterpolator = (value: string, format: string, lng: string): string 
   return value;
 };
 
-// Prevent language detection from overwriting user preference on init
-const languageDetectorOptions = {
-  order: ['localStorage', 'navigator'],
-  lookupLocalStorage: 'i18nextLng',
-  caches: ['localStorage'],
-};
-
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
@@ -108,12 +102,7 @@ i18n
       escapeValue: false,
       format: customInterpolator
     },
-    detection: languageDetectorOptions,
-    debug: process.env.NODE_ENV === 'development',
-    // Prevent automatic reload on language change
-    react: {
-      useSuspense: false,
-    }
+    debug: process.env.NODE_ENV === 'development'
   });
 
 export default i18n;
