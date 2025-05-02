@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-// Improved file upload function with optimizations for mobile
+// Improved file upload function with optimizations for mobile WebView
 export const uploadFileToStorage = async (file: File, folder: string): Promise<string> => {
   // Compress image if it's a photo before uploading
   let fileToUpload = file;
@@ -15,11 +15,18 @@ export const uploadFileToStorage = async (file: File, folder: string): Promise<s
     }
   }
 
+  const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
+  const filePath = `${folder}/${fileName}`;
+
+  // Console.log for debugging WebView uploads
+  console.log(`Uploading file: ${fileName} (${fileToUpload.type}, ${Math.round(fileToUpload.size/1024)}KB)`);
+
   const { data, error } = await supabase.storage
     .from('task-attachments')
-    .upload(`${folder}/${Date.now()}-${file.name.replace(/\s+/g, '_')}`, fileToUpload);
+    .upload(filePath, fileToUpload);
 
   if (error) {
+    console.error('Storage upload error:', error);
     throw error;
   }
 
@@ -27,6 +34,7 @@ export const uploadFileToStorage = async (file: File, folder: string): Promise<s
     .from('task-attachments')
     .getPublicUrl(data.path);
 
+  console.log('Upload successful, public URL:', publicUrl);
   return publicUrl;
 };
 
@@ -96,3 +104,35 @@ async function compressImageIfNeeded(file: File): Promise<File> {
     };
   });
 }
+
+// Extract image from WebView camera
+export const getImageFromCamera = async (): Promise<File | null> => {
+  return new Promise((resolve) => {
+    // Create file input element
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'environment'; // Force camera on mobile
+    
+    // Listen for file selection
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        console.log(`Camera capture: ${file.name} (${file.type}, ${Math.round(file.size/1024)}KB)`);
+        resolve(file);
+      } else {
+        console.log('No image captured');
+        resolve(null);
+      }
+    };
+    
+    // Handle cancel
+    input.oncancel = () => {
+      console.log('Camera capture cancelled');
+      resolve(null);
+    };
+    
+    // Trigger file selection dialog
+    input.click();
+  });
+};
