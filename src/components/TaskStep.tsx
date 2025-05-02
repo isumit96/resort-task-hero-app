@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { TaskStep as TaskStepType } from "@/types";
 import { Camera, X, CheckCircle, XCircle, Lock } from "lucide-react";
@@ -111,7 +112,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
     return (
       <div className="absolute top-2 right-2 text-muted-foreground flex items-center gap-1.5 bg-muted/30 px-2 py-1 rounded-full text-xs">
         <Lock size={12} />
-        <span>Locked</span>
+        <span>{t('tasks.locked')}</span>
       </div>
     );
   };
