@@ -9,9 +9,10 @@ interface TaskStepsListProps {
   onComplete: (stepId: string, isCompleted: boolean) => void;
   onAddComment: (stepId: string, comment: string) => void;
   onAddPhoto: (stepId: string, photoUrl: string) => void;
+  isTaskCompleted?: boolean;
 }
 
-const TaskStepsList = ({ steps, onComplete, onAddComment, onAddPhoto }: TaskStepsListProps) => {
+const TaskStepsList = ({ steps, onComplete, onAddComment, onAddPhoto, isTaskCompleted = false }: TaskStepsListProps) => {
   const { t, i18n } = useTranslation();
   
   // Get the localized title based on current language
@@ -46,6 +47,7 @@ const TaskStepsList = ({ steps, onComplete, onAddComment, onAddPhoto }: TaskStep
               onComplete={onComplete}
               onAddComment={onAddComment}
               onAddPhoto={onAddPhoto}
+              isTaskCompleted={isTaskCompleted}
             />
           );
         })}
