@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { TaskStep as TaskStepType } from "@/types";
-import { Camera, X, CheckCircle, XCircle } from "lucide-react";
+import { Camera, X, CheckCircle, XCircle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -17,9 +16,10 @@ interface TaskStepProps {
   onComplete: (stepId: string, isCompleted: boolean) => void;
   onAddComment?: (stepId: string, comment: string) => void;
   onAddPhoto?: (stepId: string, photoUrl: string) => void;
+  isTaskCompleted?: boolean;
 }
 
-const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps) => {
+const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted = false }: TaskStepProps) => {
   const { t } = useTranslation();
   
   // Unselected (undefined), explicitly true/false after selection
@@ -49,27 +49,32 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
 
   // Checkbox logic
   const handleCheck = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isTaskCompleted) return;
     onComplete(step.id, e.target.checked);
   };
   
   // Yes/No click handler with unselected as undefined
   const handleYesNoResponse = (value: 'yes' | 'no') => {
+    if (isTaskCompleted) return;
     setYesNoValue(value);
     onComplete(step.id, value === 'yes');
   };
 
   // Comment logic
   const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (isTaskCompleted) return;
     setComment(e.target.value);
   };
   
   const handleCommentSave = () => {
+    if (isTaskCompleted) return;
     if (onAddComment) onAddComment(step.id, comment);
     setShowCommentInput(false);
   };
 
   // Camera capture logic - enhanced for WebView
   const handleCapturePhoto = async () => {
+    if (isTaskCompleted) return;
     try {
       setIsCapturing(true);
       const file = await getImageFromCamera();
@@ -94,12 +99,27 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
   };
 
   const handleRemovePhoto = () => {
+    if (isTaskCompleted) return;
     setPhotoPreview(undefined);
     if (onAddPhoto) onAddPhoto(step.id, ""); // Remove from backend too
   };
 
+  // Show locked status indicator for completed tasks
+  const renderLockedIndicator = () => {
+    if (!isTaskCompleted) return null;
+    
+    return (
+      <div className="absolute top-2 right-2 text-muted-foreground flex items-center gap-1.5 bg-muted/30 px-2 py-1 rounded-full text-xs">
+        <Lock size={12} />
+        <span>Locked</span>
+      </div>
+    );
+  };
+
   return (
-    <div className="mb-4 rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md">
+    <div className="mb-4 rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md relative">
+      {renderLockedIndicator()}
+      
       <div className="flex items-start gap-3">
         {/* Checkbox input - made larger and easier to touch */}
         {step.interactionType === 'checkbox' && (
@@ -108,7 +128,10 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
               type="checkbox"
               checked={!!step.isCompleted}
               onChange={handleCheck}
-              className="h-6 w-6 rounded-md border-gray-300 text-primary focus:ring-primary touch-manipulation"
+              disabled={isTaskCompleted}
+              className={`h-6 w-6 rounded-md border-gray-300 text-primary focus:ring-primary touch-manipulation ${
+                isTaskCompleted ? "opacity-60 cursor-not-allowed" : ""
+              }`}
               style={{ minWidth: '24px' }}
             />
           </div>
@@ -133,15 +156,18 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
               <ToggleGroup
                 type="single"
                 value={yesNoValue}
-                className="flex gap-3"
+                className={`flex gap-3 ${isTaskCompleted ? "opacity-60" : ""}`}
                 onValueChange={v => {
+                  if (isTaskCompleted) return;
                   if (v === 'yes' || v === 'no') handleYesNoResponse(v);
                 }}
+                disabled={isTaskCompleted}
               >
                 <ToggleGroupItem
                   value="yes"
                   aria-label="Yes"
                   data-state={yesNoValue === 'yes' ? "on" : "off"}
+                  disabled={isTaskCompleted}
                   className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-3 rounded-md min-h-12 touch-manipulation ${
                     yesNoValue === "yes"
                       ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
@@ -155,6 +181,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
                   value="no"
                   aria-label="No"
                   data-state={yesNoValue === 'no' ? "on" : "off"}
+                  disabled={isTaskCompleted}
                   className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-3 rounded-md min-h-12 touch-manipulation ${
                     yesNoValue === "no"
                       ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
@@ -174,8 +201,10 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
               {!photoPreview ? (
                 <button
                   onClick={handleCapturePhoto}
-                  disabled={isCapturing}
-                  className="flex items-center gap-2 py-3 px-3 w-full rounded-md bg-muted text-muted-foreground cursor-pointer hover:bg-muted/80 transition-colors text-sm dark:bg-muted/50 dark:hover:bg-muted/30 min-h-12 justify-center touch-manipulation border border-dashed border-border"
+                  disabled={isCapturing || isTaskCompleted}
+                  className={`flex items-center gap-2 py-3 px-3 w-full rounded-md bg-muted text-muted-foreground cursor-pointer hover:bg-muted/80 transition-colors text-sm dark:bg-muted/50 dark:hover:bg-muted/30 min-h-12 justify-center touch-manipulation border border-dashed border-border ${
+                    isTaskCompleted ? "opacity-60 cursor-not-allowed" : ""
+                  }`}
                   type="button"
                 >
                   <Camera size={20} />
@@ -192,21 +221,24 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
                     className="h-40 w-full object-cover rounded-lg border border-border"
                     loading="lazy"
                   />
-                  <button 
-                    onClick={handleRemovePhoto}
-                    type="button"
-                    className="absolute top-2 right-2 bg-black bg-opacity-50 dark:bg-white dark:bg-opacity-20 text-white p-2 rounded-full touch-manipulation"
-                    aria-label="Remove photo"
-                  >
-                    <X size={18} />
-                  </button>
+                  {!isTaskCompleted && (
+                    <button 
+                      onClick={handleRemovePhoto}
+                      type="button"
+                      className="absolute top-2 right-2 bg-black bg-opacity-50 dark:bg-white dark:bg-opacity-20 text-white p-2 rounded-full touch-manipulation"
+                      aria-label="Remove photo"
+                      disabled={isTaskCompleted}
+                    >
+                      <X size={18} />
+                    </button>
+                  )}
                 </div>
               )}
             </div>
           )}
 
           {/* Comment section - cleaner UI with better spacing */}
-          {showCommentInput ? (
+          {showCommentInput && !isTaskCompleted ? (
             <div className="mt-4 bg-card rounded-md p-0.5">
               <Textarea
                 className="w-full border border-input bg-background rounded-md p-3 text-base min-h-[80px]"
@@ -214,6 +246,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
                 rows={2}
                 value={comment}
                 onChange={handleCommentChange}
+                disabled={isTaskCompleted}
               />
               <div className="flex justify-end gap-2 mt-2">
                 <Button 
@@ -222,6 +255,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
                   type="button"
                   onClick={() => setShowCommentInput(false)}
                   className="py-2 px-4 min-h-10 touch-manipulation"
+                  disabled={isTaskCompleted}
                 >
                   {t('common.cancel')}
                 </Button>
@@ -231,6 +265,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
                   type="button"
                   onClick={handleCommentSave}
                   className="py-2 px-4 min-h-10 touch-manipulation"
+                  disabled={isTaskCompleted}
                 >
                   {t('common.save')}
                 </Button>
@@ -241,11 +276,12 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
               {step.comment && (
                 <p className="text-muted-foreground text-sm mt-1 bg-muted/50 p-3 rounded-md italic">"{step.comment}"</p>
               )}
-              {!showCommentInput && (
+              {!showCommentInput && !isTaskCompleted && (
                 <button 
                   className="text-sm text-primary mt-2 py-1 px-0 touch-manipulation flex items-center"
                   type="button"
                   onClick={() => setShowCommentInput(true)}
+                  disabled={isTaskCompleted}
                 >
                   {step.comment ? t('templates.editComment') : t('templates.addComment')}
                 </button>
