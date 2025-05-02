@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTranslation } from "react-i18next";
-import { getImageFromCamera } from "@/utils/storage";
 
 /**
  * Renders an individual task step with support for checkbox or yes/no.
@@ -35,7 +34,6 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
   const [comment, setComment] = useState(step.comment || "");
   const [showCommentInput, setShowCommentInput] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | undefined>(step.photoUrl || undefined);
-  const [isCapturing, setIsCapturing] = useState(false);
 
   // Update yesNoValue when step prop changes (react-query refresh etc)
   useEffect(() => {
@@ -68,28 +66,17 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
     setShowCommentInput(false);
   };
 
-  // Camera capture logic - enhanced for WebView
-  const handleCapturePhoto = async () => {
-    try {
-      setIsCapturing(true);
-      const file = await getImageFromCamera();
-      
-      if (file) {
-        // Show preview immediately
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          setPhotoPreview(result);
-        };
-        reader.readAsDataURL(file);
-        
-        // Pass file to parent for upload
-        if (onAddPhoto) onAddPhoto(step.id, URL.createObjectURL(file));
-      }
-    } catch (error) {
-      console.error('Camera capture error:', error);
-    } finally {
-      setIsCapturing(false);
+  // Photo logic
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        setPhotoPreview(result);
+        if (onAddPhoto) onAddPhoto(step.id, result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -168,22 +155,21 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
             </div>
           )}
 
-          {/* Photo section - improved for WebView with direct camera access */}
+          {/* Photo section - improved UI with better touch targets */}
           {step.requiresPhoto && (
             <div className="mt-4">
               {!photoPreview ? (
-                <button
-                  onClick={handleCapturePhoto}
-                  disabled={isCapturing}
-                  className="flex items-center gap-2 py-3 px-3 w-full rounded-md bg-muted text-muted-foreground cursor-pointer hover:bg-muted/80 transition-colors text-sm dark:bg-muted/50 dark:hover:bg-muted/30 min-h-12 justify-center touch-manipulation border border-dashed border-border"
-                  type="button"
-                >
+                <label className="flex items-center gap-2 py-3 px-3 rounded-md bg-muted text-muted-foreground cursor-pointer hover:bg-muted/80 transition-colors text-sm dark:bg-muted/50 dark:hover:bg-muted/30 min-h-12 w-full justify-center touch-manipulation border border-dashed border-border">
                   <Camera size={20} />
-                  {isCapturing ? 
-                    <span>{t('templates.opening')}</span> : 
-                    <span>{t('templates.takePhoto')}</span>
-                  }
-                </button>
+                  <span>{t('templates.requiresPhoto')}</span>
+                  <input 
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                </label>
               ) : (
                 <div className="relative mt-2">
                   <img 
