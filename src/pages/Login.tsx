@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -59,12 +58,7 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-center px-6 bg-background relative">
-      {/* Language Switcher in top-right corner */}
-      <div className="absolute top-4 right-4">
-        <LanguageSwitcher />
-      </div>
-
+    <div className="min-h-screen flex flex-col justify-center px-6 bg-background">
       <div className="w-full max-w-md mx-auto">
         <motion.div 
           initial={{ y: -20, opacity: 0 }}
