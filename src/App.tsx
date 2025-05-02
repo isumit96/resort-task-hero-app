@@ -1,10 +1,10 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { UserProvider, useUser } from "./context/UserContext";
 import "./i18n/config";
+import { useEffect } from "react";
 
 // Import all page components
 import Login from "./pages/Login";
@@ -68,6 +68,18 @@ const AppRoutes = () => {
 };
 
 const App = () => {
+  // Initialize language from localStorage if available
+  useEffect(() => {
+    const savedLang = localStorage.getItem('i18nextLng');
+    if (savedLang) {
+      import('i18next').then(i18next => {
+        if (i18next.default.language !== savedLang) {
+          i18next.default.changeLanguage(savedLang);
+        }
+      });
+    }
+  }, []);
+
   return (
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
