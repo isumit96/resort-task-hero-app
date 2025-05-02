@@ -163,7 +163,6 @@ const TaskDetail = () => {
           onComplete={handleStepComplete}
           onAddComment={handleAddComment}
           onAddPhoto={handleAddPhoto}
-          isTaskCompleted={isCompleted}
         />
         
         <div className="px-4 py-6 bg-background dark:bg-background">
