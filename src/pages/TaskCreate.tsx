@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -65,7 +64,7 @@ const TaskCreate = () => {
 
   const { employees, isLoading: isLoadingEmployees } = useEmployees();
   const { handleSubmit, saveAsTemplate, isSubmitting, isSavingTemplate } = useTaskCreation();
-  const { loadTemplateData, isLoadingTemplate, templateApplied } = useTemplateLoader(form);
+  const { loadTemplateData, isLoadingTemplate, templateApplied, resetTemplateApplied } = useTemplateLoader(form);
 
   const handlePhotoUpload = async (file: File) => {
     try {
@@ -137,11 +136,12 @@ const TaskCreate = () => {
     }
   };
 
+  // Load template from URL parameter, but only once
   useEffect(() => {
     if (templateId) {
       loadTemplateData(templateId);
     }
-  }, [templateId, loadTemplateData]);
+  }, [templateId]);
 
   useEffect(() => {
     const subscription = form.watch(() => {
@@ -160,6 +160,11 @@ const TaskCreate = () => {
     return () => subscription.unsubscribe();
   }, [form]);
 
+  // Clear alert after user has seen it
+  const handleAlertClose = () => {
+    resetTemplateApplied();
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background dark:bg-background">
       <Header title="Create Task" showBackButton={true} />
@@ -172,6 +177,16 @@ const TaskCreate = () => {
             <AlertDescription>
               The task details have been pre-filled from the selected template.
             </AlertDescription>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleAlertClose} 
+              className="absolute right-2 top-2 h-6 w-6 p-0 rounded-full"
+              aria-label="Close"
+            >
+              <span className="sr-only">Close</span>
+              <span aria-hidden="true">&times;</span>
+            </Button>
           </Alert>
         )}
 

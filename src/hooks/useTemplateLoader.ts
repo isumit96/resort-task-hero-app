@@ -73,11 +73,14 @@ export const useTemplateLoader = (form: UseFormReturn<TaskFormData>) => {
       // Force update of form
       form.trigger();
 
-      setTemplateApplied(true);
+      // Show toast notification once when template is applied
       toast({
         title: "Template Applied",
         description: "The template has been loaded successfully."
       });
+      
+      // Set templateApplied state to true to show the alert
+      setTemplateApplied(true);
     } catch (error) {
       console.error("Error loading template:", error);
       toast({
@@ -90,9 +93,15 @@ export const useTemplateLoader = (form: UseFormReturn<TaskFormData>) => {
     }
   };
 
+  // Add function to reset the templateApplied state
+  const resetTemplateApplied = () => {
+    setTemplateApplied(false);
+  };
+
   return {
     loadTemplateData,
     isLoadingTemplate,
-    templateApplied
+    templateApplied,
+    resetTemplateApplied
   };
 };
