@@ -23,7 +23,7 @@ const TaskDetail = () => {
   const { isAuthenticated } = useUser();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { handleStepComplete, handleAddComment, handleAddPhoto, handleTaskStatusUpdate, handleInteraction } = useTaskOperations(taskId);
+  const { handleStepComplete, handleAddComment, handleAddPhoto, handleTaskStatusUpdate } = useTaskOperations(taskId);
   const [allRequiredStepsCompleted, setAllRequiredStepsCompleted] = useState(false);
   const { t, i18n } = useTranslation();
 
@@ -101,7 +101,9 @@ const TaskDetail = () => {
     });
 
     setAllRequiredStepsCompleted(requiredStepsCompleted);
-  }, [task?.steps]);
+
+    // Status auto-update managed by useTaskOperations now
+  }, [task?.steps, task?.status]);
 
   const handleMarkComplete = () => {
     if (!task) return;
@@ -120,12 +122,6 @@ const TaskDetail = () => {
       title: t('tasks.taskCompleted'),
       description: t('tasks.allStepsCompleted'),
     });
-  };
-
-  const handleStepInteraction = (isInteracting: boolean) => {
-    if (task) {
-      handleInteraction(isInteracting, task.status);
-    }
   };
 
   if (isLoading || !task) {
@@ -163,7 +159,6 @@ const TaskDetail = () => {
           onComplete={handleStepComplete}
           onAddComment={handleAddComment}
           onAddPhoto={handleAddPhoto}
-          onInteraction={handleStepInteraction}
           isTaskCompleted={isCompleted}
         />
         

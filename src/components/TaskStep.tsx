@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { TaskStep as TaskStepType } from "@/types";
 import { Camera, X, CheckCircle, XCircle, Lock } from "lucide-react";
@@ -17,18 +16,10 @@ interface TaskStepProps {
   onComplete: (stepId: string, isCompleted: boolean) => void;
   onAddComment?: (stepId: string, comment: string) => void;
   onAddPhoto?: (stepId: string, photoUrl: string) => void;
-  onInteraction?: (isInteracting: boolean) => void;
   isTaskCompleted?: boolean;
 }
 
-const TaskStep = ({ 
-  step, 
-  onComplete, 
-  onAddComment, 
-  onAddPhoto, 
-  onInteraction,
-  isTaskCompleted = false 
-}: TaskStepProps) => {
+const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted = false }: TaskStepProps) => {
   const { t } = useTranslation();
   
   // Unselected (undefined), explicitly true/false after selection
@@ -60,7 +51,6 @@ const TaskStep = ({
   const handleCheck = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (isTaskCompleted) return;
     onComplete(step.id, e.target.checked);
-    if (onInteraction) onInteraction(true);
   };
   
   // Yes/No click handler with unselected as undefined
@@ -68,14 +58,12 @@ const TaskStep = ({
     if (isTaskCompleted) return;
     setYesNoValue(value);
     onComplete(step.id, value === 'yes');
-    if (onInteraction) onInteraction(true);
   };
 
   // Comment logic
   const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (isTaskCompleted) return;
     setComment(e.target.value);
-    if (onInteraction) onInteraction(true);
   };
   
   const handleCommentSave = () => {
@@ -84,18 +72,11 @@ const TaskStep = ({
     setShowCommentInput(false);
   };
 
-  const handleCommentCancel = () => {
-    setShowCommentInput(false);
-    setComment(step.comment || "");
-    if (onInteraction && !step.comment) onInteraction(false);
-  };
-
   // Camera capture logic - enhanced for WebView
   const handleCapturePhoto = async () => {
     if (isTaskCompleted) return;
     try {
       setIsCapturing(true);
-      if (onInteraction) onInteraction(true);
       const file = await getImageFromCamera();
       
       if (file) {
@@ -109,14 +90,9 @@ const TaskStep = ({
         
         // Pass file to parent for upload
         if (onAddPhoto) onAddPhoto(step.id, URL.createObjectURL(file));
-      } else {
-        // If capture was canceled and no photo exists
-        if (!step.photoUrl && onInteraction) onInteraction(false);
       }
     } catch (error) {
       console.error('Camera capture error:', error);
-      // If capture errors out and no photo exists
-      if (!step.photoUrl && onInteraction) onInteraction(false);
     } finally {
       setIsCapturing(false);
     }
@@ -126,7 +102,6 @@ const TaskStep = ({
     if (isTaskCompleted) return;
     setPhotoPreview(undefined);
     if (onAddPhoto) onAddPhoto(step.id, ""); // Remove from backend too
-    if (onInteraction) onInteraction(false);
   };
 
   // Show locked status indicator for completed tasks
@@ -278,7 +253,7 @@ const TaskStep = ({
                   variant="outline"
                   size="sm"
                   type="button"
-                  onClick={handleCommentCancel}
+                  onClick={() => setShowCommentInput(false)}
                   className="py-2 px-4 min-h-10 touch-manipulation"
                   disabled={isTaskCompleted}
                 >
@@ -305,10 +280,7 @@ const TaskStep = ({
                 <button 
                   className="text-sm text-primary mt-2 py-1 px-0 touch-manipulation flex items-center"
                   type="button"
-                  onClick={() => {
-                    setShowCommentInput(true);
-                    if (onInteraction) onInteraction(true);
-                  }}
+                  onClick={() => setShowCommentInput(true)}
                   disabled={isTaskCompleted}
                 >
                   {step.comment ? t('templates.editComment') : t('templates.addComment')}
