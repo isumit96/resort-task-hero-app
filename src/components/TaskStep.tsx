@@ -17,10 +17,18 @@ interface TaskStepProps {
   onComplete: (stepId: string, isCompleted: boolean) => void;
   onAddComment?: (stepId: string, comment: string) => void;
   onAddPhoto?: (stepId: string, photoUrl: string) => void;
+  onInteraction?: (isInteracting: boolean) => void;
   isTaskCompleted?: boolean;
 }
 
-const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted = false }: TaskStepProps) => {
+const TaskStep = ({ 
+  step, 
+  onComplete, 
+  onAddComment, 
+  onAddPhoto, 
+  onInteraction,
+  isTaskCompleted = false 
+}: TaskStepProps) => {
   const { t } = useTranslation();
   
   // Unselected (undefined), explicitly true/false after selection
@@ -52,6 +60,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
   const handleCheck = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (isTaskCompleted) return;
     onComplete(step.id, e.target.checked);
+    if (onInteraction) onInteraction(true);
   };
   
   // Yes/No click handler with unselected as undefined
@@ -59,12 +68,14 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
     if (isTaskCompleted) return;
     setYesNoValue(value);
     onComplete(step.id, value === 'yes');
+    if (onInteraction) onInteraction(true);
   };
 
   // Comment logic
   const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (isTaskCompleted) return;
     setComment(e.target.value);
+    if (onInteraction) onInteraction(true);
   };
   
   const handleCommentSave = () => {
@@ -73,11 +84,18 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
     setShowCommentInput(false);
   };
 
+  const handleCommentCancel = () => {
+    setShowCommentInput(false);
+    setComment(step.comment || "");
+    if (onInteraction && !step.comment) onInteraction(false);
+  };
+
   // Camera capture logic - enhanced for WebView
   const handleCapturePhoto = async () => {
     if (isTaskCompleted) return;
     try {
       setIsCapturing(true);
+      if (onInteraction) onInteraction(true);
       const file = await getImageFromCamera();
       
       if (file) {
@@ -91,9 +109,14 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
         
         // Pass file to parent for upload
         if (onAddPhoto) onAddPhoto(step.id, URL.createObjectURL(file));
+      } else {
+        // If capture was canceled and no photo exists
+        if (!step.photoUrl && onInteraction) onInteraction(false);
       }
     } catch (error) {
       console.error('Camera capture error:', error);
+      // If capture errors out and no photo exists
+      if (!step.photoUrl && onInteraction) onInteraction(false);
     } finally {
       setIsCapturing(false);
     }
@@ -103,6 +126,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
     if (isTaskCompleted) return;
     setPhotoPreview(undefined);
     if (onAddPhoto) onAddPhoto(step.id, ""); // Remove from backend too
+    if (onInteraction) onInteraction(false);
   };
 
   // Show locked status indicator for completed tasks
@@ -112,7 +136,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
     return (
       <div className="absolute top-2 right-2 text-muted-foreground flex items-center gap-1.5 bg-muted/30 px-2 py-1 rounded-full text-xs">
         <Lock size={12} />
-        <span>{t('tasks.locked')}</span>
+        <span>Locked</span>
       </div>
     );
   };
@@ -254,7 +278,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
                   variant="outline"
                   size="sm"
                   type="button"
-                  onClick={() => setShowCommentInput(false)}
+                  onClick={handleCommentCancel}
                   className="py-2 px-4 min-h-10 touch-manipulation"
                   disabled={isTaskCompleted}
                 >
@@ -281,7 +305,10 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
                 <button 
                   className="text-sm text-primary mt-2 py-1 px-0 touch-manipulation flex items-center"
                   type="button"
-                  onClick={() => setShowCommentInput(true)}
+                  onClick={() => {
+                    setShowCommentInput(true);
+                    if (onInteraction) onInteraction(true);
+                  }}
                   disabled={isTaskCompleted}
                 >
                   {step.comment ? t('templates.editComment') : t('templates.addComment')}

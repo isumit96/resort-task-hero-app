@@ -23,7 +23,7 @@ const TaskDetail = () => {
   const { isAuthenticated } = useUser();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { handleStepComplete, handleAddComment, handleAddPhoto, handleTaskStatusUpdate } = useTaskOperations(taskId);
+  const { handleStepComplete, handleAddComment, handleAddPhoto, handleTaskStatusUpdate, handleInteraction } = useTaskOperations(taskId);
   const [allRequiredStepsCompleted, setAllRequiredStepsCompleted] = useState(false);
   const { t, i18n } = useTranslation();
 
@@ -101,13 +101,7 @@ const TaskDetail = () => {
     });
 
     setAllRequiredStepsCompleted(requiredStepsCompleted);
-
-    if (task.steps.every(step => (typeof step.isCompleted === "boolean" && step.isCompleted === true)) && task.status !== 'completed') {
-      handleTaskStatusUpdate('inprogress');
-    } else if (task.steps.some(step => step.isCompleted) && task.status === 'pending') {
-      handleTaskStatusUpdate('inprogress');
-    }
-  }, [task?.steps, task?.status, handleTaskStatusUpdate]);
+  }, [task?.steps]);
 
   const handleMarkComplete = () => {
     if (!task) return;
@@ -126,6 +120,12 @@ const TaskDetail = () => {
       title: t('tasks.taskCompleted'),
       description: t('tasks.allStepsCompleted'),
     });
+  };
+
+  const handleStepInteraction = (isInteracting: boolean) => {
+    if (task) {
+      handleInteraction(isInteracting, task.status);
+    }
   };
 
   if (isLoading || !task) {
@@ -163,6 +163,7 @@ const TaskDetail = () => {
           onComplete={handleStepComplete}
           onAddComment={handleAddComment}
           onAddPhoto={handleAddPhoto}
+          onInteraction={handleStepInteraction}
           isTaskCompleted={isCompleted}
         />
         

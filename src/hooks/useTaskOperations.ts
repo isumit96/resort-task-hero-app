@@ -3,12 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
+import { TaskStatus } from "@/types";
 
 export const useTaskOperations = (taskId: string | undefined) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [isInteracting, setIsInteracting] = useState(false);
+  const [previousStatus, setPreviousStatus] = useState<TaskStatus | null>(null);
 
   // Helper function to translate text
   const translateText = async (text: string, targetLang: string) => {
@@ -118,7 +121,7 @@ export const useTaskOperations = (taskId: string | undefined) => {
     }
   }, [taskId, queryClient, toast]);
 
-  const handleTaskStatusUpdate = useCallback(async (newStatus: 'completed' | 'inprogress' | 'pending') => {
+  const handleTaskStatusUpdate = useCallback(async (newStatus: TaskStatus) => {
     if (!taskId) return;
 
     try {
@@ -159,10 +162,40 @@ export const useTaskOperations = (taskId: string | undefined) => {
     }
   }, [taskId, navigate, queryClient, toast]);
 
+  const handleInteraction = useCallback(async (interacting: boolean, currentStatus: TaskStatus) => {
+    setIsInteracting(interacting);
+    
+    if (interacting) {
+      // Save the current status before changing to 'inprogress' 
+      // but only if we're not already interacting
+      if (!isInteracting && currentStatus !== 'inprogress' && currentStatus !== 'completed') {
+        console.log(`Saving previous status: ${currentStatus}`);
+        setPreviousStatus(currentStatus);
+        
+        // Update the status to 'inprogress'
+        if (currentStatus !== 'inprogress') {
+          await handleTaskStatusUpdate('inprogress');
+        }
+      }
+    } else {
+      // Check if all interactions have stopped and if we should revert to previous status
+      // Only revert if:
+      // 1. The task isn't completed
+      // 2. We have a previous status saved
+      // 3. The current status is 'inprogress'
+      if (previousStatus && previousStatus !== 'inprogress' && currentStatus !== 'completed') {
+        console.log(`Reverting to previous status: ${previousStatus}`);
+        await handleTaskStatusUpdate(previousStatus);
+        setPreviousStatus(null);  // Clear the stored previous status
+      }
+    }
+  }, [isInteracting, handleTaskStatusUpdate]);
+
   return {
     handleStepComplete,
     handleAddComment,
     handleAddPhoto,
     handleTaskStatusUpdate,
+    handleInteraction
   };
 };
