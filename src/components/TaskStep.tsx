@@ -60,6 +60,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
   const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setComment(e.target.value);
   };
+  
   const handleCommentSave = () => {
     if (onAddComment) onAddComment(step.id, comment);
     setShowCommentInput(false);
@@ -85,37 +86,81 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
   };
 
   return (
-    <div className="py-3 border-b border-border last:border-b-0 dark:border-border">
-      <div className="flex items-start">
-        {/* Checkbox input on left - made larger for touch */}
+    <div className="mb-4 rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md">
+      <div className="flex items-start gap-3">
+        {/* Checkbox input - made larger and easier to touch */}
         {step.interactionType === 'checkbox' && (
-          <input
-            type="checkbox"
-            checked={!!step.isCompleted}
-            onChange={handleCheck}
-            className="mt-1 h-6 w-6 rounded border-gray-300 text-primary focus:ring-primary touch-manipulation"
-          />
+          <div className="mt-0.5 flex-shrink-0">
+            <input
+              type="checkbox"
+              checked={!!step.isCompleted}
+              onChange={handleCheck}
+              className="h-6 w-6 rounded-md border-gray-300 text-primary focus:ring-primary touch-manipulation"
+              style={{ minWidth: '24px' }}
+            />
+          </div>
         )}
 
-        {/* Main content to the right */}
-        <div className="ml-3 w-full">
-          <div className="flex justify-between items-start">
-            <label className={`text-base ${step.isCompleted ? 'line-through text-muted-foreground' : ''}`}>
+        {/* Main content - well spaced and organized */}
+        <div className="flex-1">
+          <div className="flex justify-between items-start mb-2">
+            <label className={`text-base font-medium ${step.isCompleted ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
               {step.title}
             </label>
             {step.isOptional && (
-              <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full dark:bg-muted/50">
+              <span className="ml-2 text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full dark:bg-muted/50">
                 {t('common.optional')}
               </span>
             )}
           </div>
 
-          {/* Photo section - improved for WebView and camera capture */}
-          {step.requiresPhoto && (
+          {/* Yes/No buttons - larger touch targets and clear visual states */}
+          {step.interactionType === 'yes_no' && (
             <div className="mt-3">
+              <ToggleGroup
+                type="single"
+                value={yesNoValue}
+                className="flex gap-3"
+                onValueChange={v => {
+                  if (v === 'yes' || v === 'no') handleYesNoResponse(v);
+                }}
+              >
+                <ToggleGroupItem
+                  value="yes"
+                  aria-label="Yes"
+                  data-state={yesNoValue === 'yes' ? "on" : "off"}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-3 rounded-md min-h-12 touch-manipulation ${
+                    yesNoValue === "yes"
+                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
+                      : "bg-muted text-muted-foreground dark:bg-muted/50"
+                  }`}
+                >
+                  <CheckCircle size={18} />
+                  <span>{t('templates.yes')}</span>
+                </ToggleGroupItem>
+                <ToggleGroupItem
+                  value="no"
+                  aria-label="No"
+                  data-state={yesNoValue === 'no' ? "on" : "off"}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-3 rounded-md min-h-12 touch-manipulation ${
+                    yesNoValue === "no"
+                      ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
+                      : "bg-muted text-muted-foreground dark:bg-muted/50"
+                  }`}
+                >
+                  <XCircle size={18} />
+                  <span>{t('templates.no')}</span>
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+          )}
+
+          {/* Photo section - improved UI with better touch targets */}
+          {step.requiresPhoto && (
+            <div className="mt-4">
               {!photoPreview ? (
-                <label className="flex items-center gap-2 py-3 px-3 rounded-md bg-muted text-muted-foreground cursor-pointer hover:bg-muted/80 transition-colors text-sm dark:bg-muted/50 dark:hover:bg-muted/30 min-h-12 touch-manipulation">
-                  <Camera size={18} />
+                <label className="flex items-center gap-2 py-3 px-3 rounded-md bg-muted text-muted-foreground cursor-pointer hover:bg-muted/80 transition-colors text-sm dark:bg-muted/50 dark:hover:bg-muted/30 min-h-12 w-full justify-center touch-manipulation border border-dashed border-border">
+                  <Camera size={20} />
                   <span>{t('templates.requiresPhoto')}</span>
                   <input 
                     type="file"
@@ -130,13 +175,14 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
                   <img 
                     src={photoPreview}
                     alt="Step verification" 
-                    className="h-32 w-full object-cover rounded-lg"
+                    className="h-40 w-full object-cover rounded-lg border border-border"
                     loading="lazy"
                   />
                   <button 
                     onClick={handleRemovePhoto}
                     type="button"
                     className="absolute top-2 right-2 bg-black bg-opacity-50 dark:bg-white dark:bg-opacity-20 text-white p-2 rounded-full touch-manipulation"
+                    aria-label="Remove photo"
                   >
                     <X size={18} />
                   </button>
@@ -145,11 +191,11 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
             </div>
           )}
 
-          {/* Comment section */}
+          {/* Comment section - cleaner UI with better spacing */}
           {showCommentInput ? (
-            <div className="mt-3">
+            <div className="mt-4 bg-card rounded-md p-0.5">
               <Textarea
-                className="w-full border border-input bg-background rounded-md p-3 text-base"
+                className="w-full border border-input bg-background rounded-md p-3 text-base min-h-[80px]"
                 placeholder={t('templates.addComment')}
                 rows={2}
                 value={comment}
@@ -158,7 +204,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
               <div className="flex justify-end gap-2 mt-2">
                 <Button 
                   variant="outline"
-                  size="default"
+                  size="sm"
                   type="button"
                   onClick={() => setShowCommentInput(false)}
                   className="py-2 px-4 min-h-10 touch-manipulation"
@@ -167,7 +213,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
                 </Button>
                 <Button 
                   variant="default"
-                  size="default"
+                  size="sm"
                   type="button"
                   onClick={handleCommentSave}
                   className="py-2 px-4 min-h-10 touch-manipulation"
@@ -177,60 +223,19 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto }: TaskStepProps)
               </div>
             </div>
           ) : (
-            <div>
+            <div className="mt-2">
               {step.comment && (
-                <p className="text-muted-foreground text-sm mt-1 italic">"{step.comment}"</p>
+                <p className="text-muted-foreground text-sm mt-1 bg-muted/50 p-3 rounded-md italic">"{step.comment}"</p>
               )}
               {!showCommentInput && (
                 <button 
-                  className="text-sm text-primary mt-2 py-2 px-3 touch-manipulation"
+                  className="text-sm text-primary mt-2 py-1 px-0 touch-manipulation flex items-center"
                   type="button"
                   onClick={() => setShowCommentInput(true)}
                 >
                   {step.comment ? t('templates.editComment') : t('templates.addComment')}
                 </button>
               )}
-            </div>
-          )}
-
-          {/* Yes/No buttons below content - made more touch-friendly */}
-          {step.interactionType === 'yes_no' && (
-            <div className="mt-3">
-              <ToggleGroup
-                type="single"
-                value={yesNoValue}
-                className=""
-                onValueChange={v => {
-                  if (v === 'yes' || v === 'no') handleYesNoResponse(v);
-                }}
-              >
-                <ToggleGroupItem
-                  value="yes"
-                  aria-label="Yes"
-                  data-state={yesNoValue === 'yes' ? "on" : "off"}
-                  className={`flex items-center gap-1.5 px-4 py-2.5 rounded-md min-h-11 touch-manipulation ${
-                    yesNoValue === "yes"
-                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
-                      : "bg-muted text-muted-foreground dark:bg-muted/50"
-                  }`}
-                >
-                  <CheckCircle size={18} />
-                  <span>{t('templates.yes')}</span>
-                </ToggleGroupItem>
-                <ToggleGroupItem
-                  value="no"
-                  aria-label="No"
-                  data-state={yesNoValue === 'no' ? "on" : "off"}
-                  className={`flex items-center gap-1.5 px-4 py-2.5 rounded-md min-h-11 touch-manipulation ${
-                    yesNoValue === "no"
-                      ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
-                      : "bg-muted text-muted-foreground dark:bg-muted/50"
-                  }`}
-                >
-                  <XCircle size={18} />
-                  <span>{t('templates.no')}</span>
-                </ToggleGroupItem>
-              </ToggleGroup>
             </div>
           )}
         </div>

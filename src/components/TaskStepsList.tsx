@@ -2,6 +2,7 @@
 import { TaskStep as TaskStepType } from "@/types";
 import TaskStep from "./TaskStep";
 import { useTranslation } from "react-i18next";
+import { Card } from "@/components/ui/card";
 
 interface TaskStepsListProps {
   steps: TaskStepType[];
@@ -25,10 +26,15 @@ const TaskStepsList = ({ steps, onComplete, onAddComment, onAddPhoto }: TaskStep
   };
   
   return (
-    <div className="bg-background dark:bg-background mt-2 px-4">
-      <h2 className="text-lg font-medium py-3 border-b dark:border-border">{t('tasks.stepsToComplete')}</h2>
+    <Card className="bg-background dark:bg-background mt-4 mx-4 border rounded-lg overflow-hidden shadow-sm">
+      <h2 className="text-lg font-medium py-4 px-5 border-b dark:border-border flex items-center">
+        {t('tasks.stepsToComplete')}
+        <span className="ml-2 text-sm text-muted-foreground">
+          ({steps.length})
+        </span>
+      </h2>
       
-      <div className="divide-y divide-gray-100 dark:divide-gray-800">
+      <div className="p-4 space-y-2">
         {steps.map(step => {          
           return (
             <TaskStep 
@@ -44,7 +50,7 @@ const TaskStepsList = ({ steps, onComplete, onAddComment, onAddPhoto }: TaskStep
           );
         })}
       </div>
-    </div>
+    </Card>
   );
 };
 

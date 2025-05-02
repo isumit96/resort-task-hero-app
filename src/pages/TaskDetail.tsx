@@ -152,10 +152,10 @@ const TaskDetail = () => {
   const isCompleted = task.status === 'completed';
 
   return (
-    <div className="flex flex-col h-screen bg-background dark:bg-[#121212]">
+    <div className="flex flex-col h-screen bg-background dark:bg-background">
       <Header showBackButton title={title} />
       
-      <div className="flex-1 overflow-y-auto pb-24 bg-background dark:bg-[#121212]">
+      <div className="flex-1 overflow-y-auto pb-24 bg-background dark:bg-background">
         <TaskHeader task={task} />
         
         <TaskStepsList
@@ -165,7 +165,7 @@ const TaskDetail = () => {
           onAddPhoto={handleAddPhoto}
         />
         
-        <div className="px-4 py-4 bg-background dark:bg-[#121212]">
+        <div className="px-4 py-6 bg-background dark:bg-background">
           <TaskStatus
             status={task.status}
             completedSteps={completedSteps}
@@ -173,20 +173,24 @@ const TaskDetail = () => {
           />
         
           {!isCompleted && (
-            <div className="mt-6 bg-background dark:bg-[#121212]">
+            <div className="mt-6 bg-background dark:bg-background">
               <Button 
-                className="w-full py-6 text-base shadow-lg hover:shadow-primary/25 transition-all duration-300 animate-fade-in hover:bg-primary/90" 
+                className={`
+                  w-full py-6 text-base shadow-lg transition-all duration-300 rounded-lg
+                  ${allRequiredStepsCompleted 
+                    ? 'bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-primary/25' 
+                    : 'bg-muted text-muted-foreground hover:bg-muted/90'}
+                `}
                 disabled={!allRequiredStepsCompleted}
                 onClick={handleMarkComplete}
                 type="button"
-                variant="default"
                 size="default"
               >
-                <CheckCircle2 className="mr-2" />
+                <CheckCircle2 className="mr-2" size={22} />
                 {t('tasks.markComplete')}
               </Button>
               {!allRequiredStepsCompleted && (
-                <p className="text-sm text-muted-foreground dark:text-muted-foreground/80 mt-2 text-center">
+                <p className="text-sm text-muted-foreground dark:text-muted-foreground/80 mt-3 text-center">
                   {t('tasks.completeRequiredSteps')}
                 </p>
               )}
@@ -195,7 +199,7 @@ const TaskDetail = () => {
         </div>
       </div>
       
-      <div className="h-16 bg-background dark:bg-[#121212]" />
+      <div className="h-16 bg-background dark:bg-background" />
       <BottomNavigation />
     </div>
   );
