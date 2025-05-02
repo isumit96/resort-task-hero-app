@@ -183,7 +183,7 @@ export const useTaskOperations = (taskId: string | undefined) => {
       // 1. The task isn't completed
       // 2. We have a previous status saved
       // 3. The current status is 'inprogress'
-      if (previousStatus && previousStatus !== 'inprogress' && currentStatus !== 'completed') {
+      if (previousStatus && currentStatus === 'inprogress' && currentStatus !== 'completed') {
         console.log(`Reverting to previous status: ${previousStatus}`);
         await handleTaskStatusUpdate(previousStatus);
         setPreviousStatus(null);  // Clear the stored previous status
