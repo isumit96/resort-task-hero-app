@@ -102,8 +102,12 @@ const TaskDetail = () => {
 
     setAllRequiredStepsCompleted(requiredStepsCompleted);
 
-    // Status auto-update managed by useTaskOperations now
-  }, [task?.steps, task?.status]);
+    if (task.steps.every(step => (typeof step.isCompleted === "boolean" && step.isCompleted === true)) && task.status !== 'completed') {
+      handleTaskStatusUpdate('inprogress');
+    } else if (task.steps.some(step => step.isCompleted) && task.status === 'pending') {
+      handleTaskStatusUpdate('inprogress');
+    }
+  }, [task?.steps, task?.status, handleTaskStatusUpdate]);
 
   const handleMarkComplete = () => {
     if (!task) return;
