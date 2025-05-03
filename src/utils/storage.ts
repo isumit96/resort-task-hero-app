@@ -126,10 +126,88 @@ async function compressImageIfNeeded(file: File): Promise<File> {
   });
 }
 
-// Completely redesigned WebView camera capture function with enhanced Android compatibility
+// Define global handler for Android native app callbacks
+// This will be called from the Android WebView when there are camera or file errors
+declare global {
+  interface Window {
+    handleAndroidFileError?: (errorType: string, message: string) => void;
+    receiveFileFromAndroid?: (base64Data: string, fileName: string, mimeType: string) => Promise<File>;
+    androidCameraCapture?: {
+      capturePhoto: () => void;
+      captureVideo: () => void;
+    };
+  }
+}
+
+// Set up global handlers for Android WebView communication
+if (typeof window !== 'undefined' && !window.handleAndroidFileError) {
+  // Error handler for Android WebView callbacks
+  window.handleAndroidFileError = (errorType: string, message: string) => {
+    console.error(`Android file error [${errorType}]:`, message);
+    
+    // Dispatch custom event that components can listen for
+    const errorEvent = new CustomEvent('android-file-error', {
+      detail: { errorType, message }
+    });
+    document.dispatchEvent(errorEvent);
+  };
+  
+  // Handler to receive file data directly from Android
+  window.receiveFileFromAndroid = async (base64Data: string, fileName: string, mimeType: string): Promise<File> => {
+    try {
+      // Convert base64 to blob
+      const response = await fetch(`data:${mimeType};base64,${base64Data}`);
+      const blob = await response.blob();
+      
+      // Create File object from blob
+      return new File([blob], fileName, { type: mimeType });
+    } catch (error) {
+      console.error('Error converting base64 to File:', error);
+      throw error;
+    }
+  };
+}
+
+// Android WebView-optimized camera capture function
 export const getImageFromCamera = async (): Promise<File | null> => {
   console.log('Starting camera capture process');
   
+  // Check if we have direct Android bridge access
+  if (window.androidCameraCapture && typeof window.androidCameraCapture.capturePhoto === 'function') {
+    console.log('Using Android native camera bridge');
+    
+    return new Promise((resolve) => {
+      // Listen for file from Android
+      const handleFileReceived = (e: CustomEvent) => {
+        document.removeEventListener('android-file-received', handleFileReceived as EventListener);
+        resolve(e.detail.file);
+      };
+      
+      // Listen for errors from Android
+      const handleFileError = (e: CustomEvent) => {
+        document.removeEventListener('android-file-error', handleFileError as EventListener);
+        console.error('Android camera error:', e.detail);
+        resolve(null);
+      };
+      
+      // Set up event listeners
+      document.addEventListener('android-file-received', handleFileReceived as EventListener);
+      document.addEventListener('android-file-error', handleFileError as EventListener);
+      
+      // Call Android bridge method
+      window.androidCameraCapture.capturePhoto();
+      
+      // Safety timeout in case Android doesn't call back
+      setTimeout(() => {
+        document.removeEventListener('android-file-received', handleFileReceived as EventListener);
+        document.removeEventListener('android-file-error', handleFileError as EventListener);
+        console.log('Android camera timeout reached');
+        resolve(null);
+      }, 60000);
+    });
+  }
+  
+  // Fallback to standard HTML file input approach
   return new Promise((resolve) => {
     try {
       // Create file input element specifically tailored for WebView interaction
@@ -226,6 +304,17 @@ export const getImageFromCamera = async (): Promise<File | null> => {
       input.addEventListener('focus', handleFocus);
       input.addEventListener('blur', handleBlur);
       
+      // Add global error listener for Android errors
+      const handleAndroidError = (e: CustomEvent) => {
+        console.log('Received Android error event:', e.detail);
+        document.removeEventListener('android-file-error', handleAndroidError as EventListener);
+        if (!fileSelected) {
+          fileSelected = true;
+          resolve(null);
+        }
+      };
+      document.addEventListener('android-file-error', handleAndroidError as EventListener);
+      
       // Trigger camera with click after a small delay for WebView readiness
       setTimeout(() => {
         console.log('Triggering camera file selection dialog');
@@ -246,6 +335,7 @@ export const getImageFromCamera = async (): Promise<File | null> => {
             input.removeEventListener('click', handleClick);
             input.removeEventListener('focus', handleFocus);
             input.removeEventListener('blur', handleBlur);
+            document.removeEventListener('android-file-error', handleAndroidError as EventListener);
             
             if (document.body.contains(input)) {
               document.body.removeChild(input);
@@ -258,6 +348,123 @@ export const getImageFromCamera = async (): Promise<File | null> => {
       
     } catch (error) {
       console.error('Error setting up camera capture:', error);
+      resolve(null);
+    }
+  });
+};
+
+// Add function for Android video capture (similar to getImageFromCamera)
+export const getVideoFromCamera = async (): Promise<File | null> => {
+  console.log('Starting video capture process');
+  
+  // Check if we have direct Android bridge access
+  if (window.androidCameraCapture && typeof window.androidCameraCapture.captureVideo === 'function') {
+    console.log('Using Android native video bridge');
+    
+    return new Promise((resolve) => {
+      // Listen for file from Android
+      const handleFileReceived = (e: CustomEvent) => {
+        document.removeEventListener('android-file-received', handleFileReceived as EventListener);
+        resolve(e.detail.file);
+      };
+      
+      // Listen for errors from Android
+      const handleFileError = (e: CustomEvent) => {
+        document.removeEventListener('android-file-error', handleFileError as EventListener);
+        console.error('Android video error:', e.detail);
+        resolve(null);
+      };
+      
+      // Set up event listeners
+      document.addEventListener('android-file-received', handleFileReceived as EventListener);
+      document.addEventListener('android-file-error', handleFileError as EventListener);
+      
+      // Call Android bridge method
+      window.androidCameraCapture.captureVideo();
+      
+      // Safety timeout in case Android doesn't call back
+      setTimeout(() => {
+        document.removeEventListener('android-file-received', handleFileReceived as EventListener);
+        document.removeEventListener('android-file-error', handleFileError as EventListener);
+        console.log('Android video timeout reached');
+        resolve(null);
+      }, 300000); // 5 minutes for video recording
+    });
+  }
+  
+  // Fallback to standard HTML file input approach for video
+  return new Promise((resolve) => {
+    try {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'video/*';
+      
+      const isAndroidWebView = /Android/.test(navigator.userAgent) && 
+                              (/wv/.test(navigator.userAgent) || 
+                               /Version\/[0-9.]+/.test(navigator.userAgent));
+      
+      if (isAndroidWebView) {
+        input.setAttribute('capture', 'environment');
+        console.log('Android WebView detected, using capture=environment attribute for video');
+      }
+      
+      let fileSelected = false;
+      
+      const handleChange = () => {
+        console.log('Video input change event fired');
+        fileSelected = true;
+        
+        if (input.files && input.files.length > 0) {
+          const file = input.files[0];
+          
+          if (file.size === 0) {
+            console.error('Video recording returned an empty file');
+            resolve(null);
+            return;
+          }
+          
+          console.log(`Video capture success: ${file.name} (${file.type}, ${Math.round(file.size/1024)}KB)`);
+          resolve(file);
+        } else {
+          console.log('Video capture: no file selected');
+          resolve(null);
+        }
+      };
+      
+      input.addEventListener('change', handleChange);
+      
+      // Add global error listener for Android errors
+      const handleAndroidError = (e: CustomEvent) => {
+        document.removeEventListener('android-file-error', handleAndroidError as EventListener);
+        if (!fileSelected) {
+          fileSelected = true;
+          resolve(null);
+        }
+      };
+      document.addEventListener('android-file-error', handleAndroidError as EventListener);
+      
+      setTimeout(() => {
+        console.log('Triggering video selection dialog');
+        document.body.appendChild(input);
+        input.click();
+        
+        setTimeout(() => {
+          if (!fileSelected) {
+            console.log('Video capture timeout reached');
+            input.removeEventListener('change', handleChange);
+            document.removeEventListener('android-file-error', handleAndroidError as EventListener);
+            
+            if (document.body.contains(input)) {
+              document.body.removeChild(input);
+            }
+            
+            resolve(null);
+          }
+        }, 300000); // 5 minute timeout for video recording
+      }, 100);
+      
+    } catch (error) {
+      console.error('Error setting up video capture:', error);
       resolve(null);
     }
   });

@@ -28,7 +28,7 @@ export function Toaster() {
           </Toast>
         )
       })}
-      <ToastViewport className="p-4 pb-16 z-[100] max-w-[90vw]" /> {/* Added max width and extra bottom padding for WebView */}
+      <ToastViewport className="p-4 pb-16 z-[100] max-w-[90vw] max-h-screen overflow-y-auto" /> {/* Added max width, max height and overflow for WebView */}
     </ToastProvider>
   )
 }
