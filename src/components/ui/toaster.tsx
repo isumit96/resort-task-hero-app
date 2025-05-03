@@ -16,7 +16,7 @@ export function Toaster() {
     <ToastProvider>
       {toasts.map(function ({ id, title, description, action, variant, ...props }) {
         return (
-          <Toast key={id} {...props} variant={variant} className="group">
+          <Toast key={id} {...props} variant={variant} className="group z-[9999] shadow-lg dark:shadow-black/20">
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (
@@ -28,7 +28,7 @@ export function Toaster() {
           </Toast>
         )
       })}
-      <ToastViewport className="p-4 pb-16 z-[100] max-w-[90vw] max-h-screen overflow-y-auto" /> {/* Added max width, max height and overflow for WebView */}
+      <ToastViewport className="p-4 pb-16 z-[100] max-w-[90vw] max-h-screen overflow-y-auto fixed bottom-0 right-0 flex flex-col gap-2" />
     </ToastProvider>
   )
 }

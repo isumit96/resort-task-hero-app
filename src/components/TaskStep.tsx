@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { TaskStep as TaskStepType } from "@/types";
 import { Camera, X, CheckCircle, XCircle, Lock, Loader2, AlertTriangle } from "lucide-react";
@@ -8,6 +7,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTranslation } from "react-i18next";
 import { getImageFromCamera } from "@/utils/storage";
 import { useToast } from "@/hooks/use-toast";
+import { useAndroidCamera } from "@/hooks/useAndroidCamera";
 
 /**
  * Renders an individual task step with support for checkbox or yes/no.
@@ -24,6 +24,7 @@ interface TaskStepProps {
 const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted = false }: TaskStepProps) => {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { capturePhotoWithAndroid, isCapturing: isNativeCapturing, isAndroidWebView } = useAndroidCamera();
   
   // Unselected (undefined), explicitly true/false after selection
   const [yesNoValue, setYesNoValue] = useState<'yes' | 'no' | undefined>(
@@ -86,7 +87,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
     });
   };
 
-  // Enhanced camera capture logic for WebView - with better error recovery
+  // Enhanced camera capture logic with Android native bridge support
   const handleCapturePhoto = async () => {
     if (isTaskCompleted) return;
     setUploadError(null);
@@ -95,7 +96,15 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
     console.log(`Starting photo capture for step ${step.id}`);
     
     try {
-      const file = await getImageFromCamera();
+      // Try using Android native camera first if available
+      let file = isAndroidWebView ? await capturePhotoWithAndroid() : null;
+      
+      // If native camera didn't work or isn't available, fall back to standard approach
+      if (!file) {
+        console.log('Using standard camera capture');
+        file = await getImageFromCamera();
+      }
+      
       console.log(`Camera capture result:`, file ? `File received (${file.size} bytes)` : 'No file received');
       
       // If we got a file back from the camera
@@ -193,7 +202,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
     );
   };
 
-  // Check if we're on a mobile device - this helps with specific WebView handling
+  // Check if we're on a mobile device
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
   return (
@@ -282,18 +291,18 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
                 <>
                   <button
                     onClick={handleCapturePhoto}
-                    disabled={isCapturing || isTaskCompleted}
+                    disabled={isCapturing || isNativeCapturing || isTaskCompleted}
                     className={`flex items-center gap-2 py-3 px-4 w-full rounded-md bg-muted text-muted-foreground cursor-pointer hover:bg-muted/80 transition-colors text-sm dark:bg-muted/50 dark:hover:bg-muted/30 min-h-12 justify-center touch-manipulation border border-dashed border-border ${
                       isTaskCompleted ? "opacity-60 cursor-not-allowed" : ""
-                    } ${isCapturing ? "animate-pulse" : ""}`}
+                    } ${(isCapturing || isNativeCapturing) ? "animate-pulse" : ""}`}
                     type="button"
                   >
-                    {isCapturing ? (
+                    {(isCapturing || isNativeCapturing) ? (
                       <Loader2 size={20} className="animate-spin" />
                     ) : (
                       <Camera size={20} />
                     )}
-                    {isCapturing ? 
+                    {(isCapturing || isNativeCapturing) ? 
                       <span>{isMobile ? t('templates.takingPhoto') : t('templates.opening')}</span> : 
                       <span>{t('templates.takePhoto')}</span>
                     }
@@ -332,7 +341,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
             </div>
           )}
 
-          {/* Comment section - cleaner UI with better spacing */}
+          {/* Comment section */}
           {showCommentInput && !isTaskCompleted ? (
             <div className="mt-4 bg-card rounded-md p-0.5">
               <Textarea
