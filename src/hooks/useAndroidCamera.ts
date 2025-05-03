@@ -8,7 +8,8 @@ import {
   takeNativePhoto,
   openNativeCamera,
   sendDebugLog,
-  initializeAndroidBridge
+  initializeAndroidBridge,
+  checkConnectivity
 } from '@/utils/android-bridge';
 
 /**
@@ -43,96 +44,6 @@ export function useAndroidCamera() {
         };
       }
       
-      // Handler for receiving camera files from Android native code
-      if (!window.receiveImageFromAndroid) {
-        window.receiveImageFromAndroid = (requestId: string, base64Data: string, fileName: string, mimeType: string) => {
-          sendDebugLog('Camera', `Received image from Android: request #${requestId}, file size ${Math.round(base64Data.length * 0.75 / 1024)}KB`);
-          
-          try {
-            // Create file from base64 data
-            const byteString = atob(base64Data);
-            const ab = new ArrayBuffer(byteString.length);
-            const ia = new Uint8Array(ab);
-            
-            for (let i = 0; i < byteString.length; i++) {
-              ia[i] = byteString.charCodeAt(i);
-            }
-            
-            const blob = new Blob([ab], { type: mimeType });
-            const file = new File([blob], fileName || 'camera-photo.jpg', { type: mimeType });
-            
-            // Get the callback for this specific request
-            const callback = window.androidBridge.captureRequests.get(parseInt(requestId));
-            
-            if (callback) {
-              // Clear the capture request
-              window.androidBridge.captureRequests.delete(parseInt(requestId));
-              sendDebugLog('Camera', 'Successfully processed image, calling callback');
-              callback(file);
-              
-              toast({
-                title: "Photo received",
-                description: "Successfully received photo from camera",
-              });
-            } else {
-              console.error(`No callback found for camera request #${requestId}`);
-              sendDebugLog('CameraError', `No callback found for request #${requestId}`);
-              
-              // For direct camera calls (openCamera), we might not have a request ID
-              // So let's check if we have any pending callbacks
-              if (window.androidBridge.captureRequests.size > 0) {
-                // Get the most recent request
-                const lastRequestId = Math.max(...Array.from(window.androidBridge.captureRequests.keys()));
-                const callback = window.androidBridge.captureRequests.get(lastRequestId);
-                
-                if (callback) {
-                  window.androidBridge.captureRequests.delete(lastRequestId);
-                  sendDebugLog('Camera', `Using most recent request #${lastRequestId} for direct camera call`);
-                  callback(file);
-                }
-              }
-            }
-          } catch (error) {
-            console.error('Error processing image from Android:', error);
-            sendDebugLog('CameraError', `Processing error: ${error}`);
-            setLastCaptureError('Failed to process image from camera');
-            
-            // Try to resolve the request as failed
-            const callback = window.androidBridge.captureRequests.get(parseInt(requestId));
-            if (callback) {
-              window.androidBridge.captureRequests.delete(parseInt(requestId));
-              callback(null);
-            }
-          }
-        };
-      }
-      
-      // Handler for receiving camera errors from Android native code
-      if (!window.receiveAndroidCameraError) {
-        window.receiveAndroidCameraError = (requestId: string, errorCode: string, errorMessage: string) => {
-          console.error(`Android camera error for request #${requestId}: [${errorCode}] ${errorMessage}`);
-          sendDebugLog('CameraError', `Android error for #${requestId}: [${errorCode}] ${errorMessage}`);
-          
-          setLastCaptureError(errorMessage || 'Camera operation failed');
-          
-          // Get the callback for this specific request
-          const callback = window.androidBridge.captureRequests.get(parseInt(requestId));
-          
-          if (callback) {
-            // Clear the request
-            window.androidBridge.captureRequests.delete(parseInt(requestId));
-            callback(null);
-            
-            // Show toast notification
-            toast({
-              title: 'Camera Error',
-              description: errorMessage || `Error code: ${errorCode}`,
-              variant: 'destructive'
-            });
-          }
-        };
-      }
-      
       sendDebugLog('Setup', `Android WebView detected. Native camera available: ${hasNativeCamera}, Direct camera available: ${hasDirectCamera}`);
     }
     
@@ -140,7 +51,7 @@ export function useAndroidCamera() {
     return () => {
       // We don't remove the global handlers as they might be used by other components
     };
-  }, [toast, isInAndroidWebView, hasNativeCamera, hasDirectCamera]);
+  }, [isInAndroidWebView, hasNativeCamera, hasDirectCamera]);
 
   /**
    * Capture photo using Android's native camera integration
@@ -153,6 +64,18 @@ export function useAndroidCamera() {
       return null;
     }
     
+    // Check connectivity first
+    if (!checkConnectivity()) {
+      const errorMsg = 'No internet connection. Please check your connectivity and try again.';
+      setLastCaptureError(errorMsg);
+      toast({
+        title: 'Connectivity Error',
+        description: errorMsg,
+        variant: 'destructive'
+      });
+      return null;
+    }
+    
     sendDebugLog('Camera', 'Using Android native camera bridge');
     setIsCapturing(true);
     setLastCaptureError(null);
@@ -162,41 +85,111 @@ export function useAndroidCamera() {
         // Generate a request ID for this specific camera operation
         const requestId = window.androidBridge.nextRequestId++;
         
-        // Store the callback in the request map
+        // Add timeout to prevent hanging promises
+        const timeoutId = setTimeout(() => {
+          if (window.androidBridge.captureRequests.has(requestId)) {
+            sendDebugLog('CameraError', `Timeout for request #${requestId} after 30 seconds`);
+            
+            const callback = window.androidBridge.captureRequests.get(requestId);
+            if (callback) {
+              callback(null);
+            }
+            
+            window.androidBridge.captureRequests.delete(requestId);
+            setIsCapturing(false);
+            setLastCaptureError('Camera request timed out');
+            
+            toast({
+              title: 'Camera Timeout',
+              description: 'The camera operation took too long and was cancelled',
+              variant: 'destructive'
+            });
+            
+            resolve(null);
+          }
+        }, 30000); // 30 second timeout
+        
+        // Store the callback in the request map with timeout cleanup
         window.androidBridge.captureRequests.set(requestId, (file: File | null) => {
+          clearTimeout(timeoutId);
           setIsCapturing(false);
           sendDebugLog('Camera', `Camera operation complete for request #${requestId}`);
+          
+          if (file) {
+            sendDebugLog('Camera', `Received file: ${file.name} (${Math.round(file.size/1024)}KB)`);
+            
+            // Check for empty files
+            if (!file.size || file.size === 0) {
+              const errorMsg = "Camera returned an empty image. Please try again.";
+              setLastCaptureError(errorMsg);
+              sendDebugLog('CameraError', `Empty file received: ${file.name}`);
+              
+              toast({
+                title: "Camera error",
+                description: errorMsg,
+                variant: "destructive"
+              });
+              
+              resolve(null);
+              return;
+            }
+            
+            toast({
+              title: "Photo received",
+              description: "Successfully received photo from camera"
+            });
+          } else {
+            setLastCaptureError('Failed to capture photo');
+          }
+          
           resolve(file);
         });
         
-        // Try to use the new preferred direct camera method first
-        if (isOpenCameraAvailable()) {
+        // Try to use the preferred methods in order
+        if (hasDirectCamera) {
+          // Use openCamera as first choice when available
           try {
             sendDebugLog('Camera', 'Using preferred direct openCamera method');
             window.AndroidCamera.openCamera();
           } catch (e) {
-            sendDebugLog('CameraError', `Direct openCamera failed, falling back: ${e}`);
+            sendDebugLog('CameraError', `Direct openCamera failed: ${e}`);
             
-            // Fall back to the older takePhoto method if openCamera fails
+            // Fall back to takePhoto if openCamera fails
             const cameraOpened = takeNativePhoto(requestId.toString());
             
             if (!cameraOpened) {
+              clearTimeout(timeoutId);
               window.androidBridge.captureRequests.delete(requestId);
               setIsCapturing(false);
               setLastCaptureError('Native camera not available');
               sendDebugLog('CameraError', 'Failed to open native camera');
+              
+              toast({
+                title: "Camera Error",
+                description: "Failed to access the camera. Please try again.",
+                variant: "destructive"
+              });
+              
               resolve(null);
             }
           }
         } else {
-          // Use the older takePhoto method if openCamera is not available
+          // Use takePhoto if openCamera is not available
           const cameraOpened = takeNativePhoto(requestId.toString());
           
           if (!cameraOpened) {
+            clearTimeout(timeoutId);
             window.androidBridge.captureRequests.delete(requestId);
             setIsCapturing(false);
             setLastCaptureError('Native camera not available');
             sendDebugLog('CameraError', 'Failed to open native camera');
+            
+            toast({
+              title: "Camera Error",
+              description: "Failed to access the camera. Please try again.",
+              variant: "destructive"
+            });
+            
             resolve(null);
           }
         }
@@ -205,26 +198,15 @@ export function useAndroidCamera() {
         sendDebugLog('CameraError', `Exception: ${error}`);
         setIsCapturing(false);
         setLastCaptureError('Failed to access native camera');
+        
+        toast({
+          title: "Camera Error",
+          description: "An error occurred while accessing the camera",
+          variant: "destructive"
+        });
+        
         resolve(null);
       }
-      
-      // Safety timeout to prevent hanging promises
-      setTimeout(() => {
-        setIsCapturing(false);
-        if (window.androidBridge.captureRequests.has(window.androidBridge.nextRequestId - 1)) {
-          console.warn('Camera request timed out');
-          sendDebugLog('CameraError', 'Camera request timed out after 30 seconds');
-          window.androidBridge.captureRequests.delete(window.androidBridge.nextRequestId - 1);
-          setLastCaptureError('Camera request timed out');
-          resolve(null);
-          
-          toast({
-            title: 'Camera Timeout',
-            description: 'The camera operation took too long and was cancelled',
-            variant: 'destructive'
-          });
-        }
-      }, 30000); // 30 second timeout (reduced from 60 seconds)
     });
   };
 
