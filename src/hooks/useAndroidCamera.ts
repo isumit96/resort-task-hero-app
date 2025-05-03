@@ -6,6 +6,7 @@ import {
   isNativeCameraAvailable, 
   isOpenCameraAvailable,
   takeNativePhoto,
+  openNativeCamera,
   sendDebugLog,
   initializeAndroidBridge
 } from '@/utils/android-bridge';
@@ -24,6 +25,9 @@ export function useAndroidCamera() {
   
   // Check for native camera availability
   const hasNativeCamera = isNativeCameraAvailable() || isOpenCameraAvailable();
+  
+  // Direct method availability
+  const hasDirectCamera = isOpenCameraAvailable();
 
   // Setup global handlers for Android communication if they don't exist
   useEffect(() => {
@@ -65,9 +69,28 @@ export function useAndroidCamera() {
               window.androidBridge.captureRequests.delete(parseInt(requestId));
               sendDebugLog('Camera', 'Successfully processed image, calling callback');
               callback(file);
+              
+              toast({
+                title: "Photo received",
+                description: "Successfully received photo from camera",
+              });
             } else {
               console.error(`No callback found for camera request #${requestId}`);
               sendDebugLog('CameraError', `No callback found for request #${requestId}`);
+              
+              // For direct camera calls (openCamera), we might not have a request ID
+              // So let's check if we have any pending callbacks
+              if (window.androidBridge.captureRequests.size > 0) {
+                // Get the most recent request
+                const lastRequestId = Math.max(...Array.from(window.androidBridge.captureRequests.keys()));
+                const callback = window.androidBridge.captureRequests.get(lastRequestId);
+                
+                if (callback) {
+                  window.androidBridge.captureRequests.delete(lastRequestId);
+                  sendDebugLog('Camera', `Using most recent request #${lastRequestId} for direct camera call`);
+                  callback(file);
+                }
+              }
             }
           } catch (error) {
             console.error('Error processing image from Android:', error);
@@ -110,18 +133,18 @@ export function useAndroidCamera() {
         };
       }
       
-      sendDebugLog('Setup', `Android WebView detected. Native camera available: ${hasNativeCamera}`);
+      sendDebugLog('Setup', `Android WebView detected. Native camera available: ${hasNativeCamera}, Direct camera available: ${hasDirectCamera}`);
     }
     
     // Cleanup function
     return () => {
       // We don't remove the global handlers as they might be used by other components
     };
-  }, [toast, isInAndroidWebView, hasNativeCamera]);
+  }, [toast, isInAndroidWebView, hasNativeCamera, hasDirectCamera]);
 
   /**
    * Capture photo using Android's native camera integration
-   * Now supports both the takePhoto and openCamera methods
+   * Prioritizes the direct openCamera method when available
    */
   const capturePhotoWithAndroid = async (): Promise<File | null> => {
     if (!isInAndroidWebView) {
@@ -146,15 +169,36 @@ export function useAndroidCamera() {
           resolve(file);
         });
         
-        // Try to use the new or old camera method
-        const cameraOpened = takeNativePhoto(requestId.toString());
-        
-        if (!cameraOpened) {
-          window.androidBridge.captureRequests.delete(requestId);
-          setIsCapturing(false);
-          setLastCaptureError('Native camera not available');
-          sendDebugLog('CameraError', 'Failed to open native camera');
-          resolve(null);
+        // Try to use the new preferred direct camera method first
+        if (isOpenCameraAvailable()) {
+          try {
+            sendDebugLog('Camera', 'Using preferred direct openCamera method');
+            window.AndroidCamera.openCamera();
+          } catch (e) {
+            sendDebugLog('CameraError', `Direct openCamera failed, falling back: ${e}`);
+            
+            // Fall back to the older takePhoto method if openCamera fails
+            const cameraOpened = takeNativePhoto(requestId.toString());
+            
+            if (!cameraOpened) {
+              window.androidBridge.captureRequests.delete(requestId);
+              setIsCapturing(false);
+              setLastCaptureError('Native camera not available');
+              sendDebugLog('CameraError', 'Failed to open native camera');
+              resolve(null);
+            }
+          }
+        } else {
+          // Use the older takePhoto method if openCamera is not available
+          const cameraOpened = takeNativePhoto(requestId.toString());
+          
+          if (!cameraOpened) {
+            window.androidBridge.captureRequests.delete(requestId);
+            setIsCapturing(false);
+            setLastCaptureError('Native camera not available');
+            sendDebugLog('CameraError', 'Failed to open native camera');
+            resolve(null);
+          }
         }
       } catch (error) {
         console.error('Error calling Android camera:', error);
@@ -169,7 +213,7 @@ export function useAndroidCamera() {
         setIsCapturing(false);
         if (window.androidBridge.captureRequests.has(window.androidBridge.nextRequestId - 1)) {
           console.warn('Camera request timed out');
-          sendDebugLog('CameraError', 'Camera request timed out after 60 seconds');
+          sendDebugLog('CameraError', 'Camera request timed out after 30 seconds');
           window.androidBridge.captureRequests.delete(window.androidBridge.nextRequestId - 1);
           setLastCaptureError('Camera request timed out');
           resolve(null);
@@ -180,7 +224,7 @@ export function useAndroidCamera() {
             variant: 'destructive'
           });
         }
-      }, 60000); // 1 minute timeout
+      }, 30000); // 30 second timeout (reduced from 60 seconds)
     });
   };
 
@@ -191,7 +235,8 @@ export function useAndroidCamera() {
     lastCaptureError,
     clearError: () => setLastCaptureError(null),
     isAndroidWebView: isInAndroidWebView,
-    hasNativeCamera
+    hasNativeCamera,
+    hasDirectCamera
   };
 }
 

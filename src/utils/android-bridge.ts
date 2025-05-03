@@ -52,19 +52,22 @@ export const sendDebugLog = (tag: string, message: string): void => {
 
 /**
  * Open the native camera directly using the new AndroidCamera.openCamera method
- * This is a direct approach without request IDs or callbacks
+ * This is the preferred approach for direct camera integration with Android WebView
  */
 export const openNativeCamera = (): boolean => {
   if (isOpenCameraAvailable()) {
     try {
       window.AndroidCamera.openCamera();
-      sendDebugLog('Camera', 'Opening native camera with direct method');
+      sendDebugLog('Camera', 'Opening native camera with direct openCamera method');
       return true;
     } catch (e) {
       console.error('Error opening native camera:', e);
+      sendDebugLog('CameraError', `Failed to open camera directly: ${e}`);
       return false;
     }
   }
+  
+  sendDebugLog('Camera', 'Direct openCamera method not available');
   return false;
 };
 
@@ -77,6 +80,19 @@ export const takeNativePhoto = async (requestId?: string): Promise<boolean> => {
   // If no requestId is provided, generate one
   const actualRequestId = requestId || `photo_${Date.now()}`;
   
+  // First try the simplified direct openCamera method which is preferred
+  if (isOpenCameraAvailable()) {
+    try {
+      sendDebugLog('Camera', `Using preferred direct openCamera method`);
+      window.AndroidCamera.openCamera();
+      return true;
+    } catch (e) {
+      sendDebugLog('CameraError', `Direct openCamera failed, falling back to takePhoto: ${e}`);
+      // Fall back to takePhoto if openCamera fails
+    }
+  }
+  
+  // Fall back to the older takePhoto method requiring a request ID
   if (window.AndroidCamera?.takePhoto) {
     try {
       // Call the Android native method
@@ -88,9 +104,6 @@ export const takeNativePhoto = async (requestId?: string): Promise<boolean> => {
       sendDebugLog('CameraError', `Failed to take photo: ${e}`);
       return false;
     }
-  } else if (isOpenCameraAvailable()) {
-    // Fall back to the simpler openCamera method if available
-    return openNativeCamera();
   }
   
   sendDebugLog('Camera', 'Native camera not available');
@@ -144,6 +157,10 @@ declare global {
       takePhoto: (requestId: string) => void;
       captureVideo?: (requestId: string) => void;
       openCamera?: () => void;
+    };
+    androidBridge?: {
+      captureRequests: Map<number, (file: File | null) => void>;
+      nextRequestId: number;
     };
   }
 }
