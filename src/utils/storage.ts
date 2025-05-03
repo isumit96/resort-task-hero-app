@@ -1,6 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { sendDebugLog, checkConnectivity, isAndroidWebView } from "@/utils/android-bridge";
 
 // Improved file upload function with optimizations for mobile WebView
 export const uploadFileToStorage = async (file: File, folder: string): Promise<string> => {
@@ -9,22 +8,10 @@ export const uploadFileToStorage = async (file: File, folder: string): Promise<s
     return "";
   }
 
-  // Check connectivity first
-  if (!checkConnectivity()) {
-    sendDebugLog('Storage', 'Upload failed: No internet connection');
-    throw new Error('No internet connection. Please check your connectivity and try again.');
-  }
-
   // Size check to prevent large file uploads - 10MB max
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
   if (file.size > MAX_FILE_SIZE) {
     throw new Error(`File size exceeds limit (${Math.round(file.size/1024/1024)}MB). Maximum allowed: 10MB`);
-  }
-
-  // Check for empty files
-  if (!file.size || file.size === 0) {
-    sendDebugLog('Storage', 'Empty file detected, cannot upload');
-    throw new Error('Cannot upload empty file');
   }
 
   // Compress image if it's a photo before uploading
@@ -35,7 +22,6 @@ export const uploadFileToStorage = async (file: File, folder: string): Promise<s
       fileToUpload = await compressImageIfNeeded(file);
     } catch (error) {
       console.error('Image compression failed, using original:', error);
-      sendDebugLog('Storage', `Image compression failed: ${error}`);
       // Continue with original if compression fails
     }
   }
@@ -45,7 +31,6 @@ export const uploadFileToStorage = async (file: File, folder: string): Promise<s
 
   // Console.log for debugging WebView uploads
   console.log(`Uploading file: ${fileName} (${fileToUpload.type}, ${Math.round(fileToUpload.size/1024)}KB)`);
-  sendDebugLog('Storage', `Uploading file: ${fileName} (${Math.round(fileToUpload.size/1024)}KB)`);
 
   try {
     const { data, error } = await supabase.storage
@@ -54,7 +39,6 @@ export const uploadFileToStorage = async (file: File, folder: string): Promise<s
 
     if (error) {
       console.error('Storage upload error:', error);
-      sendDebugLog('Storage', `Upload error: ${error.message}`);
       throw error;
     }
 
@@ -63,11 +47,9 @@ export const uploadFileToStorage = async (file: File, folder: string): Promise<s
       .getPublicUrl(data.path);
 
     console.log('Upload successful, public URL:', publicUrl);
-    sendDebugLog('Storage', `Upload successful: ${publicUrl}`);
     return publicUrl;
   } catch (error) {
     console.error('Upload failed with error:', error);
-    sendDebugLog('Storage', `Upload exception: ${error}`);
     throw error;
   }
 };
@@ -144,14 +126,55 @@ async function compressImageIfNeeded(file: File): Promise<File> {
   });
 }
 
+// Define global handler for Android native app callbacks
+// This will be called from the Android WebView when there are camera or file errors
+declare global {
+  interface Window {
+    handleAndroidFileError?: (errorType: string, message: string) => void;
+    receiveFileFromAndroid?: (base64Data: string, fileName: string, mimeType: string) => Promise<File>;
+    androidCameraCapture?: {
+      capturePhoto: () => void;
+      captureVideo: () => void;
+    };
+  }
+}
+
+// Set up global handlers for Android WebView communication
+if (typeof window !== 'undefined' && !window.handleAndroidFileError) {
+  // Error handler for Android WebView callbacks
+  window.handleAndroidFileError = (errorType: string, message: string) => {
+    console.error(`Android file error [${errorType}]:`, message);
+    
+    // Dispatch custom event that components can listen for
+    const errorEvent = new CustomEvent('android-file-error', {
+      detail: { errorType, message }
+    });
+    document.dispatchEvent(errorEvent);
+  };
+  
+  // Handler to receive file data directly from Android
+  window.receiveFileFromAndroid = async (base64Data: string, fileName: string, mimeType: string): Promise<File> => {
+    try {
+      // Convert base64 to blob
+      const response = await fetch(`data:${mimeType};base64,${base64Data}`);
+      const blob = await response.blob();
+      
+      // Create File object from blob
+      return new File([blob], fileName, { type: mimeType });
+    } catch (error) {
+      console.error('Error converting base64 to File:', error);
+      throw error;
+    }
+  };
+}
+
 // Android WebView-optimized camera capture function
 export const getImageFromCamera = async (): Promise<File | null> => {
   console.log('Starting camera capture process');
-  sendDebugLog('Camera', 'Starting camera capture process');
   
   // Check if we have direct Android bridge access
   if (window.androidCameraCapture && typeof window.androidCameraCapture.capturePhoto === 'function') {
-    sendDebugLog('Camera', 'Using Android native camera bridge');
+    console.log('Using Android native camera bridge');
     
     return new Promise((resolve) => {
       // Listen for file from Android
@@ -164,7 +187,6 @@ export const getImageFromCamera = async (): Promise<File | null> => {
       const handleFileError = (e: CustomEvent) => {
         document.removeEventListener('android-file-error', handleFileError as EventListener);
         console.error('Android camera error:', e.detail);
-        sendDebugLog('Camera', `Android error event: ${JSON.stringify(e.detail)}`);
         resolve(null);
       };
       
@@ -180,7 +202,6 @@ export const getImageFromCamera = async (): Promise<File | null> => {
         document.removeEventListener('android-file-received', handleFileReceived as EventListener);
         document.removeEventListener('android-file-error', handleFileError as EventListener);
         console.log('Android camera timeout reached');
-        sendDebugLog('Camera', 'Android camera timeout reached');
         resolve(null);
       }, 60000);
     });
@@ -195,20 +216,18 @@ export const getImageFromCamera = async (): Promise<File | null> => {
       input.accept = 'image/*';
       
       // For Android WebView, using "environment" for back camera works more reliably
-      const isInAndroidWebView = isAndroidWebView();
+      const isAndroidWebView = /Android/.test(navigator.userAgent) && 
+                              (/wv/.test(navigator.userAgent) || 
+                               /Version\/[0-9.]+/.test(navigator.userAgent));
       
-      if (isInAndroidWebView) {
+      if (isAndroidWebView) {
         // For Android WebView, explicitly set the capture attribute
         input.setAttribute('capture', 'environment');
-        sendDebugLog('Camera', 'Android WebView detected, using capture=environment attribute');
-        
-        // Add this important line - makes input more reliable in WebView
-        input.style.cssText = 'position:fixed;top:0;left:0;opacity:0.01;width:100%;height:100%;z-index:99999;';
-        document.body.appendChild(input);
+        console.log('Android WebView detected, using capture=environment attribute');
       } else if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
         // For other mobile browsers, still use capture but may behave differently
         input.setAttribute('capture', 'environment');
-        sendDebugLog('Camera', 'Mobile browser detected, using capture=environment attribute');
+        console.log('Mobile browser detected, using capture=environment attribute');
       }
       
       let fileSelected = false;
@@ -224,19 +243,16 @@ export const getImageFromCamera = async (): Promise<File | null> => {
           const file = input.files[0];
           
           // Android WebView sometimes returns empty files
-          if (!file.size || file.size === 0) {
+          if (file.size === 0) {
             console.error('Camera returned an empty file');
-            sendDebugLog('Camera', 'Camera returned an empty file');
             resolve(null);
             return;
           }
           
           console.log(`Camera capture success: ${file.name} (${file.type}, ${Math.round(file.size/1024)}KB)`);
-          sendDebugLog('Camera', `Camera captured file: ${file.name} (${Math.round(file.size/1024)}KB)`);
           resolve(file);
         } else {
           console.log('Camera capture: no file selected in change event');
-          sendDebugLog('Camera', 'No file selected in change event');
           resolve(null);
         }
       };
@@ -259,7 +275,6 @@ export const getImageFromCamera = async (): Promise<File | null> => {
           if (!fileSelected && input.files && input.files.length > 0) {
             const file = input.files[0];
             console.log(`Camera capture detected on blur: ${file.name}`);
-            sendDebugLog('Camera', `Camera file detected on blur: ${file.name}`);
             fileSelected = true;
             resolve(file);
           }
@@ -274,7 +289,6 @@ export const getImageFromCamera = async (): Promise<File | null> => {
         if (input.files && input.files.length > 0) {
           const file = input.files[0];
           console.log(`Camera file detected through polling (${checkCount}): ${file.name}`);
-          sendDebugLog('Camera', `Camera file detected through polling: ${file.name}`);
           fileSelected = true;
           resolve(file);
           return;
@@ -304,13 +318,11 @@ export const getImageFromCamera = async (): Promise<File | null> => {
       // Trigger camera with click after a small delay for WebView readiness
       setTimeout(() => {
         console.log('Triggering camera file selection dialog');
-        if (!document.body.contains(input)) {
-          document.body.appendChild(input); // Append to DOM for some Android WebViews
-        }
+        document.body.appendChild(input); // Append to DOM for some Android WebViews
         input.click();
         
         // Start polling check for Android WebView (helps with some devices)
-        if (isInAndroidWebView) {
+        if (isAndroidWebView) {
           setTimeout(checkForFilesPolling, 2000);
         }
         
@@ -318,7 +330,6 @@ export const getImageFromCamera = async (): Promise<File | null> => {
         setTimeout(() => {
           if (!fileSelected) {
             console.log('Camera capture timeout reached, resolving as null');
-            sendDebugLog('Camera', 'Camera capture timeout reached');
             // Clean up event listeners to prevent memory leaks
             input.removeEventListener('change', handleChange);
             input.removeEventListener('click', handleClick);
@@ -337,7 +348,6 @@ export const getImageFromCamera = async (): Promise<File | null> => {
       
     } catch (error) {
       console.error('Error setting up camera capture:', error);
-      sendDebugLog('Camera', `Error setting up camera: ${error}`);
       resolve(null);
     }
   });
@@ -346,11 +356,10 @@ export const getImageFromCamera = async (): Promise<File | null> => {
 // Add function for Android video capture (similar to getImageFromCamera)
 export const getVideoFromCamera = async (): Promise<File | null> => {
   console.log('Starting video capture process');
-  sendDebugLog('Camera', 'Starting video capture process');
   
   // Check if we have direct Android bridge access
   if (window.androidCameraCapture && typeof window.androidCameraCapture.captureVideo === 'function') {
-    sendDebugLog('Camera', 'Using Android native video bridge');
+    console.log('Using Android native video bridge');
     
     return new Promise((resolve) => {
       // Listen for file from Android
@@ -363,7 +372,6 @@ export const getVideoFromCamera = async (): Promise<File | null> => {
       const handleFileError = (e: CustomEvent) => {
         document.removeEventListener('android-file-error', handleFileError as EventListener);
         console.error('Android video error:', e.detail);
-        sendDebugLog('Camera', `Android video error: ${JSON.stringify(e.detail)}`);
         resolve(null);
       };
       
@@ -379,7 +387,6 @@ export const getVideoFromCamera = async (): Promise<File | null> => {
         document.removeEventListener('android-file-received', handleFileReceived as EventListener);
         document.removeEventListener('android-file-error', handleFileError as EventListener);
         console.log('Android video timeout reached');
-        sendDebugLog('Camera', 'Android video timeout reached');
         resolve(null);
       }, 300000); // 5 minutes for video recording
     });
@@ -392,15 +399,13 @@ export const getVideoFromCamera = async (): Promise<File | null> => {
       input.type = 'file';
       input.accept = 'video/*';
       
-      const isInAndroidWebView = isAndroidWebView();
+      const isAndroidWebView = /Android/.test(navigator.userAgent) && 
+                              (/wv/.test(navigator.userAgent) || 
+                               /Version\/[0-9.]+/.test(navigator.userAgent));
       
-      if (isInAndroidWebView) {
+      if (isAndroidWebView) {
         input.setAttribute('capture', 'environment');
-        sendDebugLog('Camera', 'Android WebView detected, using capture=environment for video');
-        
-        // Add this important line - makes input more reliable in WebView
-        input.style.cssText = 'position:fixed;top:0;left:0;opacity:0.01;width:100%;height:100%;z-index:99999;';
-        document.body.appendChild(input);
+        console.log('Android WebView detected, using capture=environment attribute for video');
       }
       
       let fileSelected = false;
@@ -412,19 +417,16 @@ export const getVideoFromCamera = async (): Promise<File | null> => {
         if (input.files && input.files.length > 0) {
           const file = input.files[0];
           
-          if (!file.size || file.size === 0) {
+          if (file.size === 0) {
             console.error('Video recording returned an empty file');
-            sendDebugLog('Camera', 'Video recording returned empty file');
             resolve(null);
             return;
           }
           
           console.log(`Video capture success: ${file.name} (${file.type}, ${Math.round(file.size/1024)}KB)`);
-          sendDebugLog('Camera', `Video file captured: ${file.name} (${Math.round(file.size/1024)}KB)`);
           resolve(file);
         } else {
           console.log('Video capture: no file selected');
-          sendDebugLog('Camera', 'No video file selected');
           resolve(null);
         }
       };
@@ -443,15 +445,12 @@ export const getVideoFromCamera = async (): Promise<File | null> => {
       
       setTimeout(() => {
         console.log('Triggering video selection dialog');
-        if (!document.body.contains(input)) {
-          document.body.appendChild(input);
-        }
+        document.body.appendChild(input);
         input.click();
         
         setTimeout(() => {
           if (!fileSelected) {
             console.log('Video capture timeout reached');
-            sendDebugLog('Camera', 'Video capture timeout reached');
             input.removeEventListener('change', handleChange);
             document.removeEventListener('android-file-error', handleAndroidError as EventListener);
             
@@ -466,61 +465,7 @@ export const getVideoFromCamera = async (): Promise<File | null> => {
       
     } catch (error) {
       console.error('Error setting up video capture:', error);
-      sendDebugLog('Camera', `Error setting up video capture: ${error}`);
       resolve(null);
     }
   });
 };
-
-// Define global handler for Android native app callbacks
-// This will be called from the Android WebView when there are camera or file errors
-declare global {
-  interface Window {
-    handleAndroidFileError?: (errorType: string, message: string) => void;
-    receiveFileFromAndroid?: (base64Data: string, fileName: string, mimeType: string) => Promise<File>;
-    androidCameraCapture?: {
-      capturePhoto: () => void;
-      captureVideo: () => void;
-    };
-  }
-}
-
-// Set up global handlers for Android WebView communication
-if (typeof window !== 'undefined' && !window.handleAndroidFileError) {
-  // Error handler for Android WebView callbacks
-  window.handleAndroidFileError = (errorType: string, message: string) => {
-    console.error(`Android file error [${errorType}]:`, message);
-    sendDebugLog('CameraError', `Android file error [${errorType}]: ${message}`);
-    
-    // Dispatch custom event that components can listen for
-    const errorEvent = new CustomEvent('android-file-error', {
-      detail: { errorType, message }
-    });
-    document.dispatchEvent(errorEvent);
-  };
-  
-  // Handler to receive file data directly from Android
-  window.receiveFileFromAndroid = async (base64Data: string, fileName: string, mimeType: string): Promise<File> => {
-    try {
-      sendDebugLog('Camera', `Received file data from Android: ${fileName} (${mimeType})`);
-      
-      // Convert base64 to blob
-      const response = await fetch(`data:${mimeType};base64,${base64Data}`);
-      const blob = await response.blob();
-      
-      // Create File object from blob
-      const file = new File([blob], fileName, { 
-        type: mimeType,
-        lastModified: Date.now()
-      });
-      
-      sendDebugLog('Camera', `Created file from Android data: ${fileName} (${Math.round(file.size/1024)}KB)`);
-      
-      return file;
-    } catch (error) {
-      console.error('Error converting base64 to File:', error);
-      sendDebugLog('CameraError', `Failed to create file from base64: ${error}`);
-      throw error;
-    }
-  };
-}
