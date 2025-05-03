@@ -29,6 +29,7 @@ const TaskDescription = ({
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadErrorType, setUploadErrorType] = useState<'photo' | 'video' | null>(null);
   
   // Check if we're on a mobile device - this helps with specific WebView handling
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -42,6 +43,7 @@ const TaskDescription = ({
     }
     
     setUploadError(null);
+    setUploadErrorType(null);
     
     try {
       console.log(`Processing ${type} upload: ${file.name} (${Math.round(file.size/1024)}KB)`);
@@ -67,6 +69,7 @@ const TaskDescription = ({
       console.error(`Error uploading ${type}:`, error);
       
       setUploadError(`Failed to upload ${type}. Please try again.`);
+      setUploadErrorType(type);
       
       toast({
         title: `${type.charAt(0).toUpperCase() + type.slice(1)} upload failed`,
@@ -168,7 +171,7 @@ const TaskDescription = ({
               </div>
             </div>
           )}
-          {uploadError && type === 'photo' && (
+          {uploadError && uploadErrorType === 'photo' && (
             <div className="mt-2 text-sm text-destructive flex items-center gap-1.5">
               <AlertTriangle size={14} />
               <span>{uploadError}</span>
@@ -223,7 +226,7 @@ const TaskDescription = ({
               </div>
             </div>
           )}
-          {uploadError && type === 'video' && (
+          {uploadError && uploadErrorType === 'video' && (
             <div className="mt-2 text-sm text-destructive flex items-center gap-1.5">
               <AlertTriangle size={14} />
               <span>{uploadError}</span>
