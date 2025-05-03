@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAndroidFile } from "@/hooks/use-android-file";
-import { isAndroidWebView } from "@/utils/android-bridge";
+import { isAndroidWebView, isNativeCameraAvailable, sendDebugLog } from "@/utils/android-bridge";
 
 interface TaskDescriptionProps {
   description: string;
@@ -42,11 +42,13 @@ const TaskDescription = ({
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   const isAndroidDevice = /Android/.test(navigator.userAgent);
   const runningInWebView = isInAndroidView || isAndroidWebView();
+  const hasNativeCamera = isNativeCameraAvailable();
   
   console.log('TaskDescription mount:', { 
     isMobile, 
     isAndroidDevice, 
     runningInWebView,
+    hasNativeCamera,
     isCapturing,
     userAgent: navigator.userAgent
   });
@@ -58,6 +60,7 @@ const TaskDescription = ({
     setIsUploadingPhoto(true);
     
     console.log('Starting photo capture process');
+    sendDebugLog('TaskDescription', 'Starting photo capture process');
     
     try {
       // Use the enhanced capturePhoto function that handles Android WebView
@@ -65,6 +68,7 @@ const TaskDescription = ({
       
       if (file) {
         console.log(`Processing uploaded photo: ${file.name} (${Math.round(file.size/1024)}KB)`);
+        sendDebugLog('TaskDescription', `Photo captured successfully: ${file.name} (${Math.round(file.size/1024)}KB)`);
         await onPhotoUpload(file);
         
         toast({
@@ -73,10 +77,12 @@ const TaskDescription = ({
         });
       } else {
         console.log('No photo file returned from capturePhoto');
+        sendDebugLog('TaskDescription', 'No photo file returned from capturePhoto');
         // User may have canceled or there was an error that was already handled
       }
     } catch (error) {
       console.error('Error capturing photo:', error);
+      sendDebugLog('TaskDescription', `Error capturing photo: ${error instanceof Error ? error.message : String(error)}`);
       
       setUploadError(`Failed to upload photo. Please try again.`);
       setUploadErrorType('photo');
@@ -98,6 +104,7 @@ const TaskDescription = ({
     setIsUploadingVideo(true);
     
     console.log('Starting video capture process');
+    sendDebugLog('TaskDescription', 'Starting video capture process');
     
     try {
       // Use the enhanced captureVideo function that handles Android WebView
@@ -105,6 +112,7 @@ const TaskDescription = ({
       
       if (file) {
         console.log(`Processing uploaded video: ${file.name} (${Math.round(file.size/1024)}KB)`);
+        sendDebugLog('TaskDescription', `Video captured successfully: ${file.name} (${Math.round(file.size/1024)}KB)`);
         await onVideoUpload(file);
         
         toast({
@@ -113,10 +121,12 @@ const TaskDescription = ({
         });
       } else {
         console.log('No video file returned from captureVideo');
+        sendDebugLog('TaskDescription', 'No video file returned from captureVideo');
         // User may have canceled or there was an error that was already handled
       }
     } catch (error) {
       console.error('Error capturing video:', error);
+      sendDebugLog('TaskDescription', `Error capturing video: ${error instanceof Error ? error.message : String(error)}`);
       
       setUploadError(`Failed to upload video. Please try again.`);
       setUploadErrorType('video');
@@ -159,6 +169,7 @@ const TaskDescription = ({
     
     try {
       console.log(`Processing ${type} upload: ${file.name} (${Math.round(file.size/1024)}KB)`);
+      sendDebugLog('TaskDescription', `Processing ${type} upload from file input: ${file.name} (${Math.round(file.size/1024)}KB)`);
       
       if (type === 'photo') {
         setIsUploadingPhoto(true);
@@ -179,6 +190,7 @@ const TaskDescription = ({
       }
     } catch (error) {
       console.error(`Error uploading ${type}:`, error);
+      sendDebugLog('TaskDescription', `Error uploading ${type}: ${error instanceof Error ? error.message : String(error)}`);
       
       setUploadError(`Failed to upload ${type}. Please try again.`);
       setUploadErrorType(type);
@@ -222,6 +234,9 @@ const TaskDescription = ({
     };
   }, []);
 
+  // When running in Android WebView, prioritize native camera bridge
+  const shouldShowFileInput = !isInAndroidView && !hasNativeCamera;
+
   return (
     <div className={cn("space-y-4", className)}>
       <div>
@@ -259,19 +274,21 @@ const TaskDescription = ({
                 </span>
               </button>
               
-              {/* Hidden file input as fallback, but accessible when needed */}
-              <input
-                ref={photoInputRef}
-                type="file"
-                accept="image/*"
-                capture={isAndroidDevice ? "environment" : undefined}
-                className="opacity-0 absolute inset-0 cursor-pointer"
-                onChange={(e) => handleFileUpload(e, 'photo')}
-                disabled={isUploadingPhoto || isCapturing}
-                // Add a key that changes when upload completes to reset the input
-                key={`photo-upload-${isUploadingPhoto || isCapturing ? 'loading' : 'ready'}-${Date.now()}`}
-                aria-hidden="true"
-              />
+              {/* Hidden file input as fallback - ONLY SHOWN when needed */}
+              {shouldShowFileInput && (
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture={isAndroidDevice ? "environment" : undefined}
+                  className="opacity-0 absolute inset-0 cursor-pointer"
+                  onChange={(e) => handleFileUpload(e, 'photo')}
+                  disabled={isUploadingPhoto || isCapturing}
+                  // Add a key that changes when upload completes to reset the input
+                  key={`photo-upload-${isUploadingPhoto || isCapturing ? 'loading' : 'ready'}-${Date.now()}`}
+                  aria-hidden="true"
+                />
+              )}
             </div>
           ) : (
             <div className="relative mt-2 group">
@@ -323,19 +340,21 @@ const TaskDescription = ({
                 </span>
               </button>
               
-              {/* Hidden file input as fallback, but accessible when needed */}
-              <input
-                ref={videoInputRef}
-                type="file"
-                accept="video/*"
-                capture={isAndroidDevice ? "environment" : undefined}
-                className="opacity-0 absolute inset-0 cursor-pointer"
-                onChange={(e) => handleFileUpload(e, 'video')}
-                disabled={isUploadingVideo || isCapturing}
-                // Add a key that changes when upload completes to reset the input
-                key={`video-upload-${isUploadingVideo || isCapturing ? 'loading' : 'ready'}-${Date.now()}`}
-                aria-hidden="true"
-              />
+              {/* Hidden file input as fallback - ONLY SHOWN when needed */}
+              {shouldShowFileInput && (
+                <input
+                  ref={videoInputRef}
+                  type="file"
+                  accept="video/*"
+                  capture={isAndroidDevice ? "environment" : undefined}
+                  className="opacity-0 absolute inset-0 cursor-pointer"
+                  onChange={(e) => handleFileUpload(e, 'video')}
+                  disabled={isUploadingVideo || isCapturing}
+                  // Add a key that changes when upload completes to reset the input
+                  key={`video-upload-${isUploadingVideo || isCapturing ? 'loading' : 'ready'}-${Date.now()}`}
+                  aria-hidden="true"
+                />
+              )}
             </div>
           ) : (
             <div className="relative mt-2 group">

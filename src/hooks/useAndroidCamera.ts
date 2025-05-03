@@ -18,7 +18,7 @@ export function useAndroidCamera() {
   const [isCapturing, setIsCapturing] = useState(false);
   const [lastCaptureError, setLastCaptureError] = useState<string | null>(null);
   
-  // Detect if we're in an Android WebView
+  // Detect if we're in an Android WebView - more aggressive detection
   const isInAndroidWebView = isAndroidWebView();
   
   // Check for native camera availability
@@ -57,7 +57,11 @@ export function useAndroidCamera() {
       return null;
     }
     
-    console.log('Camera availability check:', { hasNativeCamera, AndroidCamera: !!window.AndroidCamera });
+    console.log('Camera availability check:', { 
+      hasNativeCamera, 
+      AndroidCamera: !!window.AndroidCamera,
+      takePhotoMethodExists: window.AndroidCamera ? typeof window.AndroidCamera.takePhoto : 'undefined'
+    });
     
     if (!hasNativeCamera) {
       console.log('Native camera not available, using file input fallback');
@@ -76,6 +80,7 @@ export function useAndroidCamera() {
         const requestId = window.androidBridge!.nextRequestId++;
         
         console.log('Camera operation requestId:', requestId);
+        sendDebugLog('Camera', `Starting camera operation with requestId: ${requestId}`);
         
         // Set up timeout for operation
         const timeoutId = setTimeout(() => {
@@ -102,6 +107,8 @@ export function useAndroidCamera() {
           sendDebugLog('Camera', `Camera operation complete for request #${requestId}`);
           
           if (file) {
+            console.log(`Received file from camera: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
+            
             // Validate the file
             if (!file.size || file.size === 0) {
               sendDebugLog('CameraError', 'Empty file received from camera');
@@ -143,7 +150,8 @@ export function useAndroidCamera() {
         
         // Try to use the camera method - LOG THE RESULT
         const cameraOpened = takeNativePhoto(requestId.toString());
-        console.log('Camera opened:', cameraOpened);
+        console.log('Native camera method called, result:', cameraOpened);
+        sendDebugLog('Camera', `Native camera opened: ${cameraOpened}`);
         
         if (!cameraOpened) {
           clearTimeout(timeoutId);

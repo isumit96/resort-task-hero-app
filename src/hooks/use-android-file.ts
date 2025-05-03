@@ -138,6 +138,7 @@ export function useAndroidFile() {
             
             // Try to use the camera method
             const cameraOpened = takeNativePhoto(requestId.toString());
+            console.log('Native camera opened:', cameraOpened);
             
             if (!cameraOpened) {
               clearTimeout(timeoutId);
@@ -146,6 +147,7 @@ export function useAndroidFile() {
               // Fall back to standard file input approach
               sendDebugLog('AndroidFile', 'Native camera failed, falling back to file input');
               
+              // Fix: Don't use await in non-async callback
               getImageFromCamera().then(result => {
                 setIsCapturing(false);
                 resolve(result);
@@ -304,6 +306,7 @@ export function useAndroidFile() {
             
             // Try to use the camera method
             const cameraOpened = takeNativeVideo(requestId.toString());
+            console.log('Native video recording started:', cameraOpened);
             
             if (!cameraOpened) {
               clearTimeout(timeoutId);
@@ -312,6 +315,7 @@ export function useAndroidFile() {
               // Fall back to standard file input approach
               sendDebugLog('AndroidFile', 'Native video recording failed, falling back to file input');
               
+              // Fix: Don't use await in non-async callback
               getVideoFromCamera().then(result => {
                 setIsCapturing(false);
                 resolve(result);
