@@ -3,15 +3,14 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { 
   isAndroidWebView, 
-  isNativeCameraAvailable, 
-  isOpenCameraAvailable,
+  isNativeCameraAvailable,
   takeNativePhoto,
   sendDebugLog,
   initializeAndroidBridge
 } from '@/utils/android-bridge';
 
 /**
- * Hook to handle Android WebView camera interaction with improved debugging
+ * Hook to handle Android WebView camera interaction with robust fallback
  * and native communication bridge.
  */
 export function useAndroidCamera() {
@@ -23,21 +22,13 @@ export function useAndroidCamera() {
   const isInAndroidWebView = isAndroidWebView();
   
   // Check for native camera availability
-  const hasNativeCamera = isNativeCameraAvailable() || isOpenCameraAvailable();
+  const hasNativeCamera = isNativeCameraAvailable();
 
-  // Setup global handlers for Android communication if they don't exist
+  // Setup global handlers for Android communication
   useEffect(() => {
     if (typeof window !== 'undefined' && isInAndroidWebView) {
       // Initialize the Android bridge
       initializeAndroidBridge();
-      
-      // Create or ensure the global bridge object for Android communication
-      if (!window.androidBridge) {
-        window.androidBridge = {
-          captureRequests: new Map(),
-          nextRequestId: 1
-        };
-      }
       
       sendDebugLog('Setup', `Android WebView detected. Native camera available: ${hasNativeCamera}`);
     }
@@ -46,16 +37,21 @@ export function useAndroidCamera() {
     return () => {
       // We don't remove the global handlers as they might be used by other components
     };
-  }, [toast, isInAndroidWebView, hasNativeCamera]);
+  }, [isInAndroidWebView, hasNativeCamera]);
 
   /**
    * Capture photo using Android's native camera integration
-   * Now supports both the takePhoto and openCamera methods
+   * with improved fallback and error handling
    */
   const capturePhotoWithAndroid = async (): Promise<File | null> => {
     if (!isInAndroidWebView) {
       sendDebugLog('Camera', 'Not in Android WebView, using standard file input');
       // Let the normal file input handle it
+      return null;
+    }
+    
+    if (!hasNativeCamera) {
+      sendDebugLog('Camera', 'Native camera not available, using file input fallback');
       return null;
     }
     
@@ -84,7 +80,7 @@ export function useAndroidCamera() {
             
             resolve(null);
           }
-        }, 30000); // 30 second timeout - more reasonable than a full minute
+        }, 30000); // 30 second timeout
         
         // Store the callback in the request map
         window.androidBridge!.captureRequests.set(requestId, (file: File | null) => {
@@ -93,6 +89,36 @@ export function useAndroidCamera() {
           sendDebugLog('Camera', `Camera operation complete for request #${requestId}`);
           
           if (file) {
+            // Validate the file
+            if (!file.size || file.size === 0) {
+              sendDebugLog('CameraError', 'Empty file received from camera');
+              setLastCaptureError('Camera returned an empty image');
+              
+              toast({
+                title: 'Camera Error',
+                description: 'Camera returned an empty image. Please try again.',
+                variant: 'destructive'
+              });
+              
+              resolve(null);
+              return;
+            }
+            
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+              sendDebugLog('CameraError', `Invalid file type received: ${file.type}`);
+              setLastCaptureError('Invalid image type');
+              
+              toast({
+                title: 'Camera Error',
+                description: 'Invalid image type received. Please try again.',
+                variant: 'destructive'
+              });
+              
+              resolve(null);
+              return;
+            }
+            
             toast({
               title: 'Photo Captured',
               description: 'Photo successfully captured from camera'
@@ -102,7 +128,7 @@ export function useAndroidCamera() {
           resolve(file);
         });
         
-        // Try to use the new or old camera method
+        // Try to use the camera method
         const cameraOpened = takeNativePhoto(requestId.toString());
         
         if (!cameraOpened) {
@@ -115,7 +141,7 @@ export function useAndroidCamera() {
         }
       } catch (error) {
         console.error('Error calling Android camera:', error);
-        sendDebugLog('CameraError', `Exception: ${error}`);
+        sendDebugLog('CameraError', `Exception: ${error instanceof Error ? error.message : String(error)}`);
         setIsCapturing(false);
         setLastCaptureError('Failed to access native camera');
         
@@ -139,16 +165,4 @@ export function useAndroidCamera() {
     isAndroidWebView: isInAndroidWebView,
     hasNativeCamera
   };
-}
-
-// Define global window properties for TypeScript
-declare global {
-  interface Window {
-    androidBridge?: {
-      captureRequests: Map<number, (file: File | null) => void>;
-      nextRequestId: number;
-    };
-    receiveImageFromAndroid?: (requestId: string, base64Data: string, fileName: string, mimeType: string) => void;
-    receiveAndroidCameraError?: (requestId: string, errorCode: string, errorMessage: string) => void;
-  }
 }

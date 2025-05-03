@@ -62,9 +62,9 @@ export const sendDebugLog = (tag: string, message: string): void => {
   const timestamp = new Date().toISOString();
   console.log(`[${timestamp}] [${tag}] ${message}`);
   
-  if (isAndroidWebView() && window.AndroidDebug?.log) {
+  if (isAndroidWebView() && window.AndroidLogger?.logDebug) {
     try {
-      window.AndroidDebug.log(tag, message);
+      window.AndroidLogger.logDebug(tag, message);
     } catch (e) {
       console.error('Failed to send log to Android:', e);
     }
@@ -115,7 +115,7 @@ export const takeNativePhoto = async (requestId?: string): Promise<boolean> => {
   // If no requestId is provided, generate one
   const actualRequestId = requestId || `photo_${Date.now()}`;
   
-  // Try primary method first
+  // Try using Android native camera if available
   if (window.AndroidCamera?.takePhoto) {
     try {
       // Call the Android native method
@@ -125,33 +125,37 @@ export const takeNativePhoto = async (requestId?: string): Promise<boolean> => {
     } catch (e) {
       console.error('Error taking native photo with takePhoto:', e);
       sendDebugLog('CameraError', `takePhoto failed: ${e}`);
-      
-      // Try fallback to openCamera if takePhoto fails
-      if (isOpenCameraAvailable()) {
-        try {
-          sendDebugLog('Camera', 'Falling back to openCamera method');
-          window.AndroidCamera.openCamera();
-          return true;
-        } catch (fallbackError) {
-          console.error('Error with openCamera fallback:', fallbackError);
-          sendDebugLog('CameraError', `openCamera fallback failed: ${fallbackError}`);
-        }
-      }
-    }
-  } 
-  // Try secondary method if primary isn't available
-  else if (isOpenCameraAvailable()) {
-    try {
-      sendDebugLog('Camera', 'Using openCamera method');
-      window.AndroidCamera.openCamera();
-      return true;
-    } catch (e) {
-      console.error('Error opening native camera:', e);
-      sendDebugLog('CameraError', `openCamera failed: ${e}`);
+      return false;
     }
   }
   
   sendDebugLog('Camera', 'Native camera methods not available');
+  return false;
+};
+
+/**
+ * Record a video using the Android native camera
+ * @param requestId Optional request ID for tracking the response
+ * @returns Promise that resolves to true if the camera was opened successfully
+ */
+export const takeNativeVideo = async (requestId?: string): Promise<boolean> => {
+  // If no requestId is provided, generate one
+  const actualRequestId = requestId || `video_${Date.now()}`;
+  
+  // Try using Android native video recording if available
+  if (window.AndroidCamera?.captureVideo) {
+    try {
+      sendDebugLog('Camera', `Recording video with request ID: ${actualRequestId}`);
+      window.AndroidCamera.captureVideo(actualRequestId);
+      return true;
+    } catch (e) {
+      console.error('Error recording native video:', e);
+      sendDebugLog('CameraError', `captureVideo failed: ${e}`);
+      return false;
+    }
+  }
+  
+  sendDebugLog('Camera', 'Native video recording not available');
   return false;
 };
 
@@ -179,34 +183,99 @@ export const initializeAndroidBridge = (): void => {
     };
   }
   
+  // Set up global handlers for Android communication
+  if (typeof window.receiveImageFromAndroid !== 'function') {
+    window.receiveImageFromAndroid = (requestId, base64Data, fileName, mimeType) => {
+      console.log(`Received image from Android: ${requestId}, ${fileName}, ${mimeType}`);
+      sendDebugLog('Camera', `Received image from Android: ${fileName} (${mimeType})`);
+      
+      try {
+        // Convert base64 to Blob/File
+        const byteCharacters = atob(base64Data);
+        const byteArrays = [];
+        
+        for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+          const slice = byteCharacters.slice(offset, offset + 512);
+          
+          const byteNumbers = new Array(slice.length);
+          for (let i = 0; i < slice.length; i++) {
+            byteNumbers[i] = slice.charCodeAt(i);
+          }
+          
+          const byteArray = new Uint8Array(byteNumbers);
+          byteArrays.push(byteArray);
+        }
+        
+        const blob = new Blob(byteArrays, { type: mimeType });
+        const file = new File([blob], fileName, { 
+          type: mimeType,
+          lastModified: Date.now()
+        });
+        
+        // Call the stored callback
+        const callback = window.androidBridge?.captureRequests.get(Number(requestId));
+        if (callback) {
+          sendDebugLog('Camera', `Calling callback for request #${requestId} with file: ${fileName}`);
+          callback(file);
+          window.androidBridge?.captureRequests.delete(Number(requestId));
+        } else {
+          sendDebugLog('CameraError', `No callback found for request #${requestId}`);
+        }
+      } catch (error) {
+        console.error('Error processing image from Android:', error);
+        sendDebugLog('CameraError', `Failed to process image: ${error.message}`);
+        
+        // Try to call the callback with null to signal error
+        const callback = window.androidBridge?.captureRequests.get(Number(requestId));
+        if (callback) {
+          callback(null);
+          window.androidBridge?.captureRequests.delete(Number(requestId));
+        }
+      }
+    };
+  }
+  
+  if (typeof window.receiveAndroidCameraError !== 'function') {
+    window.receiveAndroidCameraError = (requestId, errorCode, errorMessage) => {
+      console.error(`Android camera error: ${requestId}, ${errorCode}, ${errorMessage}`);
+      sendDebugLog('CameraError', `Android error: ${errorCode} - ${errorMessage}`);
+      
+      // Call the stored callback with null to signal error
+      const callback = window.androidBridge?.captureRequests.get(Number(requestId));
+      if (callback) {
+        callback(null);
+        window.androidBridge?.captureRequests.delete(Number(requestId));
+      } else {
+        sendDebugLog('CameraError', `No callback found for error request #${requestId}`);
+      }
+      
+      // Create and dispatch a custom event for error handling
+      const errorEvent = new CustomEvent('android-file-error', { 
+        detail: { 
+          errorType: errorCode, 
+          message: errorMessage 
+        }
+      });
+      document.dispatchEvent(errorEvent);
+    };
+  }
+  
   // Test availability of Android interfaces
   if (window.AndroidCamera) {
-    console.log('AndroidCamera interface is available');
+    sendDebugLog('Bridge', 'AndroidCamera interface available');
     
-    const methods = Object.getOwnPropertyNames(window.AndroidCamera)
-      .filter(prop => typeof window.AndroidCamera[prop] === 'function');
+    const methods = [];
+    if (typeof window.AndroidCamera.takePhoto === 'function') methods.push('takePhoto');
+    if (typeof window.AndroidCamera.captureVideo === 'function') methods.push('captureVideo');
+    if (typeof window.AndroidCamera.openCamera === 'function') methods.push('openCamera');
     
     sendDebugLog('Bridge', `Available AndroidCamera methods: ${methods.join(', ') || 'none'}`);
-    
-    // Test specific methods
-    if (typeof window.AndroidCamera.takePhoto === 'function') {
-      console.log('AndroidCamera.takePhoto method is available');
-    } else {
-      console.warn('AndroidCamera.takePhoto method is missing');
-    }
-    
-    if (typeof window.AndroidCamera.openCamera === 'function') {
-      console.log('AndroidCamera.openCamera method is available');
-    } else {
-      console.warn('AndroidCamera.openCamera method is missing');
-    }
   } else {
-    console.warn('AndroidCamera interface is not available');
     sendDebugLog('Bridge', 'AndroidCamera interface not found - will use fallback methods');
   }
   
-  if (window.AndroidDebug) {
-    sendDebugLog('Bridge', 'AndroidDebug interface available');
+  if (window.AndroidLogger) {
+    sendDebugLog('Bridge', 'AndroidLogger interface available');
   }
   
   // Log successful initialization
@@ -227,16 +296,19 @@ export const checkConnectivity = (): boolean => {
 // Helper types for TypeScript
 declare global {
   interface Window {
-    AndroidDebug?: {
-      log: (tag: string, message: string) => void;
+    AndroidLogger?: {
+      logDebug: (tag: string, message: string) => void;
     };
     AndroidCamera?: {
       takePhoto: (requestId: string) => void;
       captureVideo?: (requestId: string) => void;
       openCamera?: () => void;
     };
-    AndroidLogger?: {
-      logDebug: (category: string, message: string) => void;
+    receiveImageFromAndroid?: (requestId: string, base64Data: string, fileName: string, mimeType: string) => void;
+    receiveAndroidCameraError?: (requestId: string, errorCode: string, errorMessage: string) => void;
+    androidBridge?: {
+      captureRequests: Map<number, (file: File | null) => void>;
+      nextRequestId: number;
     };
   }
 }
