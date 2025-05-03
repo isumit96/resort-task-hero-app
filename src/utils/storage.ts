@@ -3,6 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 
 // Improved file upload function with optimizations for mobile WebView
 export const uploadFileToStorage = async (file: File, folder: string): Promise<string> => {
+  // Return empty string for empty files (used when clearing/removing images)
+  if (file.size === 0 && file.name === "removed") {
+    return "";
+  }
+
+  // Size check to prevent large file uploads - 10MB max
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error(`File size exceeds limit (${Math.round(file.size/1024/1024)}MB). Maximum allowed: 10MB`);
+  }
+
   // Compress image if it's a photo before uploading
   let fileToUpload = file;
   
@@ -21,27 +32,32 @@ export const uploadFileToStorage = async (file: File, folder: string): Promise<s
   // Console.log for debugging WebView uploads
   console.log(`Uploading file: ${fileName} (${fileToUpload.type}, ${Math.round(fileToUpload.size/1024)}KB)`);
 
-  const { data, error } = await supabase.storage
-    .from('task-attachments')
-    .upload(filePath, fileToUpload);
+  try {
+    const { data, error } = await supabase.storage
+      .from('task-attachments')
+      .upload(filePath, fileToUpload);
 
-  if (error) {
-    console.error('Storage upload error:', error);
+    if (error) {
+      console.error('Storage upload error:', error);
+      throw error;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('task-attachments')
+      .getPublicUrl(data.path);
+
+    console.log('Upload successful, public URL:', publicUrl);
+    return publicUrl;
+  } catch (error) {
+    console.error('Upload failed with error:', error);
     throw error;
   }
-
-  const { data: { publicUrl } } = supabase.storage
-    .from('task-attachments')
-    .getPublicUrl(data.path);
-
-  console.log('Upload successful, public URL:', publicUrl);
-  return publicUrl;
 };
 
 // Helper function to compress images for faster uploads on mobile
 async function compressImageIfNeeded(file: File): Promise<File> {
-  // Skip compression for small files (less than 1MB)
-  if (file.size < 1024 * 1024) {
+  // Skip compression for small files (less than 500KB)
+  if (file.size < 500 * 1024) {
     return file;
   }
   
@@ -81,7 +97,12 @@ async function compressImageIfNeeded(file: File): Promise<File> {
       
       ctx.drawImage(img, 0, 0, width, height);
       
-      // Use lower quality for JPEG
+      // Use lower quality for JPEG - adjust quality based on file size
+      let quality = 0.75; // Default quality
+      if (file.size > 2 * 1024 * 1024) {
+        quality = 0.6; // More compression for larger files
+      }
+      
       canvas.toBlob((blob) => {
         if (!blob) {
           reject(new Error('Canvas to Blob conversion failed'));
@@ -95,7 +116,7 @@ async function compressImageIfNeeded(file: File): Promise<File> {
         
         URL.revokeObjectURL(img.src); // Clean up
         resolve(newFile);
-      }, 'image/jpeg', 0.75); // Use JPEG with 75% quality
+      }, 'image/jpeg', quality);
     };
     
     img.onerror = () => {
@@ -116,11 +137,12 @@ export const getImageFromCamera = async (): Promise<File | null> => {
       input.type = 'file';
       input.accept = 'image/*';
       
-      // For mobile, prioritize camera but allow gallery fallback
-      // Using 'camera' instead of 'environment' for better WebView compatibility
-      input.capture = 'camera';
+      // For mobile, use 'environment' for back camera (standard)
+      if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        input.setAttribute('capture', 'environment');
+      }
       
-      console.log('Camera file input created with capture=camera');
+      console.log('Camera file input created with appropriate capture attribute');
       
       // Time tracking for debugging
       const startTime = Date.now();

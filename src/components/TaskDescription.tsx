@@ -45,6 +45,21 @@ const TaskDescription = ({
     setUploadError(null);
     setUploadErrorType(null);
     
+    // Check file size - limit to 10MB to prevent issues on mobile
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    if (file.size > MAX_FILE_SIZE) {
+      const errorMsg = `File is too large (${Math.round(file.size/1024/1024)}MB). Please select a file under 10MB.`;
+      setUploadError(errorMsg);
+      setUploadErrorType(type);
+      
+      toast({
+        title: "File too large",
+        description: errorMsg,
+        variant: "destructive"
+      });
+      return;
+    }
+    
     try {
       console.log(`Processing ${type} upload: ${file.name} (${Math.round(file.size/1024)}KB)`);
       
@@ -144,7 +159,7 @@ const TaskDescription = ({
               <input
                 type="file"
                 accept="image/*"
-                capture={isMobile ? "camera" : undefined}
+                capture={isMobile ? "environment" : undefined}
                 className="hidden"
                 onChange={(e) => handleFileUpload(e, 'photo')}
                 disabled={isUploadingPhoto}
@@ -199,7 +214,7 @@ const TaskDescription = ({
               <input
                 type="file"
                 accept="video/*"
-                capture={isMobile ? "camera" : undefined}
+                capture={isMobile ? "environment" : undefined}
                 className="hidden"
                 onChange={(e) => handleFileUpload(e, 'video')}
                 disabled={isUploadingVideo}
