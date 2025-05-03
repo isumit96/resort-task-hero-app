@@ -70,7 +70,7 @@ export function useAndroidFile() {
         // Generate a request ID for this specific operation
         const requestId = window.androidBridge ? window.androidBridge.nextRequestId++ : Date.now();
         
-        return new Promise((resolve) => {
+        file = await new Promise<File | null>((resolve) => {
           // Set up timeout for operation
           const timeoutId = setTimeout(() => {
             if (window.androidBridge?.captureRequests.has(requestId)) {
@@ -146,9 +146,14 @@ export function useAndroidFile() {
               // Fall back to standard file input approach
               sendDebugLog('AndroidFile', 'Native camera failed, falling back to file input');
               
-              file = await getImageFromCamera();
-              setIsCapturing(false);
-              resolve(file);
+              getImageFromCamera().then(result => {
+                setIsCapturing(false);
+                resolve(result);
+              }).catch(err => {
+                setIsCapturing(false);
+                console.error('File input error:', err);
+                resolve(null);
+              });
             }
           } else {
             // No Android bridge, fall back to standard approach
@@ -231,7 +236,7 @@ export function useAndroidFile() {
         // Generate a request ID for this specific operation
         const requestId = window.androidBridge ? window.androidBridge.nextRequestId++ : Date.now();
         
-        return new Promise((resolve) => {
+        file = await new Promise<File | null>((resolve) => {
           // Set up timeout for operation
           const timeoutId = setTimeout(() => {
             if (window.androidBridge?.captureRequests.has(requestId)) {
@@ -307,9 +312,14 @@ export function useAndroidFile() {
               // Fall back to standard file input approach
               sendDebugLog('AndroidFile', 'Native video recording failed, falling back to file input');
               
-              file = await getVideoFromCamera();
-              setIsCapturing(false);
-              resolve(file);
+              getVideoFromCamera().then(result => {
+                setIsCapturing(false);
+                resolve(result);
+              }).catch(err => {
+                setIsCapturing(false);
+                console.error('File input error:', err);
+                resolve(null);
+              });
             }
           } else {
             // No Android bridge, fall back to standard approach
