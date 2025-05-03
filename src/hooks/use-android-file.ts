@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { getImageFromCamera, getVideoFromCamera } from '@/utils/storage';
 import { useToast } from '@/hooks/use-toast';
+import { isAndroidWebView as checkIsAndroidWebView } from '@/utils/android-bridge';
 
 export function useAndroidFile() {
   const { toast } = useToast();
@@ -9,9 +10,7 @@ export function useAndroidFile() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   
   // Is this running inside an Android WebView?
-  const isAndroidWebView = /Android/.test(navigator.userAgent) && 
-                          (/wv/.test(navigator.userAgent) || 
-                           /Version\/[0-9.]+/.test(navigator.userAgent));
+  const isAndroidWebView = checkIsAndroidWebView();
 
   // Set up listener for Android file errors
   useEffect(() => {
@@ -35,7 +34,7 @@ export function useAndroidFile() {
     };
   }, [toast]);
 
-  // Function to capture photo using camera
+  // Function to capture photo using camera with improved error handling
   const capturePhoto = async (): Promise<File | null> => {
     setIsCapturing(true);
     setUploadError(null);
@@ -43,6 +42,8 @@ export function useAndroidFile() {
     try {
       const file = await getImageFromCamera();
       
+      // If file is null, it could mean user cancelled or there was an error 
+      // that was already handled by the getImageFromCamera function
       if (!file) {
         setUploadError('No photo was captured');
         
@@ -54,6 +55,12 @@ export function useAndroidFile() {
             variant: "destructive"
           });
         }
+      } else {
+        // Success toast for better UX feedback
+        toast({
+          title: 'Photo Captured',
+          description: 'Photo successfully captured from camera'
+        });
       }
       
       return file;
@@ -73,7 +80,7 @@ export function useAndroidFile() {
     }
   };
 
-  // Function to capture video using camera
+  // Function to capture video using camera with improved error handling
   const captureVideo = async (): Promise<File | null> => {
     setIsCapturing(true);
     setUploadError(null);
@@ -92,6 +99,12 @@ export function useAndroidFile() {
             variant: "destructive"
           });
         }
+      } else {
+        // Success toast for better UX feedback
+        toast({
+          title: 'Video Recorded',
+          description: 'Video successfully recorded from camera'
+        });
       }
       
       return file;
