@@ -3,8 +3,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Camera, Video, Loader2, X, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useAndroidFile } from "@/hooks/use-android-file";
+import { isAndroidWebView } from "@/utils/android-bridge";
 
 interface TaskDescriptionProps {
   description: string;
@@ -30,14 +32,106 @@ const TaskDescription = ({
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadErrorType, setUploadErrorType] = useState<'photo' | 'video' | null>(null);
+  const { capturePhoto, captureVideo, isCapturing, isAndroidWebView: isInAndroidView } = useAndroidFile();
+  
+  // Refs for file inputs
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   
   // Check if we're on a mobile device - this helps with specific WebView handling
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  const isAndroidWebView = /Android/.test(navigator.userAgent) && 
-                          (/wv/.test(navigator.userAgent) || 
-                           /Version\/[0-9.]+/.test(navigator.userAgent));
+  const isAndroidDevice = /Android/.test(navigator.userAgent);
+  const runningInWebView = isInAndroidView || isAndroidWebView();
   
-  // Enhanced file upload handler with WebView compatibility improvements
+  console.log('TaskDescription mount:', { 
+    isMobile, 
+    isAndroidDevice, 
+    runningInWebView,
+    isCapturing,
+    userAgent: navigator.userAgent
+  });
+  
+  // Enhanced photo capture with Android WebView support
+  const handlePhotoCapture = async () => {
+    setUploadError(null);
+    setUploadErrorType(null);
+    setIsUploadingPhoto(true);
+    
+    console.log('Starting photo capture process');
+    
+    try {
+      // Use the enhanced capturePhoto function that handles Android WebView
+      const file = await capturePhoto();
+      
+      if (file) {
+        console.log(`Processing uploaded photo: ${file.name} (${Math.round(file.size/1024)}KB)`);
+        await onPhotoUpload(file);
+        
+        toast({
+          title: "Photo uploaded",
+          description: "Your photo has been uploaded successfully"
+        });
+      } else {
+        console.log('No photo file returned from capturePhoto');
+        // User may have canceled or there was an error that was already handled
+      }
+    } catch (error) {
+      console.error('Error capturing photo:', error);
+      
+      setUploadError(`Failed to upload photo. Please try again.`);
+      setUploadErrorType('photo');
+      
+      toast({
+        title: `Photo upload failed`,
+        description: `Unable to upload your photo. Please try again.`,
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+  
+  // Enhanced video capture with Android WebView support
+  const handleVideoCapture = async () => {
+    setUploadError(null);
+    setUploadErrorType(null);
+    setIsUploadingVideo(true);
+    
+    console.log('Starting video capture process');
+    
+    try {
+      // Use the enhanced captureVideo function that handles Android WebView
+      const file = await captureVideo();
+      
+      if (file) {
+        console.log(`Processing uploaded video: ${file.name} (${Math.round(file.size/1024)}KB)`);
+        await onVideoUpload(file);
+        
+        toast({
+          title: "Video uploaded",
+          description: "Your video has been uploaded successfully"
+        });
+      } else {
+        console.log('No video file returned from captureVideo');
+        // User may have canceled or there was an error that was already handled
+      }
+    } catch (error) {
+      console.error('Error capturing video:', error);
+      
+      setUploadError(`Failed to upload video. Please try again.`);
+      setUploadErrorType('video');
+      
+      toast({
+        title: `Video upload failed`,
+        description: `Unable to upload your video. Please try again.`,
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploadingVideo(false);
+    }
+  };
+
+  // Legacy file upload handler for non-Android or fallback
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, type: 'photo' | 'video') => {
     const file = event.target.files?.[0];
     if (!file) {
@@ -145,31 +239,40 @@ const TaskDescription = ({
         <div className="w-full sm:w-auto">
           <Label className="mb-1.5 block">Photo</Label>
           {!photoUrl ? (
-            <label className={cn(
-              "cursor-pointer block",
-              isUploadingPhoto && "opacity-70 pointer-events-none"
-            )}>
-              <div className="flex items-center gap-2 px-4 py-3 border rounded-md hover:bg-accent min-h-12 touch-manipulation">
-                {isUploadingPhoto ? (
+            <div className="relative">
+              <button 
+                type="button"
+                onClick={handlePhotoCapture}
+                disabled={isUploadingPhoto || isCapturing}
+                className={cn(
+                  "w-full flex items-center gap-2 px-4 py-3 border rounded-md hover:bg-accent min-h-12 touch-manipulation",
+                  (isUploadingPhoto || isCapturing) && "opacity-70 pointer-events-none"
+                )}
+              >
+                {isUploadingPhoto || isCapturing ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Camera className="h-4 w-4" />
                 )}
                 <span className="text-sm">
-                  {isUploadingPhoto ? "Uploading..." : isMobile ? "Take Photo" : "Add Photo"}
+                  {isUploadingPhoto || isCapturing ? "Processing..." : isMobile ? "Take Photo" : "Add Photo"}
                 </span>
-              </div>
+              </button>
+              
+              {/* Hidden file input as fallback, but accessible when needed */}
               <input
+                ref={photoInputRef}
                 type="file"
                 accept="image/*"
-                capture={isAndroidWebView ? "environment" : undefined}
-                className="hidden"
+                capture={isAndroidDevice ? "environment" : undefined}
+                className="opacity-0 absolute inset-0 cursor-pointer"
                 onChange={(e) => handleFileUpload(e, 'photo')}
-                disabled={isUploadingPhoto}
+                disabled={isUploadingPhoto || isCapturing}
                 // Add a key that changes when upload completes to reset the input
-                key={`photo-upload-${isUploadingPhoto ? 'loading' : 'ready'}`}
+                key={`photo-upload-${isUploadingPhoto || isCapturing ? 'loading' : 'ready'}-${Date.now()}`}
+                aria-hidden="true"
               />
-            </label>
+            </div>
           ) : (
             <div className="relative mt-2 group">
               <img 
@@ -200,31 +303,40 @@ const TaskDescription = ({
         <div className="w-full sm:w-auto">
           <Label className="mb-1.5 block">Video</Label>
           {!videoUrl ? (
-            <label className={cn(
-              "cursor-pointer block",
-              isUploadingVideo && "opacity-70 pointer-events-none"
-            )}>
-              <div className="flex items-center gap-2 px-4 py-3 border rounded-md hover:bg-accent min-h-12 touch-manipulation">
-                {isUploadingVideo ? (
+            <div className="relative">
+              <button 
+                type="button"
+                onClick={handleVideoCapture}
+                disabled={isUploadingVideo || isCapturing}
+                className={cn(
+                  "w-full flex items-center gap-2 px-4 py-3 border rounded-md hover:bg-accent min-h-12 touch-manipulation",
+                  (isUploadingVideo || isCapturing) && "opacity-70 pointer-events-none"
+                )}
+              >
+                {isUploadingVideo || isCapturing ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Video className="h-4 w-4" />
                 )}
                 <span className="text-sm">
-                  {isUploadingVideo ? "Uploading..." : isMobile ? "Record Video" : "Add Video"}
+                  {isUploadingVideo || isCapturing ? "Processing..." : isMobile ? "Record Video" : "Add Video"}
                 </span>
-              </div>
+              </button>
+              
+              {/* Hidden file input as fallback, but accessible when needed */}
               <input
+                ref={videoInputRef}
                 type="file"
                 accept="video/*"
-                capture={isAndroidWebView ? "environment" : undefined}
-                className="hidden"
+                capture={isAndroidDevice ? "environment" : undefined}
+                className="opacity-0 absolute inset-0 cursor-pointer"
                 onChange={(e) => handleFileUpload(e, 'video')}
-                disabled={isUploadingVideo}
+                disabled={isUploadingVideo || isCapturing}
                 // Add a key that changes when upload completes to reset the input
-                key={`video-upload-${isUploadingVideo ? 'loading' : 'ready'}`}
+                key={`video-upload-${isUploadingVideo || isCapturing ? 'loading' : 'ready'}-${Date.now()}`}
+                aria-hidden="true"
               />
-            </label>
+            </div>
           ) : (
             <div className="relative mt-2 group">
               <video 

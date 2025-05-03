@@ -10,10 +10,24 @@
 export const isAndroidWebView = (): boolean => {
   if (typeof navigator === 'undefined') return false;
   
-  return /Android/.test(navigator.userAgent) && 
-         (/wv/.test(navigator.userAgent) || 
-          /Version\/[0-9.]+/.test(navigator.userAgent) ||
-          /Android.*Mobile.*Chrome\/[.0-9]* (?!Mobile)/i.test(navigator.userAgent));
+  // More comprehensive detection of Android WebView
+  const isAndroid = /Android/.test(navigator.userAgent);
+  const hasWebViewSignature = 
+    /wv/.test(navigator.userAgent) || 
+    /Version\/[0-9.]+/.test(navigator.userAgent) ||
+    /Android.*Mobile.*Chrome\/[.0-9]* (?!Mobile)/i.test(navigator.userAgent);
+    
+  // Additional check for our custom WebView marker
+  const hasCustomMarker = navigator.userAgent.includes('AndroidAppWebView');
+  
+  console.log('Android detection:', { 
+    isAndroid, 
+    hasWebViewSignature, 
+    hasCustomMarker,
+    userAgent: navigator.userAgent
+  });
+  
+  return isAndroid && (hasWebViewSignature || hasCustomMarker);
 };
 
 /**
@@ -23,10 +37,17 @@ export const isAndroidWebView = (): boolean => {
 export const isNativeCameraAvailable = (): boolean => {
   if (typeof window === 'undefined') return false;
   
+  // More thorough checking for Android camera availability
   const available = !!(
     window.AndroidCamera && 
     typeof window.AndroidCamera.takePhoto === 'function'
   );
+  
+  console.log('Native camera availability check:', {
+    windowExists: typeof window !== 'undefined',
+    androidCameraExists: !!window.AndroidCamera,
+    takePhotoMethodExists: window.AndroidCamera ? typeof window.AndroidCamera.takePhoto : 'undefined'
+  });
   
   if (!available) {
     console.log('Native camera interface not available for takePhoto method');
@@ -115,6 +136,12 @@ export const takeNativePhoto = async (requestId?: string): Promise<boolean> => {
   // If no requestId is provided, generate one
   const actualRequestId = requestId || `photo_${Date.now()}`;
   
+  console.log('Taking native photo with request ID:', actualRequestId);
+  console.log('AndroidCamera object status:', {
+    exists: !!window.AndroidCamera,
+    takePhotoMethod: window.AndroidCamera ? typeof window.AndroidCamera.takePhoto : 'undefined'
+  });
+  
   // Try using Android native camera if available
   if (window.AndroidCamera?.takePhoto) {
     try {
@@ -166,8 +193,14 @@ export const takeNativeVideo = async (requestId?: string): Promise<boolean> => {
 export const initializeAndroidBridge = (): void => {
   if (typeof window === 'undefined') return;
   
+  // Check if we're in an Android WebView
+  const inWebView = isAndroidWebView();
+  
+  console.log('Initializing Android bridge, in WebView:', inWebView);
+  sendDebugLog('Bridge', `Initializing Android bridge (inWebView: ${inWebView})`);
+  
   // Only initialize in Android WebView
-  if (!isAndroidWebView()) {
+  if (!inWebView) {
     console.log('Not in Android WebView, skipping bridge initialization');
     return;
   }
@@ -177,6 +210,7 @@ export const initializeAndroidBridge = (): void => {
   
   // Initialize the bridge object if it doesn't exist
   if (!window.androidBridge) {
+    console.log('Creating android bridge object');
     window.androidBridge = {
       captureRequests: new Map(),
       nextRequestId: 1
@@ -185,6 +219,7 @@ export const initializeAndroidBridge = (): void => {
   
   // Set up global handlers for Android communication
   if (typeof window.receiveImageFromAndroid !== 'function') {
+    console.log('Setting up receiveImageFromAndroid handler');
     window.receiveImageFromAndroid = (requestId, base64Data, fileName, mimeType) => {
       console.log(`Received image from Android: ${requestId}, ${fileName}, ${mimeType}`);
       sendDebugLog('Camera', `Received image from Android: ${fileName} (${mimeType})`);

@@ -30,6 +30,12 @@ export function useAndroidCamera() {
       // Initialize the Android bridge
       initializeAndroidBridge();
       
+      console.log('Setting up Android camera bridge:', { 
+        isInAndroidWebView, 
+        hasNativeCamera,
+        androidCameraObject: window.AndroidCamera ? 'exists' : 'missing'
+      });
+      
       sendDebugLog('Setup', `Android WebView detected. Native camera available: ${hasNativeCamera}`);
     }
     
@@ -45,16 +51,21 @@ export function useAndroidCamera() {
    */
   const capturePhotoWithAndroid = async (): Promise<File | null> => {
     if (!isInAndroidWebView) {
+      console.log('Not in Android WebView, using standard file input');
       sendDebugLog('Camera', 'Not in Android WebView, using standard file input');
       // Let the normal file input handle it
       return null;
     }
     
+    console.log('Camera availability check:', { hasNativeCamera, AndroidCamera: !!window.AndroidCamera });
+    
     if (!hasNativeCamera) {
+      console.log('Native camera not available, using file input fallback');
       sendDebugLog('Camera', 'Native camera not available, using file input fallback');
       return null;
     }
     
+    console.log('Using Android native camera bridge');
     sendDebugLog('Camera', 'Using Android native camera bridge');
     setIsCapturing(true);
     setLastCaptureError(null);
@@ -63,6 +74,8 @@ export function useAndroidCamera() {
       try {
         // Generate a request ID for this specific camera operation
         const requestId = window.androidBridge!.nextRequestId++;
+        
+        console.log('Camera operation requestId:', requestId);
         
         // Set up timeout for operation
         const timeoutId = setTimeout(() => {
@@ -128,8 +141,9 @@ export function useAndroidCamera() {
           resolve(file);
         });
         
-        // Try to use the camera method
+        // Try to use the camera method - LOG THE RESULT
         const cameraOpened = takeNativePhoto(requestId.toString());
+        console.log('Camera opened:', cameraOpened);
         
         if (!cameraOpened) {
           clearTimeout(timeoutId);
