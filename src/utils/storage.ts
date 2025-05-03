@@ -105,34 +105,73 @@ async function compressImageIfNeeded(file: File): Promise<File> {
   });
 }
 
-// Extract image from WebView camera
+// Fixed version for WebView camera capture with enhanced error handling
 export const getImageFromCamera = async (): Promise<File | null> => {
+  console.log('Starting camera capture process');
   return new Promise((resolve) => {
-    // Create file input element
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.capture = 'environment'; // Force camera on mobile
-    
-    // Listen for file selection
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        console.log(`Camera capture: ${file.name} (${file.type}, ${Math.round(file.size/1024)}KB)`);
-        resolve(file);
-      } else {
-        console.log('No image captured');
-        resolve(null);
-      }
-    };
-    
-    // Handle cancel
-    input.oncancel = () => {
-      console.log('Camera capture cancelled');
+    try {
+      // Create a more robust file input for WebView interaction
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.capture = 'environment'; // Force camera on mobile
+      
+      // Debug logging for WebView interaction
+      console.log('Camera file input created with capture=environment');
+      
+      // Enhanced event listeners for better WebView compatibility
+      const handleChange = (e: Event) => {
+        console.log('Camera file input change event fired');
+        const target = e.target as HTMLInputElement;
+        const files = target.files;
+        
+        if (files && files.length > 0) {
+          const file = files[0];
+          console.log(`Camera capture success: ${file.name} (${file.type}, ${Math.round(file.size/1024)}KB)`);
+          
+          // Clean up event listeners
+          input.removeEventListener('change', handleChange);
+          input.removeEventListener('click', handleCancel);
+          
+          // Resolve with the captured file
+          resolve(file);
+        } else {
+          console.log('Camera capture: no file selected');
+          resolve(null);
+        }
+      };
+      
+      const handleCancel = () => {
+        console.log('Camera capture cancelled or failed');
+        
+        // Set a timeout to check if a file was selected
+        // This helps with some WebView implementations that don't properly trigger change events
+        setTimeout(() => {
+          if (input.files && input.files.length > 0) {
+            const file = input.files[0];
+            console.log(`Delayed camera capture detection: ${file.name}`);
+            resolve(file);
+          } else {
+            resolve(null);
+          }
+          
+          // Clean up event listeners
+          input.removeEventListener('change', handleChange);
+          input.removeEventListener('click', handleCancel);
+        }, 1000);
+      };
+      
+      // Add improved event listeners
+      input.addEventListener('change', handleChange);
+      input.addEventListener('click', handleCancel);
+      
+      // Trigger camera
+      console.log('Triggering camera file selection dialog');
+      input.click();
+      
+    } catch (error) {
+      console.error('Error setting up camera capture:', error);
       resolve(null);
-    };
-    
-    // Trigger file selection dialog
-    input.click();
+    }
   });
 };

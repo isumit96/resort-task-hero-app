@@ -3,7 +3,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Camera, Video, Loader2, X, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 interface TaskDescriptionProps {
@@ -28,15 +28,28 @@ const TaskDescription = ({
   const { toast } = useToast();
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   
+  // Check if we're on a mobile device - this helps with specific WebView handling
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  
+  // Enhanced file upload handler with WebView compatibility improvements
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, type: 'photo' | 'video') => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      console.log(`No ${type} file selected`);
+      return;
+    }
+    
+    setUploadError(null);
     
     try {
+      console.log(`Processing ${type} upload: ${file.name} (${Math.round(file.size/1024)}KB)`);
+      
       if (type === 'photo') {
         setIsUploadingPhoto(true);
         await onPhotoUpload(file);
+        
         toast({
           title: "Photo uploaded",
           description: "Your photo has been uploaded successfully"
@@ -44,6 +57,7 @@ const TaskDescription = ({
       } else {
         setIsUploadingVideo(true);
         await onVideoUpload(file);
+        
         toast({
           title: "Video uploaded",
           description: "Your video has been uploaded successfully"
@@ -51,6 +65,9 @@ const TaskDescription = ({
       }
     } catch (error) {
       console.error(`Error uploading ${type}:`, error);
+      
+      setUploadError(`Failed to upload ${type}. Please try again.`);
+      
       toast({
         title: `${type.charAt(0).toUpperCase() + type.slice(1)} upload failed`,
         description: `Unable to upload your ${type}. Please try again.`,
@@ -78,6 +95,18 @@ const TaskDescription = ({
     });
   };
 
+  // Handle file input reset when user clicks "Cancel" in the camera UI
+  useEffect(() => {
+    // Clear any file inputs when component unmounts
+    return () => {
+      const fileInputs = document.querySelectorAll('input[type="file"]');
+      fileInputs.forEach(input => {
+        const htmlInput = input as HTMLInputElement;
+        htmlInput.value = '';
+      });
+    };
+  }, []);
+
   return (
     <div className={cn("space-y-4", className)}>
       <div>
@@ -99,23 +128,25 @@ const TaskDescription = ({
               "cursor-pointer block",
               isUploadingPhoto && "opacity-70 pointer-events-none"
             )}>
-              <div className="flex items-center gap-2 px-3 py-2 border rounded-md hover:bg-accent min-h-10 touch-manipulation">
+              <div className="flex items-center gap-2 px-4 py-3 border rounded-md hover:bg-accent min-h-12 touch-manipulation">
                 {isUploadingPhoto ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Camera className="h-4 w-4" />
                 )}
                 <span className="text-sm">
-                  {isUploadingPhoto ? "Uploading..." : "Take Photo"}
+                  {isUploadingPhoto ? "Uploading..." : isMobile ? "Take Photo" : "Add Photo"}
                 </span>
               </div>
               <input
                 type="file"
                 accept="image/*"
-                capture="environment"
+                capture={isMobile ? "environment" : undefined}
                 className="hidden"
                 onChange={(e) => handleFileUpload(e, 'photo')}
                 disabled={isUploadingPhoto}
+                // Add a key that changes when upload completes to reset the input
+                key={`photo-upload-${isUploadingPhoto ? 'loading' : 'ready'}`}
               />
             </label>
           ) : (
@@ -137,6 +168,12 @@ const TaskDescription = ({
               </div>
             </div>
           )}
+          {uploadError && type === 'photo' && (
+            <div className="mt-2 text-sm text-destructive flex items-center gap-1.5">
+              <AlertTriangle size={14} />
+              <span>{uploadError}</span>
+            </div>
+          )}
         </div>
 
         <div className="w-full sm:w-auto">
@@ -146,23 +183,25 @@ const TaskDescription = ({
               "cursor-pointer block",
               isUploadingVideo && "opacity-70 pointer-events-none"
             )}>
-              <div className="flex items-center gap-2 px-3 py-2 border rounded-md hover:bg-accent min-h-10 touch-manipulation">
+              <div className="flex items-center gap-2 px-4 py-3 border rounded-md hover:bg-accent min-h-12 touch-manipulation">
                 {isUploadingVideo ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Video className="h-4 w-4" />
                 )}
                 <span className="text-sm">
-                  {isUploadingVideo ? "Uploading..." : "Record Video"}
+                  {isUploadingVideo ? "Uploading..." : isMobile ? "Record Video" : "Add Video"}
                 </span>
               </div>
               <input
                 type="file"
                 accept="video/*"
-                capture="environment"
+                capture={isMobile ? "environment" : undefined}
                 className="hidden"
                 onChange={(e) => handleFileUpload(e, 'video')}
                 disabled={isUploadingVideo}
+                // Add a key that changes when upload completes to reset the input
+                key={`video-upload-${isUploadingVideo ? 'loading' : 'ready'}`}
               />
             </label>
           ) : (
@@ -182,6 +221,12 @@ const TaskDescription = ({
                   <X size={16} />
                 </button>
               </div>
+            </div>
+          )}
+          {uploadError && type === 'video' && (
+            <div className="mt-2 text-sm text-destructive flex items-center gap-1.5">
+              <AlertTriangle size={14} />
+              <span>{uploadError}</span>
             </div>
           )}
         </div>

@@ -28,7 +28,7 @@ export function Toaster() {
           </Toast>
         )
       })}
-      <ToastViewport className="p-4" />
+      <ToastViewport className="p-4 pb-12" /> {/* Added extra bottom padding for WebView */}
     </ToastProvider>
   )
 }

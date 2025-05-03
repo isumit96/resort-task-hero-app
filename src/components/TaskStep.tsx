@@ -40,6 +40,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
   const [photoPreview, setPhotoPreview] = useState<string | undefined>(step.photoUrl || undefined);
   const [isCapturing, setIsCapturing] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [captureStarted, setCaptureStarted] = useState(false);
 
   // Update yesNoValue when step prop changes (react-query refresh etc)
   useEffect(() => {
@@ -86,46 +87,62 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
     });
   };
 
-  // Camera capture logic - enhanced for WebView
+  // Enhanced camera capture logic for WebView - with additional error recovery
   const handleCapturePhoto = async () => {
     if (isTaskCompleted) return;
     setUploadError(null);
+    setIsCapturing(true);
+    setCaptureStarted(true);
+    
+    console.log(`Starting photo capture for step ${step.id}`);
     
     try {
-      setIsCapturing(true);
       const file = await getImageFromCamera();
+      console.log(`Camera capture result:`, file ? `File received (${file.size} bytes)` : 'No file received');
       
+      // If we got a file back from the camera
       if (file) {
-        // Show preview immediately
-        const reader = new FileReader();
-        reader.onload = async () => {
-          const result = reader.result as string;
-          setPhotoPreview(result);
+        try {
+          // Create an immediate preview from the file
+          const localPreviewUrl = URL.createObjectURL(file);
+          console.log(`Local preview URL created: ${localPreviewUrl}`);
+          setPhotoPreview(localPreviewUrl);
           
-          try {
-            // Pass file to parent for upload
-            if (onAddPhoto) {
-              await onAddPhoto(step.id, URL.createObjectURL(file));
-              toast({
-                title: "Photo uploaded",
-                description: "Your photo has been successfully attached to this step"
-              });
-            }
-          } catch (error) {
-            console.error('Upload error:', error);
-            setUploadError("Failed to upload photo. Please try again.");
+          // Notify the parent about the photo (actual upload happens in parent)
+          if (onAddPhoto) {
+            console.log(`Calling onAddPhoto for step ${step.id}`);
+            await onAddPhoto(step.id, localPreviewUrl);
+            
             toast({
-              title: "Upload failed",
-              description: "Failed to upload photo. Please try again.",
-              variant: "destructive"
+              title: "Photo attached",
+              description: "Your photo has been successfully attached to this step"
             });
           }
-        };
-        reader.readAsDataURL(file);
+        } catch (error) {
+          console.error('Preview/upload error:', error);
+          setUploadError("Failed to process photo. Please try again.");
+          
+          toast({
+            title: "Upload failed",
+            description: "Failed to process photo. Please try again.",
+            variant: "destructive"
+          });
+        }
+      } else if (captureStarted) {
+        // User cancelled or something went wrong with the camera
+        console.log('Camera capture cancelled or failed');
+        setUploadError("Camera capture cancelled or failed. Please try again.");
+        
+        toast({
+          title: "Camera cancelled",
+          description: "Photo capture was cancelled or failed",
+          variant: "destructive"
+        });
       }
     } catch (error) {
       console.error('Camera capture error:', error);
       setUploadError("Failed to access camera. Please check permissions.");
+      
       toast({
         title: "Camera error",
         description: "Failed to access camera. Please check permissions.",
@@ -133,11 +150,18 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
       });
     } finally {
       setIsCapturing(false);
+      setCaptureStarted(false);
     }
   };
 
   const handleRemovePhoto = () => {
     if (isTaskCompleted) return;
+    
+    // If there was a local preview URL, revoke it to prevent memory leaks
+    if (photoPreview && photoPreview.startsWith('blob:')) {
+      URL.revokeObjectURL(photoPreview);
+    }
+    
     setPhotoPreview(undefined);
     setUploadError(null);
     
@@ -161,6 +185,9 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
       </div>
     );
   };
+
+  // Check if we're on a mobile device - this helps with specific WebView handling
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
   return (
     <div className="mb-4 rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md relative">
@@ -241,7 +268,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
             </div>
           )}
 
-          {/* Photo section - improved for WebView with direct camera access and better feedback */}
+          {/* Photo section - improved for WebView with better handling */}
           {step.requiresPhoto && (
             <div className="mt-4">
               {!photoPreview ? (
@@ -249,7 +276,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
                   <button
                     onClick={handleCapturePhoto}
                     disabled={isCapturing || isTaskCompleted}
-                    className={`flex items-center gap-2 py-3 px-3 w-full rounded-md bg-muted text-muted-foreground cursor-pointer hover:bg-muted/80 transition-colors text-sm dark:bg-muted/50 dark:hover:bg-muted/30 min-h-12 justify-center touch-manipulation border border-dashed border-border ${
+                    className={`flex items-center gap-2 py-3 px-4 w-full rounded-md bg-muted text-muted-foreground cursor-pointer hover:bg-muted/80 transition-colors text-sm dark:bg-muted/50 dark:hover:bg-muted/30 min-h-12 justify-center touch-manipulation border border-dashed border-border ${
                       isTaskCompleted ? "opacity-60 cursor-not-allowed" : ""
                     } ${isCapturing ? "animate-pulse" : ""}`}
                     type="button"
@@ -260,7 +287,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
                       <Camera size={20} />
                     )}
                     {isCapturing ? 
-                      <span>{t('templates.opening')}</span> : 
+                      <span>{isMobile ? t('templates.takingPhoto') : t('templates.opening')}</span> : 
                       <span>{t('templates.takePhoto')}</span>
                     }
                   </button>
