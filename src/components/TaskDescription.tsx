@@ -144,7 +144,7 @@ const TaskDescription = ({
               <input
                 type="file"
                 accept="image/*"
-                capture={isMobile ? "environment" : undefined}
+                capture={isMobile ? "camera" : undefined}
                 className="hidden"
                 onChange={(e) => handleFileUpload(e, 'photo')}
                 disabled={isUploadingPhoto}
@@ -199,7 +199,7 @@ const TaskDescription = ({
               <input
                 type="file"
                 accept="video/*"
-                capture={isMobile ? "environment" : undefined}
+                capture={isMobile ? "camera" : undefined}
                 className="hidden"
                 onChange={(e) => handleFileUpload(e, 'video')}
                 disabled={isUploadingVideo}

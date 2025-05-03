@@ -28,7 +28,7 @@ export function Toaster() {
           </Toast>
         )
       })}
-      <ToastViewport className="p-4 pb-12" /> {/* Added extra bottom padding for WebView */}
+      <ToastViewport className="p-4 pb-16 z-[100]" /> {/* Added extra bottom padding and fixed z-index for WebView */}
     </ToastProvider>
   )
 }

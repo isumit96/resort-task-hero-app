@@ -40,7 +40,6 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
   const [photoPreview, setPhotoPreview] = useState<string | undefined>(step.photoUrl || undefined);
   const [isCapturing, setIsCapturing] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [captureStarted, setCaptureStarted] = useState(false);
 
   // Update yesNoValue when step prop changes (react-query refresh etc)
   useEffect(() => {
@@ -87,12 +86,11 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
     });
   };
 
-  // Enhanced camera capture logic for WebView - with additional error recovery
+  // Enhanced camera capture logic for WebView - with better error recovery
   const handleCapturePhoto = async () => {
     if (isTaskCompleted) return;
     setUploadError(null);
     setIsCapturing(true);
-    setCaptureStarted(true);
     
     console.log(`Starting photo capture for step ${step.id}`);
     
@@ -101,7 +99,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
       console.log(`Camera capture result:`, file ? `File received (${file.size} bytes)` : 'No file received');
       
       // If we got a file back from the camera
-      if (file) {
+      if (file && file.size > 0) {
         try {
           // Create an immediate preview from the file
           const localPreviewUrl = URL.createObjectURL(file);
@@ -128,14 +126,24 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
             variant: "destructive"
           });
         }
-      } else if (captureStarted) {
-        // User cancelled or something went wrong with the camera
-        console.log('Camera capture cancelled or failed');
-        setUploadError("Camera capture cancelled or failed. Please try again.");
+      } else if (file && file.size === 0) {
+        // Empty file - likely a WebView issue
+        console.error('Camera returned empty file');
+        setUploadError("Camera returned an empty image. Please try again.");
         
         toast({
-          title: "Camera cancelled",
-          description: "Photo capture was cancelled or failed",
+          title: "Camera error",
+          description: "Camera returned an empty image. Please try again.",
+          variant: "destructive"
+        });
+      } else {
+        // No file received - user cancelled or WebView issue
+        console.log('No file received from camera');
+        setUploadError("No photo was captured. Please try again.");
+        
+        toast({
+          title: "No photo",
+          description: "No photo was captured. Please try again.",
           variant: "destructive"
         });
       }
@@ -150,7 +158,6 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
       });
     } finally {
       setIsCapturing(false);
-      setCaptureStarted(false);
     }
   };
 
