@@ -1,11 +1,13 @@
+
 import { useState, useEffect } from "react";
 import { TaskStep as TaskStepType } from "@/types";
-import { Camera, X, CheckCircle, XCircle, Lock } from "lucide-react";
+import { Camera, X, CheckCircle, XCircle, Lock, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTranslation } from "react-i18next";
 import { getImageFromCamera } from "@/utils/storage";
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * Renders an individual task step with support for checkbox or yes/no.
@@ -21,6 +23,7 @@ interface TaskStepProps {
 
 const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted = false }: TaskStepProps) => {
   const { t } = useTranslation();
+  const { toast } = useToast();
   
   // Unselected (undefined), explicitly true/false after selection
   const [yesNoValue, setYesNoValue] = useState<'yes' | 'no' | undefined>(
@@ -36,6 +39,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
   const [showCommentInput, setShowCommentInput] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | undefined>(step.photoUrl || undefined);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Update yesNoValue when step prop changes (react-query refresh etc)
   useEffect(() => {
@@ -46,6 +50,11 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
     }
     // eslint-disable-next-line
   }, [step.isCompleted]);
+
+  // Update photo preview when step prop changes
+  useEffect(() => {
+    setPhotoPreview(step.photoUrl);
+  }, [step.photoUrl]);
 
   // Checkbox logic
   const handleCheck = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,11 +79,18 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
     if (isTaskCompleted) return;
     if (onAddComment) onAddComment(step.id, comment);
     setShowCommentInput(false);
+    
+    toast({
+      title: "Comment saved",
+      description: "Your comment has been saved successfully"
+    });
   };
 
   // Camera capture logic - enhanced for WebView
   const handleCapturePhoto = async () => {
     if (isTaskCompleted) return;
+    setUploadError(null);
+    
     try {
       setIsCapturing(true);
       const file = await getImageFromCamera();
@@ -82,17 +98,39 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
       if (file) {
         // Show preview immediately
         const reader = new FileReader();
-        reader.onload = () => {
+        reader.onload = async () => {
           const result = reader.result as string;
           setPhotoPreview(result);
+          
+          try {
+            // Pass file to parent for upload
+            if (onAddPhoto) {
+              await onAddPhoto(step.id, URL.createObjectURL(file));
+              toast({
+                title: "Photo uploaded",
+                description: "Your photo has been successfully attached to this step"
+              });
+            }
+          } catch (error) {
+            console.error('Upload error:', error);
+            setUploadError("Failed to upload photo. Please try again.");
+            toast({
+              title: "Upload failed",
+              description: "Failed to upload photo. Please try again.",
+              variant: "destructive"
+            });
+          }
         };
         reader.readAsDataURL(file);
-        
-        // Pass file to parent for upload
-        if (onAddPhoto) onAddPhoto(step.id, URL.createObjectURL(file));
       }
     } catch (error) {
       console.error('Camera capture error:', error);
+      setUploadError("Failed to access camera. Please check permissions.");
+      toast({
+        title: "Camera error",
+        description: "Failed to access camera. Please check permissions.",
+        variant: "destructive"
+      });
     } finally {
       setIsCapturing(false);
     }
@@ -101,7 +139,15 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
   const handleRemovePhoto = () => {
     if (isTaskCompleted) return;
     setPhotoPreview(undefined);
-    if (onAddPhoto) onAddPhoto(step.id, ""); // Remove from backend too
+    setUploadError(null);
+    
+    if (onAddPhoto) {
+      onAddPhoto(step.id, ""); // Remove from backend too
+      toast({
+        title: "Photo removed",
+        description: "The photo has been removed from this step"
+      });
+    }
   };
 
   // Show locked status indicator for completed tasks
@@ -195,42 +241,57 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
             </div>
           )}
 
-          {/* Photo section - improved for WebView with direct camera access */}
+          {/* Photo section - improved for WebView with direct camera access and better feedback */}
           {step.requiresPhoto && (
             <div className="mt-4">
               {!photoPreview ? (
-                <button
-                  onClick={handleCapturePhoto}
-                  disabled={isCapturing || isTaskCompleted}
-                  className={`flex items-center gap-2 py-3 px-3 w-full rounded-md bg-muted text-muted-foreground cursor-pointer hover:bg-muted/80 transition-colors text-sm dark:bg-muted/50 dark:hover:bg-muted/30 min-h-12 justify-center touch-manipulation border border-dashed border-border ${
-                    isTaskCompleted ? "opacity-60 cursor-not-allowed" : ""
-                  }`}
-                  type="button"
-                >
-                  <Camera size={20} />
-                  {isCapturing ? 
-                    <span>{t('templates.opening')}</span> : 
-                    <span>{t('templates.takePhoto')}</span>
-                  }
-                </button>
+                <>
+                  <button
+                    onClick={handleCapturePhoto}
+                    disabled={isCapturing || isTaskCompleted}
+                    className={`flex items-center gap-2 py-3 px-3 w-full rounded-md bg-muted text-muted-foreground cursor-pointer hover:bg-muted/80 transition-colors text-sm dark:bg-muted/50 dark:hover:bg-muted/30 min-h-12 justify-center touch-manipulation border border-dashed border-border ${
+                      isTaskCompleted ? "opacity-60 cursor-not-allowed" : ""
+                    } ${isCapturing ? "animate-pulse" : ""}`}
+                    type="button"
+                  >
+                    {isCapturing ? (
+                      <Loader2 size={20} className="animate-spin" />
+                    ) : (
+                      <Camera size={20} />
+                    )}
+                    {isCapturing ? 
+                      <span>{t('templates.opening')}</span> : 
+                      <span>{t('templates.takePhoto')}</span>
+                    }
+                  </button>
+                  
+                  {uploadError && (
+                    <div className="mt-2 text-sm text-destructive flex items-center gap-1.5 bg-destructive/10 p-2 rounded">
+                      <AlertTriangle size={14} />
+                      <span>{uploadError}</span>
+                    </div>
+                  )}
+                </>
               ) : (
-                <div className="relative mt-2">
+                <div className="relative mt-2 group">
                   <img 
                     src={photoPreview}
                     alt="Step verification" 
-                    className="h-40 w-full object-cover rounded-lg border border-border"
+                    className="h-48 w-full object-cover rounded-lg border border-border"
                     loading="lazy"
                   />
                   {!isTaskCompleted && (
-                    <button 
-                      onClick={handleRemovePhoto}
-                      type="button"
-                      className="absolute top-2 right-2 bg-black bg-opacity-50 dark:bg-white dark:bg-opacity-20 text-white p-2 rounded-full touch-manipulation"
-                      aria-label="Remove photo"
-                      disabled={isTaskCompleted}
-                    >
-                      <X size={18} />
-                    </button>
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg">
+                      <button 
+                        onClick={handleRemovePhoto}
+                        type="button"
+                        className="absolute top-2 right-2 bg-black/50 group-hover:bg-black/70 text-white p-2 rounded-full touch-manipulation transition-colors"
+                        aria-label="Remove photo"
+                        disabled={isTaskCompleted}
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
                   )}
                 </div>
               )}
