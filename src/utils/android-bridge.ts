@@ -28,6 +28,18 @@ export const isNativeCameraAvailable = (): boolean => {
 };
 
 /**
+ * Check if the new openCamera function is available
+ */
+export const isOpenCameraAvailable = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  
+  return !!(
+    window.AndroidCamera && 
+    typeof window.AndroidCamera.openCamera === 'function'
+  );
+};
+
+/**
  * Send a debug log to the Android app if running in a WebView
  */
 export const sendDebugLog = (tag: string, message: string): void => {
@@ -36,6 +48,53 @@ export const sendDebugLog = (tag: string, message: string): void => {
   } else {
     console.log(`[${tag}] ${message}`);
   }
+};
+
+/**
+ * Open the native camera directly using the new AndroidCamera.openCamera method
+ * This is a direct approach without request IDs or callbacks
+ */
+export const openNativeCamera = (): boolean => {
+  if (isOpenCameraAvailable()) {
+    try {
+      window.AndroidCamera.openCamera();
+      sendDebugLog('Camera', 'Opening native camera with direct method');
+      return true;
+    } catch (e) {
+      console.error('Error opening native camera:', e);
+      return false;
+    }
+  }
+  return false;
+};
+
+/**
+ * Take a photo using the Android native camera
+ * @param requestId Optional request ID for tracking the response
+ * @returns Promise that resolves to true if the camera was opened successfully
+ */
+export const takeNativePhoto = async (requestId?: string): Promise<boolean> => {
+  // If no requestId is provided, generate one
+  const actualRequestId = requestId || `photo_${Date.now()}`;
+  
+  if (window.AndroidCamera?.takePhoto) {
+    try {
+      // Call the Android native method
+      sendDebugLog('Camera', `Taking photo with request ID: ${actualRequestId}`);
+      window.AndroidCamera.takePhoto(actualRequestId);
+      return true;
+    } catch (e) {
+      console.error('Error taking native photo:', e);
+      sendDebugLog('CameraError', `Failed to take photo: ${e}`);
+      return false;
+    }
+  } else if (isOpenCameraAvailable()) {
+    // Fall back to the simpler openCamera method if available
+    return openNativeCamera();
+  }
+  
+  sendDebugLog('Camera', 'Native camera not available');
+  return false;
 };
 
 /**
@@ -49,6 +108,7 @@ export const initializeAndroidBridge = (): void => {
   if (!isAndroidWebView()) return;
   
   console.log('Initializing Android bridge');
+  sendDebugLog('Bridge', 'Initializing Android bridge');
   
   // Initialize the bridge object if it doesn't exist
   if (!window.androidBridge) {
@@ -56,6 +116,18 @@ export const initializeAndroidBridge = (): void => {
       captureRequests: new Map(),
       nextRequestId: 1
     };
+  }
+  
+  // Log available Android interfaces
+  if (window.AndroidCamera) {
+    const methods = Object.getOwnPropertyNames(window.AndroidCamera)
+      .filter(prop => typeof window.AndroidCamera[prop] === 'function');
+    
+    sendDebugLog('Bridge', `Available AndroidCamera methods: ${methods.join(', ') || 'none'}`);
+  }
+  
+  if (window.AndroidDebug) {
+    sendDebugLog('Bridge', 'AndroidDebug interface available');
   }
   
   // Log successful initialization
@@ -67,6 +139,11 @@ declare global {
   interface Window {
     AndroidDebug?: {
       log: (tag: string, message: string) => void;
+    };
+    AndroidCamera?: {
+      takePhoto: (requestId: string) => void;
+      captureVideo?: (requestId: string) => void;
+      openCamera?: () => void;
     };
   }
 }
