@@ -126,35 +126,51 @@ async function compressImageIfNeeded(file: File): Promise<File> {
   });
 }
 
-// Enhanced WebView camera capture function with better callbacks and file handling
+// Completely redesigned WebView camera capture function with enhanced Android compatibility
 export const getImageFromCamera = async (): Promise<File | null> => {
   console.log('Starting camera capture process');
   
   return new Promise((resolve) => {
     try {
-      // Create file input element specifically for WebView interaction
+      // Create file input element specifically tailored for WebView interaction
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'image/*';
       
-      // For mobile, use 'environment' for back camera (standard)
-      if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      // For Android WebView, using "environment" for back camera works more reliably
+      const isAndroidWebView = /Android/.test(navigator.userAgent) && 
+                              (/wv/.test(navigator.userAgent) || 
+                               /Version\/[0-9.]+/.test(navigator.userAgent));
+      
+      if (isAndroidWebView) {
+        // For Android WebView, explicitly set the capture attribute
         input.setAttribute('capture', 'environment');
+        console.log('Android WebView detected, using capture=environment attribute');
+      } else if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        // For other mobile browsers, still use capture but may behave differently
+        input.setAttribute('capture', 'environment');
+        console.log('Mobile browser detected, using capture=environment attribute');
       }
       
-      console.log('Camera file input created with appropriate capture attribute');
-      
-      // Time tracking for debugging
-      const startTime = Date.now();
       let fileSelected = false;
+      let checkCount = 0;
+      const maxChecks = 5;
       
-      // Primary change handler - this is our main successful path
+      // Enhanced change handler with additional validation
       const handleChange = () => {
         console.log('Camera file input change event fired');
         fileSelected = true;
         
         if (input.files && input.files.length > 0) {
           const file = input.files[0];
+          
+          // Android WebView sometimes returns empty files
+          if (file.size === 0) {
+            console.error('Camera returned an empty file');
+            resolve(null);
+            return;
+          }
+          
           console.log(`Camera capture success: ${file.name} (${file.type}, ${Math.round(file.size/1024)}KB)`);
           resolve(file);
         } else {
@@ -163,21 +179,20 @@ export const getImageFromCamera = async (): Promise<File | null> => {
         }
       };
       
-      // Track click for WebView debugging
+      // Additional event handlers for better WebView compatibility
       const handleClick = () => {
         console.log('Camera file input clicked');
       };
       
-      // Focus tracking for debugging WebView behavior
       const handleFocus = () => {
         console.log('Camera file input received focus');
       };
       
-      // Blur tracking for detecting when WebView returns from camera
+      // Critical for WebView: check for files after blur
       const handleBlur = () => {
         console.log('Camera file input lost focus, checking for files');
         
-        // Secondary check for files - some WebViews might not trigger change event
+        // Add secondary delayed check for Android WebView edge cases
         setTimeout(() => {
           if (!fileSelected && input.files && input.files.length > 0) {
             const file = input.files[0];
@@ -188,7 +203,24 @@ export const getImageFromCamera = async (): Promise<File | null> => {
         }, 500);
       };
       
-      // Critical: WebView handling for when user cancels or something fails
+      // Android WebView specific check - periodically poll for files
+      // This helps with WebViews that don't properly trigger change events
+      const checkForFilesPolling = () => {
+        if (fileSelected || checkCount >= maxChecks) return;
+        
+        if (input.files && input.files.length > 0) {
+          const file = input.files[0];
+          console.log(`Camera file detected through polling (${checkCount}): ${file.name}`);
+          fileSelected = true;
+          resolve(file);
+          return;
+        }
+        
+        checkCount++;
+        setTimeout(checkForFilesPolling, 1000); // Check every second
+      };
+      
+      // Connect all event handlers
       input.addEventListener('change', handleChange);
       input.addEventListener('click', handleClick);
       input.addEventListener('focus', handleFocus);
@@ -197,7 +229,13 @@ export const getImageFromCamera = async (): Promise<File | null> => {
       // Trigger camera with click after a small delay for WebView readiness
       setTimeout(() => {
         console.log('Triggering camera file selection dialog');
+        document.body.appendChild(input); // Append to DOM for some Android WebViews
         input.click();
+        
+        // Start polling check for Android WebView (helps with some devices)
+        if (isAndroidWebView) {
+          setTimeout(checkForFilesPolling, 2000);
+        }
         
         // Safety timeout to prevent hanging promises in WebView
         setTimeout(() => {
@@ -208,6 +246,11 @@ export const getImageFromCamera = async (): Promise<File | null> => {
             input.removeEventListener('click', handleClick);
             input.removeEventListener('focus', handleFocus);
             input.removeEventListener('blur', handleBlur);
+            
+            if (document.body.contains(input)) {
+              document.body.removeChild(input);
+            }
+            
             resolve(null);
           }
         }, 60000); // 1 minute timeout for worst-case WebView behavior

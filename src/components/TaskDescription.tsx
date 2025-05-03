@@ -33,6 +33,9 @@ const TaskDescription = ({
   
   // Check if we're on a mobile device - this helps with specific WebView handling
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const isAndroidWebView = /Android/.test(navigator.userAgent) && 
+                          (/wv/.test(navigator.userAgent) || 
+                           /Version\/[0-9.]+/.test(navigator.userAgent));
   
   // Enhanced file upload handler with WebView compatibility improvements
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, type: 'photo' | 'video') => {
@@ -159,7 +162,7 @@ const TaskDescription = ({
               <input
                 type="file"
                 accept="image/*"
-                capture={isMobile ? "environment" : undefined}
+                capture={isAndroidWebView ? "environment" : undefined}
                 className="hidden"
                 onChange={(e) => handleFileUpload(e, 'photo')}
                 disabled={isUploadingPhoto}
@@ -214,7 +217,7 @@ const TaskDescription = ({
               <input
                 type="file"
                 accept="video/*"
-                capture={isMobile ? "environment" : undefined}
+                capture={isAndroidWebView ? "environment" : undefined}
                 className="hidden"
                 onChange={(e) => handleFileUpload(e, 'video')}
                 disabled={isUploadingVideo}
