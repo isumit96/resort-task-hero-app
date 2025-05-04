@@ -16,7 +16,7 @@ export function useAndroidFile() {
   const [isCapturing, setIsCapturing] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   
-  // Is this running inside an Android WebView?
+  // Is this running inside an Android WebView? - improved detection
   const isAndroidWebView_ = isAndroidWebView();
   
   // Check for native camera availability
@@ -24,11 +24,17 @@ export function useAndroidFile() {
 
   // Initialize Android bridge if in WebView
   useEffect(() => {
+    // Always initialize - better bridge detection
+    initializeAndroidBridge();
+    
     if (isAndroidWebView_) {
-      initializeAndroidBridge();
-      sendDebugLog('AndroidFile', 'Initialized Android file bridge');
+      sendDebugLog('AndroidFile', 'Initialized Android file bridge in WebView');
+      console.log('Android WebView detected, native camera available:', hasNativeCamera);
+    } else {
+      sendDebugLog('AndroidFile', 'Not in WebView, using standard file access');
+      console.log('Not in Android WebView, will use standard file input');
     }
-  }, [isAndroidWebView_]);
+  }, [isAndroidWebView_, hasNativeCamera]);
 
   // Set up listener for Android file errors
   useEffect(() => {
@@ -59,13 +65,18 @@ export function useAndroidFile() {
     setIsCapturing(true);
     setUploadError(null);
     sendDebugLog('AndroidFile', 'Starting photo capture');
+    console.log('Starting photo capture', {
+      isAndroidWebView: isAndroidWebView_,
+      hasNativeCamera
+    });
     
     try {
       let file: File | null = null;
       
       // First try using the native Android camera bridge
       if (isAndroidWebView_ && hasNativeCamera) {
-        sendDebugLog('AndroidFile', 'Using native Android camera');
+        sendDebugLog('AndroidFile', 'Attempting to use native Android camera');
+        console.log('Will attempt to use native Android camera bridge');
         
         // Generate a request ID for this specific operation
         const requestId = window.androidBridge ? window.androidBridge.nextRequestId++ : Date.now();
@@ -137,8 +148,9 @@ export function useAndroidFile() {
             });
             
             // Try to use the camera method
+            console.log('BEFORE calling takeNativePhoto with requestId:', requestId.toString());
             const cameraOpened = takeNativePhoto(requestId.toString());
-            console.log('Native camera opened:', cameraOpened);
+            console.log('AFTER calling takeNativePhoto, result:', cameraOpened);
             
             if (!cameraOpened) {
               clearTimeout(timeoutId);
@@ -146,27 +158,38 @@ export function useAndroidFile() {
               
               // Fall back to standard file input approach
               sendDebugLog('AndroidFile', 'Native camera failed, falling back to file input');
+              console.log('Native camera failed to open, falling back to file input');
               
-              // Use the then method instead of await
-              getImageFromCamera().then(result => {
+              try {
+                // Use getImageFromCamera as a synchronous operation with await
+                const result = await getImageFromCamera();
                 setIsCapturing(false);
                 resolve(result);
-              }).catch(err => {
+              } catch (err) {
                 setIsCapturing(false);
                 console.error('File input error:', err);
                 resolve(null);
-              });
+              }
             }
           } else {
             // No Android bridge, fall back to standard approach
             clearTimeout(timeoutId);
             setIsCapturing(false);
-            resolve(null);
+            
+            try {
+              // Use getImageFromCamera as a synchronous operation with await
+              const result = await getImageFromCamera();
+              resolve(result);
+            } catch (err) {
+              console.error('File input error:', err);
+              resolve(null);
+            }
           }
         });
       } else {
         // Not in Android WebView or native camera not available
         sendDebugLog('AndroidFile', 'Using standard file input for photo capture');
+        console.log('Using standard file input for photo capture');
         file = await getImageFromCamera();
       }
       

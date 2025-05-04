@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { getImageFromCamera } from "@/utils/storage";
 import { useToast } from "@/hooks/use-toast";
 import { useAndroidCamera } from "@/hooks/useAndroidCamera";
+import { isAndroidWebView, isNativeCameraAvailable, sendDebugLog } from "@/utils/android-bridge";
 
 /**
  * Renders an individual task step with support for checkbox or yes/no.
@@ -24,7 +25,7 @@ interface TaskStepProps {
 const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted = false }: TaskStepProps) => {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const { capturePhotoWithAndroid, isCapturing: isNativeCapturing, isAndroidWebView } = useAndroidCamera();
+  const { capturePhotoWithAndroid, isCapturing: isNativeCapturing, isAndroidWebView: isInAndroidWebView, hasNativeCamera } = useAndroidCamera();
   
   // Unselected (undefined), explicitly true/false after selection
   const [yesNoValue, setYesNoValue] = useState<'yes' | 'no' | undefined>(
@@ -42,6 +43,10 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
   const [isCapturing, setIsCapturing] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  // Check if running in WebView for better detection
+  const runningInWebView = isInAndroidWebView || isAndroidWebView();
+  const nativeCameraAvailable = hasNativeCamera || isNativeCameraAvailable();
+
   // Update yesNoValue when step prop changes (react-query refresh etc)
   useEffect(() => {
     if (step.interactionType === 'yes_no') {
@@ -56,6 +61,17 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
   useEffect(() => {
     setPhotoPreview(step.photoUrl);
   }, [step.photoUrl]);
+
+  // Log detection status on component mount
+  useEffect(() => {
+    console.log('TaskStep component environment:', {
+      runningInWebView,
+      nativeCameraAvailable,
+      stepId: step.id
+    });
+    
+    sendDebugLog('TaskStep', `Step ${step.id} environment: WebView=${runningInWebView}, NativeCamera=${nativeCameraAvailable}`);
+  }, [runningInWebView, nativeCameraAvailable, step.id]);
 
   // Checkbox logic
   const handleCheck = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,14 +110,32 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
     setIsCapturing(true);
     
     console.log(`Starting photo capture for step ${step.id}`);
+    sendDebugLog('TaskStep', `Starting photo capture for step ${step.id}`);
+    
+    // Log whether we're using AndroidCamera or file input
+    if (runningInWebView && nativeCameraAvailable) {
+      console.log('Will use Android native camera bridge');
+      sendDebugLog('Camera', 'Using native Android camera bridge');
+    } else {
+      console.log('Will use file input for camera capture');
+      sendDebugLog('Camera', 'Using file input for camera capture');
+    }
     
     try {
       // Try using Android native camera first if available
-      let file = isAndroidWebView ? await capturePhotoWithAndroid() : null;
+      let file = null;
+      
+      // First try native camera if available
+      if (runningInWebView && nativeCameraAvailable) {
+        console.log('Using Android native camera bridge');
+        sendDebugLog('Camera', 'Using Android native camera bridge for step photo');
+        file = await capturePhotoWithAndroid();
+      }
       
       // If native camera didn't work or isn't available, fall back to standard approach
       if (!file) {
-        console.log('Using standard camera capture');
+        console.log('Native camera unavailable or failed, using standard camera capture');
+        sendDebugLog('Camera', 'Using standard file input for step photo');
         file = await getImageFromCamera();
       }
       

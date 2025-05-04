@@ -1,4 +1,3 @@
-
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Camera, Video, Loader2, X, AlertTriangle } from "lucide-react";
@@ -41,6 +40,8 @@ const TaskDescription = ({
   // Check if we're on a mobile device - this helps with specific WebView handling
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   const isAndroidDevice = /Android/.test(navigator.userAgent);
+  
+  // Check WebView status for better debugging
   const runningInWebView = isInAndroidView || isAndroidWebView();
   const hasNativeCamera = isNativeCameraAvailable();
   
@@ -65,6 +66,15 @@ const TaskDescription = ({
     
     console.log('Starting photo capture process');
     sendDebugLog('TaskDescription', 'Starting photo capture process');
+    
+    // Log whether we're using AndroidCamera or file input
+    if (runningInWebView && hasNativeCamera) {
+      console.log('Will use Android native camera bridge');
+      sendDebugLog('Camera', 'Using native Android camera bridge');
+    } else {
+      console.log('Will use file input for camera capture');
+      sendDebugLog('Camera', 'Using file input for camera capture');
+    }
     
     try {
       // Use the enhanced capturePhoto function that handles Android WebView
@@ -240,7 +250,7 @@ const TaskDescription = ({
 
   // When running in Android WebView, prioritize native camera bridge
   // Only show file input as fallback if NOT in WebView or native camera isn't available
-  const shouldShowFileInput = !isInAndroidView && !hasNativeCamera;
+  const shouldShowFileInput = !runningInWebView || !hasNativeCamera;
 
   return (
     <div className={cn("space-y-4", className)}>

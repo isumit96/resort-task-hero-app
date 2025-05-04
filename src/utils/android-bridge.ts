@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for the Android WebView JavaScript bridge.
  * These functions help with communication between the Android app and the web app.
@@ -27,7 +26,7 @@ export const isAndroidWebView = (): boolean => {
     !!window.AndroidLogger
   );
   
-  console.log('Android detection:', { 
+  console.log('Android WebView detection details:', { 
     isAndroid, 
     hasWebViewSignature, 
     hasCustomMarker,
@@ -35,8 +34,18 @@ export const isAndroidWebView = (): boolean => {
     userAgent: navigator.userAgent
   });
   
-  // More aggressive detection - consider it a WebView if ANY of these are true
-  return isAndroid && (hasWebViewSignature || hasCustomMarker || hasAndroidObject);
+  // IMPORTANT: More aggressive detection - if the Android bridge is present, we're definitely in WebView
+  if (hasAndroidObject) {
+    console.log('Android WebView detected due to presence of Android bridge objects');
+    sendDebugLog('Bridge', 'Detected Android WebView via bridge objects');
+    return true;
+  }
+  
+  // If we're on Android and have any WebView signatures, consider it a WebView
+  const inWebView = isAndroid && (hasWebViewSignature || hasCustomMarker);
+  console.log('Final Android WebView detection result:', inWebView);
+  
+  return inWebView;
 };
 
 /**
@@ -59,9 +68,11 @@ export const isNativeCameraAvailable = (): boolean => {
   });
   
   if (!available) {
-    console.log('Native camera not available for takePhoto method');
+    console.log('Native camera not available for takePhoto method - will use file input fallback');
+    sendDebugLog('Camera', 'Native camera not available - using file input fallback');
   } else {
     console.log('Native camera IS available for takePhoto method');
+    sendDebugLog('Camera', 'Native camera bridge available and will be used');
   }
   
   return available;
@@ -94,9 +105,10 @@ export const sendDebugLog = (tag: string, message: string): void => {
   const timestamp = new Date().toISOString();
   console.log(`[${timestamp}] [${tag}] ${message}`);
   
-  if (isAndroidWebView() && window.AndroidLogger?.logDebug) {
+  if (typeof window !== 'undefined' && window.AndroidLogger?.logDebug) {
     try {
       window.AndroidLogger.logDebug(tag, message);
+      console.log(`Log sent to Android: [${tag}] ${message}`);
     } catch (e) {
       console.error('Failed to send log to Android:', e);
     }
@@ -149,6 +161,7 @@ export const takeNativePhoto = async (requestId?: string): Promise<boolean> => {
   
   console.log('Taking native photo with request ID:', actualRequestId);
   sendDebugLog('Camera', `Taking photo with request ID: ${actualRequestId}`);
+  
   console.log('AndroidCamera object status:', {
     exists: !!window.AndroidCamera,
     takePhotoMethod: window.AndroidCamera ? typeof window.AndroidCamera.takePhoto : 'undefined'
@@ -159,8 +172,12 @@ export const takeNativePhoto = async (requestId?: string): Promise<boolean> => {
     try {
       // Call the Android native method - this should trigger the camera in the Android app
       sendDebugLog('Camera', `Calling AndroidCamera.takePhoto with ID: ${actualRequestId}`);
+      
+      console.log('BEFORE calling native takePhoto method');
       window.AndroidCamera.takePhoto(actualRequestId);
-      console.log('Native camera method called successfully');
+      console.log('AFTER calling native takePhoto method');
+      
+      sendDebugLog('Camera', 'Native camera method called successfully');
       return true;
     } catch (e) {
       console.error('Error taking native photo with takePhoto:', e);
@@ -213,12 +230,8 @@ export const initializeAndroidBridge = (): void => {
   console.log('Initializing Android bridge, in WebView:', inWebView);
   sendDebugLog('Bridge', `Initializing Android bridge (inWebView: ${inWebView})`);
   
-  // Only initialize in Android WebView
-  if (!inWebView) {
-    console.log('Not in Android WebView, skipping bridge initialization');
-    return;
-  }
-  
+  // Always try to initialize bridge components even if not in WebView
+  // to support hybrid scenarios where the app might be used both in WebView and browser
   console.log('Creating android bridge handlers');
   sendDebugLog('Bridge', 'Setting up Android bridge handlers');
   
