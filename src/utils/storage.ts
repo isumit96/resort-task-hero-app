@@ -1,4 +1,6 @@
+
 import { sendDebugLog } from './android-bridge';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Utility functions for handling file uploads and storage interactions.
@@ -18,46 +20,45 @@ export const uploadFileToStorage = async (file: File, path: string): Promise<str
     return "";
   }
   
-  return new Promise((resolve, reject) => {
-    try {
-      sendDebugLog('Storage', `Uploading ${file.name} (${Math.round(file.size/1024)}KB) to ${path}`);
-      console.log(`Storage: Uploading ${file.name} (${Math.round(file.size/1024)}KB) to ${path}`);
-      
-      // Create a unique filename to avoid collisions
-      const timestamp = Date.now();
-      const uniqueFileName = `${timestamp}-${file.name.replace(/\s+/g, '_')}`;
-      
-      // For this app we're using Supabase client to upload
-      // Getting file data as base64 for Supabase storage
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      
-      reader.onload = () => {
-        // This is where we would normally insert the Supabase upload code
-        // But for now, we'll simulate a successful upload with a constructed URL
-        
-        // Simulate network delay
-        setTimeout(() => {
-          // Generate a persistent URL that can be stored in the database
-          const url = `https://btpyziqdiayfezhvcfof.supabase.co/storage/v1/object/public/${path}/${uniqueFileName}`;
-          
-          sendDebugLog('Storage', `Upload complete. URL: ${url}`);
-          console.log(`Storage: Upload complete. URL: ${url}`);
-          resolve(url);
-        }, 1000);
-      };
-      
-      reader.onerror = (error) => {
-        sendDebugLog('StorageError', `File read error: ${error}`);
-        console.error(`Storage: File read error`, error);
-        reject(error);
-      };
-    } catch (error) {
-      sendDebugLog('StorageError', `Upload error: ${error instanceof Error ? error.message : String(error)}`);
+  try {
+    sendDebugLog('Storage', `Uploading ${file.name} (${Math.round(file.size/1024)}KB) to ${path}`);
+    console.log(`Storage: Uploading ${file.name} (${Math.round(file.size/1024)}KB) to ${path}`);
+    
+    // Create a unique filename to avoid collisions
+    const timestamp = Date.now();
+    const uniqueFileName = `${timestamp}-${file.name.replace(/\s+/g, '_')}`;
+    
+    // Upload file to Supabase storage
+    const { data, error } = await supabase
+      .storage
+      .from(path)
+      .upload(uniqueFileName, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+    
+    if (error) {
+      sendDebugLog('StorageError', `Upload error: ${error.message}`);
       console.error(`Storage: Upload error:`, error);
-      reject(error);
+      throw error;
     }
-  });
+    
+    // Get the public URL for the uploaded file
+    const { data: publicUrlData } = supabase
+      .storage
+      .from(path)
+      .getPublicUrl(data.path);
+    
+    const url = publicUrlData.publicUrl;
+    
+    sendDebugLog('Storage', `Upload complete. URL: ${url}`);
+    console.log(`Storage: Upload complete. URL: ${url}`);
+    return url;
+  } catch (error) {
+    sendDebugLog('StorageError', `Upload error: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(`Storage: Upload error:`, error);
+    throw error;
+  }
 };
 
 /**
