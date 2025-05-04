@@ -12,14 +12,9 @@ import { useTranslation } from "react-i18next";
 interface TaskCardProps {
   task: Task;
   showAssignee?: boolean;
-  showCompletedDetails?: boolean;
 }
 
-const TaskCard = ({ 
-  task, 
-  showAssignee = true,
-  showCompletedDetails = false 
-}: TaskCardProps) => {
+const TaskCard = ({ task, showAssignee = true }: TaskCardProps) => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   

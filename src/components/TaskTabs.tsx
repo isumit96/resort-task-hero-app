@@ -62,7 +62,6 @@ const TaskTabs = ({
           tasks={completedTasks}
           badgeColor="green"
           showAssignee={showAssignee}
-          showCompletedDetails={true}
         />
       </TabsContent>
     </Tabs>

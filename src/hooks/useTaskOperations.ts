@@ -4,7 +4,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCallback, useState } from "react";
-import { uploadFileToStorage } from "@/utils/storage";
 
 export const useTaskOperations = (taskId: string | undefined) => {
   const { toast } = useToast();
@@ -59,48 +58,6 @@ export const useTaskOperations = (taskId: string | undefined) => {
       return false;
     }
   }, [taskId]);
-
-  // Define handleTaskStatusUpdate before it's used in other functions
-  const handleTaskStatusUpdate = useCallback(async (newStatus: 'completed' | 'inprogress' | 'pending') => {
-    if (!taskId) return;
-
-    try {
-      const updateData = newStatus === 'completed' 
-        ? { status: newStatus, completed_at: new Date().toISOString() }
-        : { status: newStatus };
-
-      const { error } = await supabase
-        .from('tasks')
-        .update(updateData)
-        .eq('id', taskId);
-      
-      if (error) throw error;
-
-      // For user feedback
-      if (newStatus === 'completed') {
-        toast({
-          title: "Task Completed",
-          description: "All steps have been completed",
-        });
-        
-        // Use setTimeout to delay navigation until toast is visible
-        setTimeout(() => {
-          navigate('/tasks');
-        }, 1500);
-      }
-
-      // Update the cache for both this task and the tasks list
-      queryClient.invalidateQueries({ queryKey: ["task", taskId] });
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    } catch (error) {
-      console.error('Error updating task status:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update task status",
-        variant: "destructive",
-      });
-    }
-  }, [taskId, navigate, queryClient, toast]);
 
   // Use useCallback to memoize these functions and prevent unnecessary re-renders
   const handleStepComplete = useCallback(async (stepId: string, isCompleted: boolean) => {
@@ -158,7 +115,7 @@ export const useTaskOperations = (taskId: string | undefined) => {
         variant: "destructive",
       });
     }
-  }, [taskId, queryClient, toast, previousStatus, checkForInteractions, handleTaskStatusUpdate]);
+  }, [taskId, queryClient, toast, previousStatus, checkForInteractions]);
   
   const handleAddComment = useCallback(async (stepId: string, comment: string) => {
     if (!taskId) return;
@@ -224,7 +181,7 @@ export const useTaskOperations = (taskId: string | undefined) => {
         variant: "destructive",
       });
     }
-  }, [taskId, queryClient, toast, previousStatus, checkForInteractions, handleTaskStatusUpdate]);
+  }, [taskId, queryClient, toast, previousStatus, checkForInteractions]);
   
   const handleAddPhoto = useCallback(async (stepId: string, photoUrl: string) => {
     if (!taskId) return;
@@ -247,60 +204,28 @@ export const useTaskOperations = (taskId: string | undefined) => {
         setHasInteractions(true);
       }
       
-      // Handle blob URLs by uploading them to storage
-      let finalPhotoUrl = photoUrl;
-      
-      if (photoUrl && photoUrl.startsWith('blob:')) {
-        try {
-          // Fetch the blob content
-          const response = await fetch(photoUrl);
-          const blob = await response.blob();
-          
-          // Convert to file object with a unique name
-          const fileNameBase = `task_${taskId}_step_${stepId}`;
-          const extension = blob.type.split('/')[1] || 'jpg';
-          const fileName = `${fileNameBase}.${extension}`;
-          const file = new File([blob], fileName, { type: blob.type });
-          
-          // Upload to storage
-          finalPhotoUrl = await uploadFileToStorage(file, 'task-photos');
-          
-          // Revoke the blob URL to prevent memory leaks
-          URL.revokeObjectURL(photoUrl);
-        } catch (uploadError) {
-          console.error('Error uploading blob to storage:', uploadError);
-          throw new Error('Failed to upload image to storage');
-        }
-      } else if (!photoUrl && photoUrl !== '') {
-        // If photoUrl is null or undefined but not empty string, set to empty string
-        finalPhotoUrl = '';
-      }
-      
-      // Update the database with the storage URL
       const { error } = await supabase
         .from('task_steps')
-        .update({ photo_url: finalPhotoUrl })
+        .update({ photo_url: photoUrl })
         .eq('id', stepId);
       
       if (error) throw error;
       
       // If a photo is added, update task status to inprogress
-      if (finalPhotoUrl && task && task.status === 'pending') {
+      if (photoUrl && task && task.status === 'pending') {
         await handleTaskStatusUpdate('inprogress');
       }
       
       // Optimistic update for better user experience
       queryClient.invalidateQueries({ queryKey: ["task", taskId] });
       
-      if (finalPhotoUrl) {
-        toast({
-          title: "Photo added",
-          description: "Your photo has been uploaded and saved",
-        });
-      }
+      toast({
+        title: "Photo added",
+        description: "Your photo has been uploaded",
+      });
       
       // Check if all interactions have been removed
-      if (!finalPhotoUrl) {
+      if (!photoUrl) {
         const hasActiveInteractions = await checkForInteractions();
         if (!hasActiveInteractions && previousStatus === 'pending') {
           await handleTaskStatusUpdate('pending');
@@ -316,7 +241,48 @@ export const useTaskOperations = (taskId: string | undefined) => {
         variant: "destructive",
       });
     }
-  }, [taskId, queryClient, toast, previousStatus, checkForInteractions, handleTaskStatusUpdate]);
+  }, [taskId, queryClient, toast, previousStatus, checkForInteractions]);
+
+  const handleTaskStatusUpdate = useCallback(async (newStatus: 'completed' | 'inprogress' | 'pending') => {
+    if (!taskId) return;
+
+    try {
+      const updateData = newStatus === 'completed' 
+        ? { status: newStatus, completed_at: new Date().toISOString() }
+        : { status: newStatus };
+
+      const { error } = await supabase
+        .from('tasks')
+        .update(updateData)
+        .eq('id', taskId);
+      
+      if (error) throw error;
+
+      // For user feedback
+      if (newStatus === 'completed') {
+        toast({
+          title: "Task Completed",
+          description: "All steps have been completed",
+        });
+        
+        // Use setTimeout to delay navigation until toast is visible
+        setTimeout(() => {
+          navigate('/tasks');
+        }, 1500);
+      }
+
+      // Update the cache for both this task and the tasks list
+      queryClient.invalidateQueries({ queryKey: ["task", taskId] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    } catch (error) {
+      console.error('Error updating task status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update task status",
+        variant: "destructive",
+      });
+    }
+  }, [taskId, navigate, queryClient, toast]);
 
   return {
     handleStepComplete,
