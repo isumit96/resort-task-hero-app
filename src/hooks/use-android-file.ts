@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { getImageFromCamera, getVideoFromCamera } from '@/utils/storage';
 import { useToast } from '@/hooks/use-toast';
@@ -160,30 +159,28 @@ export function useAndroidFile() {
               sendDebugLog('AndroidFile', 'Native camera failed, falling back to file input');
               console.log('Native camera failed to open, falling back to file input');
               
-              try {
-                // Use getImageFromCamera as a synchronous operation with await
-                const result = await getImageFromCamera();
+              // Use getImageFromCamera with then/catch instead of await
+              getImageFromCamera().then(result => {
                 setIsCapturing(false);
                 resolve(result);
-              } catch (err) {
+              }).catch(err => {
                 setIsCapturing(false);
                 console.error('File input error:', err);
                 resolve(null);
-              }
+              });
             }
           } else {
             // No Android bridge, fall back to standard approach
             clearTimeout(timeoutId);
             setIsCapturing(false);
             
-            try {
-              // Use getImageFromCamera as a synchronous operation with await
-              const result = await getImageFromCamera();
+            // Use getImageFromCamera with then/catch instead of await
+            getImageFromCamera().then(result => {
               resolve(result);
-            } catch (err) {
+            }).catch(err => {
               console.error('File input error:', err);
               resolve(null);
-            }
+            });
           }
         });
       } else {
