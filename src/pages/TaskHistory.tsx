@@ -61,14 +61,17 @@ const TaskHistory = () => {
           title_kn: step.title_kn,
           isCompleted: step.is_completed,
           requiresPhoto: step.requires_photo,
-          comment: step.comment,
-          comment_hi: step.comment_hi,
-          comment_kn: step.comment_kn,
-          photoUrl: step.photo_url,
-          isOptional: step.is_optional
+          comment: step.comment || null,
+          comment_hi: step.comment_hi || null,
+          comment_kn: step.comment_kn || null,
+          photoUrl: step.photo_url || null,
+          isOptional: step.is_optional || false
         }))
       }));
-    }
+    },
+    // Disable automatic refetching to prevent data loss during navigation
+    staleTime: 300000, // Consider data fresh for 5 minutes
+    refetchOnWindowFocus: false // Don't refetch when window regains focus
   });
   
   // Get appropriate locale based on current language
@@ -166,6 +169,7 @@ const TaskHistory = () => {
                       key={task.id} 
                       task={task}
                       showAssignee={false}
+                      showCompletedDetails={true}
                     />
                   ))}
                 </div>
