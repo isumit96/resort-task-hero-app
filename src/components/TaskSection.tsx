@@ -9,13 +9,15 @@ interface TaskSectionProps {
   tasks: Task[];
   badgeColor?: "yellow" | "red" | "green" | "gray";
   showAssignee?: boolean;
+  showCompletedDetails?: boolean;
 }
 
 const TaskSection = ({ 
   title, 
   tasks, 
   badgeColor = "gray",
-  showAssignee = true 
+  showAssignee = true,
+  showCompletedDetails = false
 }: TaskSectionProps) => {
   const { t } = useTranslation();
   
@@ -46,7 +48,12 @@ const TaskSection = ({
       
       <div className="space-y-3">
         {tasks.map(task => (
-          <TaskCard key={task.id} task={task} showAssignee={showAssignee} />
+          <TaskCard 
+            key={task.id} 
+            task={task} 
+            showAssignee={showAssignee}
+            showCompletedDetails={showCompletedDetails}
+          />
         ))}
         {tasks.length === 0 && (
           <p className="text-gray-500 text-center py-4">{t('tasks.no')} {title.toLowerCase()}</p>
