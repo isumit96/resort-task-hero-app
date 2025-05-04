@@ -17,12 +17,43 @@ export function useAndroidCamera() {
   const { toast } = useToast();
   const [isCapturing, setIsCapturing] = useState(false);
   const [lastCaptureError, setLastCaptureError] = useState<string | null>(null);
+  const [permissionRequested, setPermissionRequested] = useState(false);
   
   // Detect if we're in an Android WebView - improved detection
   const isInAndroidWebView = isAndroidWebView();
   
   // Check for native camera availability
   const hasNativeCamera = isNativeCameraAvailable();
+
+  // Handle Android permission request results
+  useEffect(() => {
+    const handlePermissionResult = (event: CustomEvent) => {
+      const { granted } = event.detail;
+      
+      if (granted) {
+        console.log('📸 Camera permission granted by user');
+        sendDebugLog('Permissions', 'Camera permission granted by user');
+        setPermissionRequested(false);
+      } else {
+        console.log('❌ Camera permission denied by user');
+        sendDebugLog('Permissions', 'Camera permission denied by user');
+        setLastCaptureError('Camera permission denied');
+        setPermissionRequested(false);
+        
+        toast({
+          title: 'Permission Required',
+          description: 'Camera permission is required to take photos',
+          variant: 'destructive'
+        });
+      }
+    };
+    
+    document.addEventListener('android-permission-result', handlePermissionResult as EventListener);
+    
+    return () => {
+      document.removeEventListener('android-permission-result', handlePermissionResult as EventListener);
+    };
+  }, [toast]);
 
   // Setup global handlers for Android communication
   useEffect(() => {
@@ -46,6 +77,44 @@ export function useAndroidCamera() {
     }
   }, [isInAndroidWebView, hasNativeCamera]);
 
+  // Check camera permission
+  const checkCameraPermission = async (): Promise<boolean> => {
+    if (!window.AndroidCamera?.checkCameraPermission) {
+      console.log('❌ No permission check method available');
+      return true; // Assume permission granted if we can't check
+    }
+    
+    try {
+      const hasPermission = window.AndroidCamera.checkCameraPermission();
+      console.log('📸 Camera permission status:', hasPermission);
+      return hasPermission;
+    } catch (e) {
+      console.error('❌ Error checking camera permission:', e);
+      return false;
+    }
+  };
+
+  // Request camera permission
+  const requestCameraPermission = async (): Promise<boolean> => {
+    if (!window.AndroidCamera?.requestCameraPermission) {
+      console.log('❌ No permission request method available');
+      return false;
+    }
+    
+    setPermissionRequested(true);
+    
+    try {
+      const granted = await window.AndroidCamera.requestCameraPermission();
+      console.log('📸 Camera permission request result:', granted);
+      setPermissionRequested(false);
+      return granted;
+    } catch (e) {
+      console.error('❌ Error requesting camera permission:', e);
+      setPermissionRequested(false);
+      return false;
+    }
+  };
+
   /**
    * Capture photo using Android's native camera integration
    * with improved fallback and error handling
@@ -68,6 +137,27 @@ export function useAndroidCamera() {
     sendDebugLog('Camera', 'Using Android native camera bridge');
     setIsCapturing(true);
     setLastCaptureError(null);
+    
+    // First check if we have camera permission
+    const hasPermission = await checkCameraPermission();
+    if (!hasPermission) {
+      console.log('📸 Requesting camera permission...');
+      sendDebugLog('Camera', 'Requesting camera permission');
+      
+      const permissionGranted = await requestCameraPermission();
+      if (!permissionGranted) {
+        setIsCapturing(false);
+        setLastCaptureError('Camera permission denied');
+        
+        toast({
+          title: 'Permission Denied',
+          description: 'Camera permission is required to take photos',
+          variant: 'destructive'
+        });
+        
+        return null;
+      }
+    }
     
     return new Promise((resolve) => {
       try {
@@ -191,6 +281,9 @@ export function useAndroidCamera() {
     lastCaptureError,
     clearError: () => setLastCaptureError(null),
     isAndroidWebView: isInAndroidWebView,
-    hasNativeCamera
+    hasNativeCamera,
+    checkCameraPermission,
+    requestCameraPermission,
+    permissionRequested
   };
 }

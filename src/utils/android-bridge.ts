@@ -187,14 +187,31 @@ export const takeNativePhoto = async (requestId?: string): Promise<boolean> => {
       sendDebugLog('Camera', `Calling AndroidCamera.takePhoto with ID: ${actualRequestId}`);
       
       console.log('📸 BEFORE calling native takePhoto method');
-      window.AndroidCamera.takePhoto(actualRequestId);
+      const cameraPromiseResult = window.AndroidCamera.takePhoto(actualRequestId);
       console.log('✅ AFTER calling native takePhoto method - camera intent should be launched now');
+      
+      // Check if there was an immediate error (some implementations might return false)
+      if (cameraPromiseResult === false) {
+        console.log('❌ Android camera returned false - falling back to file input');
+        sendDebugLog('CameraError', 'Camera returned false - possible permission issue');
+        return false;
+      }
       
       sendDebugLog('Camera', 'Native camera method called successfully');
       return true;
     } catch (e) {
       console.error('❌ Error taking native photo with takePhoto:', e);
       sendDebugLog('CameraError', `takePhoto failed: ${e instanceof Error ? e.message : String(e)}`);
+      
+      // Create and dispatch an error event to be handled by the app
+      const errorEvent = new CustomEvent('android-file-error', {
+        detail: {
+          errorType: 'CAMERA_ERROR',
+          message: e instanceof Error ? e.message : 'Failed to access camera'
+        }
+      });
+      document.dispatchEvent(errorEvent);
+      
       return false;
     }
   }
@@ -328,14 +345,15 @@ export const initializeAndroidBridge = (): void => {
   
   if (typeof window.receiveAndroidCameraError !== 'function') {
     window.receiveAndroidCameraError = (requestId, errorCode, errorMessage) => {
-      console.error(`❌ Android camera error: ${requestId}, ${errorCode}, ${errorMessage}`);
-      sendDebugLog('CameraError', `Android error: ${errorCode} - ${errorMessage}`);
+      console.error(`Android camera error for request #${requestId}: [${errorCode}] ${errorMessage}`);
+      sendDebugLog('CameraError', `Android error for #${requestId}: [${errorCode}] ${errorMessage}`);
       
       // Call the stored callback with null to signal error
       const callback = window.androidBridge?.captureRequests.get(Number(requestId));
       if (callback) {
         callback(null);
         window.androidBridge?.captureRequests.delete(Number(requestId));
+        sendDebugLog('Camera', `Camera operation complete for request #${requestId}`);
       } else {
         sendDebugLog('CameraError', `No callback found for error request #${requestId}`);
       }
@@ -359,6 +377,8 @@ export const initializeAndroidBridge = (): void => {
     if (typeof window.AndroidCamera.takePhoto === 'function') methods.push('takePhoto');
     if (typeof window.AndroidCamera.captureVideo === 'function') methods.push('captureVideo');
     if (typeof window.AndroidCamera.openCamera === 'function') methods.push('openCamera');
+    if (typeof window.AndroidCamera.checkCameraPermission === 'function') methods.push('checkCameraPermission');
+    if (typeof window.AndroidCamera.requestCameraPermission === 'function') methods.push('requestCameraPermission');
     
     console.log('📱 Available AndroidCamera methods:', methods);
     sendDebugLog('Bridge', `Available AndroidCamera methods: ${methods.join(', ') || 'none'}`);
@@ -396,9 +416,11 @@ declare global {
       logDebug: (tag: string, message: string) => void;
     };
     AndroidCamera?: {
-      takePhoto: (requestId: string) => void;
+      takePhoto: (requestId: string) => boolean | Promise<boolean>;
       captureVideo?: (requestId: string) => void;
       openCamera?: () => void;
+      checkCameraPermission?: () => boolean;
+      requestCameraPermission?: () => Promise<boolean>;
     };
     receiveImageFromAndroid?: (requestId: string, base64Data: string, fileName: string, mimeType: string) => void;
     receiveAndroidCameraError?: (requestId: string, errorCode: string, errorMessage: string) => void;

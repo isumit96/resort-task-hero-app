@@ -1,7 +1,7 @@
 
 import * as React from "react"
-
 import { cn } from "@/lib/utils"
+import { sendDebugLog } from "@/utils/android-bridge"
 
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, type, ...props }, ref) => {
@@ -11,6 +11,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
                              (/wv/.test(navigator.userAgent) || 
                               /Version\/[0-9.]+/.test(navigator.userAgent) ||
                               /Android.*Mobile.*Chrome\/[.0-9]* (?!Mobile)/i.test(navigator.userAgent));
+    const isAndroidDevice = /Android/.test(navigator.userAgent);
     
     // Android WebView file inputs need special handling - make it full-screen with opacity 0
     // but NOT display:none as that can cause issues with some Android WebViews
@@ -20,12 +21,28 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
     
     // For Android WebView file inputs, ensure capture attribute is set properly
     const inputProps = {...props};
-    if (isFileInput && isAndroidWebView) {
-      if (inputProps.accept === 'image/*' || inputProps.accept?.includes('image/')) {
-        inputProps['capture'] = 'environment';
-      } else if (inputProps.accept === 'video/*' || inputProps.accept?.includes('video/')) {
-        inputProps['capture'] = 'environment';
+    if (isFileInput) {
+      if (isAndroidDevice) {
+        // Log which capture method is being used
+        if (inputProps.accept === 'image/*' || inputProps.accept?.includes('image/')) {
+          inputProps['capture'] = 'environment';
+          sendDebugLog('Camera', 'Android WebView detected, using capture=environment attribute');
+        } else if (inputProps.accept === 'video/*' || inputProps.accept?.includes('video/')) {
+          inputProps['capture'] = 'environment';
+        }
       }
+      
+      // Add onClick handler to log when file input is clicked
+      const originalOnClick = inputProps.onClick;
+      inputProps.onClick = (e: React.MouseEvent<HTMLInputElement>) => {
+        console.log('Camera file input clicked');
+        sendDebugLog('Camera', 'File input clicked');
+        
+        // Still call the original onClick if it exists
+        if (originalOnClick) {
+          originalOnClick(e);
+        }
+      };
     }
     
     return (
