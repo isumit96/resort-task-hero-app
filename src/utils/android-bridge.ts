@@ -20,7 +20,7 @@ export const isAndroidWebView = (): boolean => {
   // Additional check for our custom WebView marker
   const hasCustomMarker = navigator.userAgent.includes('AndroidAppWebView');
   
-  // Enhanced checks for WebView-specific objects
+  // Enhanced checks for WebView-specific objects - MOST IMPORTANT CHECK
   const hasAndroidObject = typeof window !== 'undefined' && (
     !!window.AndroidCamera || 
     !!window.AndroidLogger
@@ -34,9 +34,9 @@ export const isAndroidWebView = (): boolean => {
     userAgent: navigator.userAgent
   });
   
-  // IMPORTANT: More aggressive detection - if the Android bridge is present, we're definitely in WebView
+  // If the Android bridge is present, we're definitely in WebView - PRIORITIZE THIS CHECK
   if (hasAndroidObject) {
-    console.log('Android WebView detected due to presence of Android bridge objects');
+    console.log('✅ Android WebView confirmed: Android bridge objects present');
     sendDebugLog('Bridge', 'Detected Android WebView via bridge objects');
     return true;
   }
@@ -50,29 +50,37 @@ export const isAndroidWebView = (): boolean => {
 
 /**
  * Check if the native Android camera bridge is available
- * Added robust checking with console logging
+ * Added robust checking with detailed console logging
  */
 export const isNativeCameraAvailable = (): boolean => {
   if (typeof window === 'undefined') return false;
   
   // More thorough checking for Android camera availability
-  const available = !!(
-    window.AndroidCamera && 
-    typeof window.AndroidCamera.takePhoto === 'function'
-  );
+  const androidCameraExists = !!window.AndroidCamera;
+  const takePhotoMethodExists = androidCameraExists && typeof window.AndroidCamera.takePhoto === 'function';
+  
+  // Result of availability check
+  const available = androidCameraExists && takePhotoMethodExists;
   
   console.log('Native camera availability check:', {
     windowExists: typeof window !== 'undefined',
-    androidCameraExists: !!window.AndroidCamera,
-    takePhotoMethodExists: window.AndroidCamera ? typeof window.AndroidCamera.takePhoto : 'undefined'
+    androidCameraExists,
+    takePhotoMethodExists,
+    functionType: window.AndroidCamera ? typeof window.AndroidCamera.takePhoto : 'undefined',
+    available
   });
   
-  if (!available) {
-    console.log('Native camera not available for takePhoto method - will use file input fallback');
-    sendDebugLog('Camera', 'Native camera not available - using file input fallback');
-  } else {
-    console.log('Native camera IS available for takePhoto method');
+  if (available) {
+    console.log('✅ Native camera IS available for takePhoto method');
     sendDebugLog('Camera', 'Native camera bridge available and will be used');
+  } else {
+    console.log('❌ Native camera not available for takePhoto method - will use file input fallback');
+    if (androidCameraExists) {
+      console.log('Android camera object exists, but takePhoto method is missing or not a function');
+      sendDebugLog('Camera', 'AndroidCamera exists but takePhoto method is unavailable');
+    } else {
+      sendDebugLog('Camera', 'Android camera object not available - using file input fallback');
+    }
   }
   
   return available;
@@ -159,35 +167,40 @@ export const takeNativePhoto = async (requestId?: string): Promise<boolean> => {
   // If no requestId is provided, generate one
   const actualRequestId = requestId || `photo_${Date.now()}`;
   
-  console.log('Taking native photo with request ID:', actualRequestId);
+  console.log('🔶 Taking native photo with request ID:', actualRequestId);
   sendDebugLog('Camera', `Taking photo with request ID: ${actualRequestId}`);
   
-  console.log('AndroidCamera object status:', {
-    exists: !!window.AndroidCamera,
-    takePhotoMethod: window.AndroidCamera ? typeof window.AndroidCamera.takePhoto : 'undefined'
+  // Detailed check for AndroidCamera object
+  const androidCameraExists = !!window.AndroidCamera;
+  const takePhotoMethodExists = androidCameraExists && typeof window.AndroidCamera.takePhoto === 'function';
+  
+  console.log('🔍 AndroidCamera object status:', {
+    exists: androidCameraExists,
+    takePhotoMethod: takePhotoMethodExists,
+    functionType: window.AndroidCamera ? typeof window.AndroidCamera.takePhoto : 'undefined'
   });
   
   // Try using Android native camera if available
-  if (window.AndroidCamera?.takePhoto) {
+  if (androidCameraExists && takePhotoMethodExists) {
     try {
       // Call the Android native method - this should trigger the camera in the Android app
       sendDebugLog('Camera', `Calling AndroidCamera.takePhoto with ID: ${actualRequestId}`);
       
-      console.log('BEFORE calling native takePhoto method');
+      console.log('📸 BEFORE calling native takePhoto method');
       window.AndroidCamera.takePhoto(actualRequestId);
-      console.log('AFTER calling native takePhoto method');
+      console.log('✅ AFTER calling native takePhoto method - camera intent should be launched now');
       
       sendDebugLog('Camera', 'Native camera method called successfully');
       return true;
     } catch (e) {
-      console.error('Error taking native photo with takePhoto:', e);
+      console.error('❌ Error taking native photo with takePhoto:', e);
       sendDebugLog('CameraError', `takePhoto failed: ${e instanceof Error ? e.message : String(e)}`);
       return false;
     }
   }
   
   sendDebugLog('Camera', 'Native camera methods not available - will use fallback');
-  console.log('Native camera methods not available, fallback to file input needed');
+  console.log('❌ Native camera methods not available, fallback to file input needed');
   return false;
 };
 
@@ -227,28 +240,27 @@ export const initializeAndroidBridge = (): void => {
   // Check if we're in an Android WebView
   const inWebView = isAndroidWebView();
   
-  console.log('Initializing Android bridge, in WebView:', inWebView);
+  console.log('⚙️ Initializing Android bridge, in WebView:', inWebView);
   sendDebugLog('Bridge', `Initializing Android bridge (inWebView: ${inWebView})`);
   
   // Always try to initialize bridge components even if not in WebView
-  // to support hybrid scenarios where the app might be used both in WebView and browser
-  console.log('Creating android bridge handlers');
+  console.log('⚙️ Creating android bridge handlers');
   sendDebugLog('Bridge', 'Setting up Android bridge handlers');
   
   // Initialize the bridge object if it doesn't exist
   if (!window.androidBridge) {
-    console.log('Creating android bridge object');
+    console.log('⚙️ Creating android bridge object');
     window.androidBridge = {
       captureRequests: new Map(),
       nextRequestId: 1
     };
   }
   
-  // Set up global handlers for Android communication
+  // Set up global handlers for Android communication - CRITICAL PART
   if (typeof window.receiveImageFromAndroid !== 'function') {
-    console.log('Setting up receiveImageFromAndroid handler');
+    console.log('⚙️ Setting up receiveImageFromAndroid handler');
     window.receiveImageFromAndroid = (requestId, base64Data, fileName, mimeType) => {
-      console.log(`Received image from Android: ${requestId}, ${fileName}, ${mimeType}, data length: ${base64Data ? base64Data.length : 0}`);
+      console.log(`📥 Received image from Android: ${requestId}, ${fileName}, ${mimeType}, data length: ${base64Data ? base64Data.length : 0}`);
       sendDebugLog('Camera', `Received image from Android: requestId=${requestId}, fileName=${fileName}, mimeType=${mimeType}`);
       
       try {
@@ -316,7 +328,7 @@ export const initializeAndroidBridge = (): void => {
   
   if (typeof window.receiveAndroidCameraError !== 'function') {
     window.receiveAndroidCameraError = (requestId, errorCode, errorMessage) => {
-      console.error(`Android camera error: ${requestId}, ${errorCode}, ${errorMessage}`);
+      console.error(`❌ Android camera error: ${requestId}, ${errorCode}, ${errorMessage}`);
       sendDebugLog('CameraError', `Android error: ${errorCode} - ${errorMessage}`);
       
       // Call the stored callback with null to signal error
@@ -339,7 +351,7 @@ export const initializeAndroidBridge = (): void => {
     };
   }
   
-  // Test availability of Android interfaces
+  // Detailed checks for Android interfaces
   if (window.AndroidCamera) {
     sendDebugLog('Bridge', 'AndroidCamera interface available');
     
@@ -348,13 +360,18 @@ export const initializeAndroidBridge = (): void => {
     if (typeof window.AndroidCamera.captureVideo === 'function') methods.push('captureVideo');
     if (typeof window.AndroidCamera.openCamera === 'function') methods.push('openCamera');
     
+    console.log('📱 Available AndroidCamera methods:', methods);
     sendDebugLog('Bridge', `Available AndroidCamera methods: ${methods.join(', ') || 'none'}`);
+    
+    // Add explicit check to verify the takePhoto method actually works
+    if (methods.includes('takePhoto')) {
+      console.log('✅ AndroidCamera.takePhoto method is properly defined');
+    } else {
+      console.log('❌ AndroidCamera.takePhoto method is missing or not a function');
+    }
   } else {
+    console.log('❌ AndroidCamera interface not found');
     sendDebugLog('Bridge', 'AndroidCamera interface not found - will use fallback methods');
-  }
-  
-  if (window.AndroidLogger) {
-    sendDebugLog('Bridge', 'AndroidLogger interface available');
   }
   
   // Log successful initialization

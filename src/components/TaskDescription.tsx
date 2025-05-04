@@ -1,3 +1,4 @@
+
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Camera, Video, Loader2, X, AlertTriangle } from "lucide-react";
@@ -47,7 +48,7 @@ const TaskDescription = ({
   
   // Log device detection info on component mount for debugging
   useEffect(() => {
-    console.log('TaskDescription component environment:', { 
+    console.log('📱 TaskDescription component environment:', { 
       isMobile, 
       isAndroidDevice, 
       runningInWebView,
@@ -64,24 +65,25 @@ const TaskDescription = ({
     setUploadErrorType(null);
     setIsUploadingPhoto(true);
     
-    console.log('Starting photo capture process');
+    console.log('📸 Starting photo capture process');
     sendDebugLog('TaskDescription', 'Starting photo capture process');
     
     // Log whether we're using AndroidCamera or file input
     if (runningInWebView && hasNativeCamera) {
-      console.log('Will use Android native camera bridge');
+      console.log('📱 Will use Android native camera bridge');
       sendDebugLog('Camera', 'Using native Android camera bridge');
     } else {
-      console.log('Will use file input for camera capture');
+      console.log('🌐 Will use file input for camera capture');
       sendDebugLog('Camera', 'Using file input for camera capture');
     }
     
     try {
       // Use the enhanced capturePhoto function that handles Android WebView
+      console.log('📸 Calling capturePhoto() method');
       const file = await capturePhoto();
       
       if (file) {
-        console.log(`Processing uploaded photo: ${file.name} (${Math.round(file.size/1024)}KB)`);
+        console.log(`✅ Processing uploaded photo: ${file.name} (${Math.round(file.size/1024)}KB)`);
         sendDebugLog('TaskDescription', `Photo captured successfully: ${file.name} (${Math.round(file.size/1024)}KB)`);
         await onPhotoUpload(file);
         
@@ -90,12 +92,12 @@ const TaskDescription = ({
           description: "Your photo has been uploaded successfully"
         });
       } else {
-        console.log('No photo file returned from capturePhoto');
+        console.log('❌ No photo file returned from capturePhoto');
         sendDebugLog('TaskDescription', 'No photo file returned from capturePhoto');
         // User may have canceled or there was an error that was already handled
       }
     } catch (error) {
-      console.error('Error capturing photo:', error);
+      console.error('❌ Error capturing photo:', error);
       sendDebugLog('TaskDescription', `Error capturing photo: ${error instanceof Error ? error.message : String(error)}`);
       
       setUploadError(`Failed to upload photo. Please try again.`);
@@ -251,6 +253,8 @@ const TaskDescription = ({
   // When running in Android WebView, prioritize native camera bridge
   // Only show file input as fallback if NOT in WebView or native camera isn't available
   const shouldShowFileInput = !runningInWebView || !hasNativeCamera;
+  
+  console.log('🔍 File input visibility check:', { shouldShowFileInput, runningInWebView, hasNativeCamera });
 
   return (
     <div className={cn("space-y-4", className)}>

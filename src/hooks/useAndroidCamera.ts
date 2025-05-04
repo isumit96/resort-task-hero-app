@@ -30,15 +30,17 @@ export function useAndroidCamera() {
       // Always initialize the bridge for more robust detection
       initializeAndroidBridge();
       
-      console.log('Android camera detection results:', { 
+      console.log('🔍 Android camera detection results:', { 
         isInAndroidWebView, 
         hasNativeCamera,
         androidCameraObject: window.AndroidCamera ? 'exists' : 'missing'
       });
       
       if (isInAndroidWebView) {
+        console.log('📱 Running inside Android WebView');
         sendDebugLog('Setup', `Android WebView detected. Native camera available: ${hasNativeCamera}`);
       } else {
+        console.log('🌐 Running in regular browser');
         sendDebugLog('Setup', 'Not in Android WebView, will use standard camera access');
       }
     }
@@ -50,19 +52,19 @@ export function useAndroidCamera() {
    */
   const capturePhotoWithAndroid = async (): Promise<File | null> => {
     if (!isInAndroidWebView || !hasNativeCamera) {
-      console.log('Not using Android WebView camera bridge - using standard file input');
+      console.log('🌐 Not using Android WebView camera bridge - using standard file input');
       sendDebugLog('Camera', `Not using Android camera bridge. In WebView: ${isInAndroidWebView}, Has native camera: ${hasNativeCamera}`);
       // Let the normal file input handle it
       return null;
     }
     
-    console.log('AndroidCamera availability check:', { 
+    console.log('🔍 AndroidCamera availability check:', { 
       hasNativeCamera, 
       AndroidCamera: !!window.AndroidCamera,
       takePhotoMethodExists: window.AndroidCamera ? typeof window.AndroidCamera.takePhoto : 'undefined'
     });
     
-    console.log('Will use Android native camera bridge');
+    console.log('📱 Will use Android native camera bridge');
     sendDebugLog('Camera', 'Using Android native camera bridge');
     setIsCapturing(true);
     setLastCaptureError(null);
@@ -72,7 +74,7 @@ export function useAndroidCamera() {
         // Generate a request ID for this specific camera operation
         const requestId = window.androidBridge ? window.androidBridge.nextRequestId++ : Date.now();
         
-        console.log('Camera operation requestId:', requestId);
+        console.log('📸 Camera operation requestId:', requestId);
         sendDebugLog('Camera', `Starting camera operation with requestId: ${requestId}`);
         
         // Set up timeout for operation
@@ -95,7 +97,7 @@ export function useAndroidCamera() {
         
         // Store the callback in the request map
         if (!window.androidBridge) {
-          console.error('Android bridge not initialized');
+          console.error('❌ Android bridge not initialized');
           sendDebugLog('CameraError', 'Android bridge not initialized');
           clearTimeout(timeoutId);
           setIsCapturing(false);
@@ -110,7 +112,7 @@ export function useAndroidCamera() {
           sendDebugLog('Camera', `Camera operation complete for request #${requestId}`);
           
           if (file) {
-            console.log(`Received file from camera: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
+            console.log(`📥 Received file from camera: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
             
             // Validate the file
             if (!file.size || file.size === 0) {
@@ -152,9 +154,9 @@ export function useAndroidCamera() {
         });
         
         // Try to use the camera method with clear logging
-        console.log('BEFORE calling takeNativePhoto');
+        console.log('📸 BEFORE calling takeNativePhoto');
         const cameraOpened = takeNativePhoto(requestId.toString());
-        console.log('AFTER calling takeNativePhoto, result:', cameraOpened);
+        console.log('📸 AFTER calling takeNativePhoto, result:', cameraOpened);
         sendDebugLog('Camera', `Native camera opened: ${cameraOpened}`);
         
         if (!cameraOpened) {
@@ -166,7 +168,7 @@ export function useAndroidCamera() {
           resolve(null);
         }
       } catch (error) {
-        console.error('Error calling Android camera:', error);
+        console.error('❌ Error calling Android camera:', error);
         sendDebugLog('CameraError', `Exception: ${error instanceof Error ? error.message : String(error)}`);
         setIsCapturing(false);
         setLastCaptureError('Failed to access native camera');
