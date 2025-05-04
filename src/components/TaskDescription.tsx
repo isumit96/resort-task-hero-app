@@ -1,7 +1,7 @@
 
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Camera, Video, Loader2, X, AlertTriangle } from "lucide-react";
+import { Camera, Video, Loader2, X, AlertTriangle, ImageIcon, VideoIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -67,15 +67,6 @@ const TaskDescription = ({
     
     console.log('📸 Starting photo capture process');
     sendDebugLog('TaskDescription', 'Starting photo capture process');
-    
-    // Log whether we're using AndroidCamera or file input
-    if (runningInWebView && hasNativeCamera) {
-      console.log('📱 Will use Android native camera bridge');
-      sendDebugLog('Camera', 'Using native Android camera bridge');
-    } else {
-      console.log('🌐 Will use file input for camera capture');
-      sendDebugLog('Camera', 'Using file input for camera capture');
-    }
     
     try {
       // Use the enhanced capturePhoto function that handles Android WebView
@@ -157,7 +148,7 @@ const TaskDescription = ({
     }
   };
 
-  // Legacy file upload handler for non-Android or fallback
+  // File upload handler for photos selected from gallery
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, type: 'photo' | 'video') => {
     const file = event.target.files?.[0];
     if (!file) {
@@ -253,8 +244,6 @@ const TaskDescription = ({
   // When running in Android WebView, prioritize native camera bridge
   // Only show file input as fallback if NOT in WebView or native camera isn't available
   const shouldShowFileInput = !runningInWebView || !hasNativeCamera;
-  
-  console.log('🔍 File input visibility check:', { shouldShowFileInput, runningInWebView, hasNativeCamera });
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -273,41 +262,49 @@ const TaskDescription = ({
         <div className="w-full sm:w-auto">
           <Label className="mb-1.5 block">Photo</Label>
           {!photoUrl ? (
-            <div className="relative">
-              <button 
-                type="button"
-                onClick={handlePhotoCapture}
-                disabled={isUploadingPhoto || isCapturing}
-                className={cn(
-                  "w-full flex items-center gap-2 px-4 py-3 border rounded-md hover:bg-accent min-h-12 touch-manipulation",
-                  (isUploadingPhoto || isCapturing) && "opacity-70 pointer-events-none"
-                )}
-              >
-                {isUploadingPhoto || isCapturing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Camera className="h-4 w-4" />
-                )}
-                <span className="text-sm">
-                  {isUploadingPhoto || isCapturing ? "Processing..." : isMobile ? "Take Photo" : "Add Photo"}
-                </span>
-              </button>
-              
-              {/* Hidden file input as fallback - ONLY SHOWN when needed */}
-              {shouldShowFileInput && (
-                <input
-                  ref={photoInputRef}
-                  type="file"
-                  accept="image/*"
-                  capture={isAndroidDevice ? "environment" : undefined}
-                  className="opacity-0 absolute inset-0 cursor-pointer"
-                  onChange={(e) => handleFileUpload(e, 'photo')}
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <button 
+                  type="button"
+                  onClick={handlePhotoCapture}
                   disabled={isUploadingPhoto || isCapturing}
-                  // Add a key that changes when upload completes to reset the input
-                  key={`photo-upload-${isUploadingPhoto || isCapturing ? 'loading' : 'ready'}-${Date.now()}`}
-                  aria-hidden="true"
-                />
-              )}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 px-4 py-3 border rounded-md hover:bg-accent min-h-12 touch-manipulation",
+                    (isUploadingPhoto || isCapturing) && "opacity-70 pointer-events-none"
+                  )}
+                  aria-label="Take photo with camera"
+                >
+                  {isUploadingPhoto || isCapturing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Camera className="h-4 w-4" />
+                  )}
+                  <span className="text-sm">
+                    {isUploadingPhoto || isCapturing ? "Processing..." : "Camera"}
+                  </span>
+                </button>
+                
+                {/* File selection button */}
+                <label 
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 px-4 py-3 border rounded-md hover:bg-accent min-h-12 cursor-pointer touch-manipulation",
+                    (isUploadingPhoto || isCapturing) && "opacity-70 pointer-events-none"
+                  )}
+                  aria-label="Choose photo from device"
+                >
+                  <ImageIcon className="h-4 w-4" />
+                  <span className="text-sm">Gallery</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleFileUpload(e, 'photo')}
+                    disabled={isUploadingPhoto || isCapturing}
+                    // Add a key that changes when upload completes to reset the input
+                    key={`photo-upload-${isUploadingPhoto || isCapturing ? 'loading' : 'ready'}-${Date.now()}`}
+                  />
+                </label>
+              </div>
             </div>
           ) : (
             <div className="relative mt-2 group">
@@ -339,41 +336,49 @@ const TaskDescription = ({
         <div className="w-full sm:w-auto">
           <Label className="mb-1.5 block">Video</Label>
           {!videoUrl ? (
-            <div className="relative">
-              <button 
-                type="button"
-                onClick={handleVideoCapture}
-                disabled={isUploadingVideo || isCapturing}
-                className={cn(
-                  "w-full flex items-center gap-2 px-4 py-3 border rounded-md hover:bg-accent min-h-12 touch-manipulation",
-                  (isUploadingVideo || isCapturing) && "opacity-70 pointer-events-none"
-                )}
-              >
-                {isUploadingVideo || isCapturing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Video className="h-4 w-4" />
-                )}
-                <span className="text-sm">
-                  {isUploadingVideo || isCapturing ? "Processing..." : isMobile ? "Record Video" : "Add Video"}
-                </span>
-              </button>
-              
-              {/* Hidden file input as fallback - ONLY SHOWN when needed */}
-              {shouldShowFileInput && (
-                <input
-                  ref={videoInputRef}
-                  type="file"
-                  accept="video/*"
-                  capture={isAndroidDevice ? "environment" : undefined}
-                  className="opacity-0 absolute inset-0 cursor-pointer"
-                  onChange={(e) => handleFileUpload(e, 'video')}
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <button 
+                  type="button"
+                  onClick={handleVideoCapture}
                   disabled={isUploadingVideo || isCapturing}
-                  // Add a key that changes when upload completes to reset the input
-                  key={`video-upload-${isUploadingVideo || isCapturing ? 'loading' : 'ready'}-${Date.now()}`}
-                  aria-hidden="true"
-                />
-              )}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 px-4 py-3 border rounded-md hover:bg-accent min-h-12 touch-manipulation",
+                    (isUploadingVideo || isCapturing) && "opacity-70 pointer-events-none"
+                  )}
+                  aria-label="Record video with camera"
+                >
+                  {isUploadingVideo || isCapturing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Video className="h-4 w-4" />
+                  )}
+                  <span className="text-sm">
+                    {isUploadingVideo || isCapturing ? "Processing..." : "Camera"}
+                  </span>
+                </button>
+                
+                {/* File selection button */}
+                <label 
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 px-4 py-3 border rounded-md hover:bg-accent min-h-12 cursor-pointer touch-manipulation",
+                    (isUploadingVideo || isCapturing) && "opacity-70 pointer-events-none"
+                  )}
+                  aria-label="Choose video from device"
+                >
+                  <VideoIcon className="h-4 w-4" />
+                  <span className="text-sm">Gallery</span>
+                  <input
+                    type="file"
+                    accept="video/*"
+                    className="hidden"
+                    onChange={(e) => handleFileUpload(e, 'video')}
+                    disabled={isUploadingVideo || isCapturing}
+                    // Add a key that changes when upload completes to reset the input
+                    key={`video-upload-${isUploadingVideo || isCapturing ? 'loading' : 'ready'}-${Date.now()}`}
+                  />
+                </label>
+              </div>
             </div>
           ) : (
             <div className="relative mt-2 group">
