@@ -60,6 +60,48 @@ export const useTaskOperations = (taskId: string | undefined) => {
     }
   }, [taskId]);
 
+  // Define handleTaskStatusUpdate before it's used in other functions
+  const handleTaskStatusUpdate = useCallback(async (newStatus: 'completed' | 'inprogress' | 'pending') => {
+    if (!taskId) return;
+
+    try {
+      const updateData = newStatus === 'completed' 
+        ? { status: newStatus, completed_at: new Date().toISOString() }
+        : { status: newStatus };
+
+      const { error } = await supabase
+        .from('tasks')
+        .update(updateData)
+        .eq('id', taskId);
+      
+      if (error) throw error;
+
+      // For user feedback
+      if (newStatus === 'completed') {
+        toast({
+          title: "Task Completed",
+          description: "All steps have been completed",
+        });
+        
+        // Use setTimeout to delay navigation until toast is visible
+        setTimeout(() => {
+          navigate('/tasks');
+        }, 1500);
+      }
+
+      // Update the cache for both this task and the tasks list
+      queryClient.invalidateQueries({ queryKey: ["task", taskId] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    } catch (error) {
+      console.error('Error updating task status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update task status",
+        variant: "destructive",
+      });
+    }
+  }, [taskId, navigate, queryClient, toast]);
+
   // Use useCallback to memoize these functions and prevent unnecessary re-renders
   const handleStepComplete = useCallback(async (stepId: string, isCompleted: boolean) => {
     if (!taskId) return;
@@ -116,7 +158,7 @@ export const useTaskOperations = (taskId: string | undefined) => {
         variant: "destructive",
       });
     }
-  }, [taskId, queryClient, toast, previousStatus, checkForInteractions]);
+  }, [taskId, queryClient, toast, previousStatus, checkForInteractions, handleTaskStatusUpdate]);
   
   const handleAddComment = useCallback(async (stepId: string, comment: string) => {
     if (!taskId) return;
@@ -182,7 +224,7 @@ export const useTaskOperations = (taskId: string | undefined) => {
         variant: "destructive",
       });
     }
-  }, [taskId, queryClient, toast, previousStatus, checkForInteractions]);
+  }, [taskId, queryClient, toast, previousStatus, checkForInteractions, handleTaskStatusUpdate]);
   
   const handleAddPhoto = useCallback(async (stepId: string, photoUrl: string) => {
     if (!taskId) return;
@@ -275,47 +317,6 @@ export const useTaskOperations = (taskId: string | undefined) => {
       });
     }
   }, [taskId, queryClient, toast, previousStatus, checkForInteractions, handleTaskStatusUpdate]);
-
-  const handleTaskStatusUpdate = useCallback(async (newStatus: 'completed' | 'inprogress' | 'pending') => {
-    if (!taskId) return;
-
-    try {
-      const updateData = newStatus === 'completed' 
-        ? { status: newStatus, completed_at: new Date().toISOString() }
-        : { status: newStatus };
-
-      const { error } = await supabase
-        .from('tasks')
-        .update(updateData)
-        .eq('id', taskId);
-      
-      if (error) throw error;
-
-      // For user feedback
-      if (newStatus === 'completed') {
-        toast({
-          title: "Task Completed",
-          description: "All steps have been completed",
-        });
-        
-        // Use setTimeout to delay navigation until toast is visible
-        setTimeout(() => {
-          navigate('/tasks');
-        }, 1500);
-      }
-
-      // Update the cache for both this task and the tasks list
-      queryClient.invalidateQueries({ queryKey: ["task", taskId] });
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    } catch (error) {
-      console.error('Error updating task status:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update task status",
-        variant: "destructive",
-      });
-    }
-  }, [taskId, navigate, queryClient, toast]);
 
   return {
     handleStepComplete,
