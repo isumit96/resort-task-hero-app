@@ -23,7 +23,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
     const inputProps = {...props};
     if (isFileInput) {
       if (isAndroidDevice) {
-        // Log which capture method is being used
+        // Set capture attribute for media inputs
         if (inputProps.accept === 'image/*' || inputProps.accept?.includes('image/')) {
           inputProps['capture'] = 'environment';
           sendDebugLog('Camera', 'Android WebView detected, using capture=environment attribute');
@@ -35,7 +35,6 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
       // Add onClick handler to log when file input is clicked
       const originalOnClick = inputProps.onClick;
       inputProps.onClick = (e: React.MouseEvent<HTMLInputElement>) => {
-        console.log('Camera file input clicked');
         sendDebugLog('Camera', 'File input clicked');
         
         // Still call the original onClick if it exists
