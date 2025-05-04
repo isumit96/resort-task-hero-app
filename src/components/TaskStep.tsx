@@ -151,8 +151,10 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
           
           // Notify the parent about the photo (actual upload happens in parent)
           if (onAddPhoto) {
-            console.log(`Calling onAddPhoto for step ${step.id}`);
-            await onAddPhoto(step.id, localPreviewUrl);
+            console.log(`Calling onAddPhoto for step ${step.id} with file`);
+            
+            // IMPORTANT: Pass the actual file to ensure it gets uploaded
+            await onAddPhoto(step.id, file);
             
             toast({
               title: "Photo attached",

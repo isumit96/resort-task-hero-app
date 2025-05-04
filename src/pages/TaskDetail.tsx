@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
@@ -105,6 +104,15 @@ const TaskDetail = () => {
     // Status auto-update managed by useTaskOperations now
   }, [task?.steps, task?.status]);
 
+  // Handle photo upload from step - supports both File objects and URLs
+  const handleStepPhotoUpload = (stepId: string, fileOrUrl: File | string) => {
+    console.log(`TaskDetail: Handling photo upload for step ${stepId}`, 
+      fileOrUrl instanceof File ? `File: ${fileOrUrl.name}` : `URL: ${fileOrUrl}`);
+    
+    // Pass the file or URL directly to the handler function
+    return handleAddPhoto(stepId, fileOrUrl);
+  };
+
   const handleMarkComplete = () => {
     if (!task) return;
     
@@ -158,7 +166,7 @@ const TaskDetail = () => {
           steps={task.steps}
           onComplete={handleStepComplete}
           onAddComment={handleAddComment}
-          onAddPhoto={handleAddPhoto}
+          onAddPhoto={handleStepPhotoUpload}
           isTaskCompleted={isCompleted}
         />
         

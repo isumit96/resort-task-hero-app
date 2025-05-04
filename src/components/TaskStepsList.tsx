@@ -8,7 +8,7 @@ interface TaskStepsListProps {
   steps: TaskStepType[];
   onComplete: (stepId: string, isCompleted: boolean) => void;
   onAddComment: (stepId: string, comment: string) => void;
-  onAddPhoto: (stepId: string, photoUrl: string) => void;
+  onAddPhoto: (stepId: string, fileOrUrl: File | string) => void;
   isTaskCompleted?: boolean;
 }
 

@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCallback, useState } from "react";
+import { uploadFileToStorage } from "@/utils/storage";
 
 export const useTaskOperations = (taskId: string | undefined) => {
   const { toast } = useToast();
@@ -11,26 +12,6 @@ export const useTaskOperations = (taskId: string | undefined) => {
   const queryClient = useQueryClient();
   const [previousStatus, setPreviousStatus] = useState<'completed' | 'inprogress' | 'pending' | null>(null);
   const [hasInteractions, setHasInteractions] = useState<boolean>(false);
-
-  // Helper function to translate text
-  const translateText = async (text: string, targetLang: string) => {
-    if (!text) return null;
-    
-    try {
-      const response = await supabase.functions.invoke('translate', {
-        body: { text, target: targetLang }
-      });
-      
-      if (response.error) {
-        throw new Error(response.error.message);
-      }
-      
-      return response.data?.translations?.[0]?.translatedText || null;
-    } catch (error) {
-      console.error(`Translation error (${targetLang}):`, error);
-      return null;
-    }
-  };
 
   // Check if there are any interactions in the task steps
   const checkForInteractions = useCallback(async () => {
@@ -58,8 +39,69 @@ export const useTaskOperations = (taskId: string | undefined) => {
       return false;
     }
   }, [taskId]);
+  
+  // Helper function to translate text
+  const translateText = async (text: string, targetLang: string) => {
+    if (!text) return null;
+    
+    try {
+      const response = await supabase.functions.invoke('translate', {
+        body: { text, target: targetLang }
+      });
+      
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+      
+      return response.data?.translations?.[0]?.translatedText || null;
+    } catch (error) {
+      console.error(`Translation error (${targetLang}):`, error);
+      return null;
+    }
+  };
 
   // Use useCallback to memoize these functions and prevent unnecessary re-renders
+  const handleTaskStatusUpdate = useCallback(async (newStatus: 'completed' | 'inprogress' | 'pending') => {
+    if (!taskId) return;
+
+    try {
+      const updateData = newStatus === 'completed' 
+        ? { status: newStatus, completed_at: new Date().toISOString() }
+        : { status: newStatus };
+
+      const { error } = await supabase
+        .from('tasks')
+        .update(updateData)
+        .eq('id', taskId);
+      
+      if (error) throw error;
+
+      // For user feedback
+      if (newStatus === 'completed') {
+        toast({
+          title: "Task Completed",
+          description: "All steps have been completed",
+        });
+        
+        // Use setTimeout to delay navigation until toast is visible
+        setTimeout(() => {
+          navigate('/tasks');
+        }, 1500);
+      }
+
+      // Update the cache for both this task and the tasks list
+      queryClient.invalidateQueries({ queryKey: ["task", taskId] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    } catch (error) {
+      console.error('Error updating task status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update task status",
+        variant: "destructive",
+      });
+    }
+  }, [taskId, navigate, queryClient, toast]);
+
   const handleStepComplete = useCallback(async (stepId: string, isCompleted: boolean) => {
     if (!taskId) return;
     
@@ -115,7 +157,7 @@ export const useTaskOperations = (taskId: string | undefined) => {
         variant: "destructive",
       });
     }
-  }, [taskId, queryClient, toast, previousStatus, checkForInteractions]);
+  }, [taskId, queryClient, toast, previousStatus, checkForInteractions, handleTaskStatusUpdate]);
   
   const handleAddComment = useCallback(async (stepId: string, comment: string) => {
     if (!taskId) return;
@@ -181,18 +223,57 @@ export const useTaskOperations = (taskId: string | undefined) => {
         variant: "destructive",
       });
     }
-  }, [taskId, queryClient, toast, previousStatus, checkForInteractions]);
+  }, [taskId, queryClient, toast, previousStatus, checkForInteractions, handleTaskStatusUpdate]);
   
-  const handleAddPhoto = useCallback(async (stepId: string, photoUrl: string) => {
+  const handleAddPhoto = useCallback(async (stepId: string, fileOrUrl: File | string) => {
     if (!taskId) return;
     
     try {
+      console.log(`Starting photo upload process for step ${stepId}`);
+      
       // Get current task status before updating
       const { data: task } = await supabase
         .from('tasks')
         .select('status')
         .eq('id', taskId)
         .single();
+      
+      // Process different input types: either a File or a URL string
+      let photoUrl = '';
+      
+      if (fileOrUrl instanceof File) {
+        console.log(`Received File object: ${fileOrUrl.name} (${Math.round(fileOrUrl.size/1024)}KB)`);
+        
+        // Upload the file to storage and get the URL
+        photoUrl = await uploadFileToStorage(fileOrUrl, 'task-photos');
+        console.log(`File uploaded, photoUrl: ${photoUrl}`);
+      } else if (typeof fileOrUrl === 'string') {
+        // If it's already a URL (like blob:// or https://)
+        photoUrl = fileOrUrl;
+        console.log(`Received URL directly: ${photoUrl}`);
+        
+        // If it's a local blob URL, we might want to fetch and reupload
+        if (photoUrl.startsWith('blob:')) {
+          console.log('Converting blob URL to file for persistent storage...');
+          try {
+            // Convert blob URL to File object
+            const response = await fetch(photoUrl);
+            const blob = await response.blob();
+            const file = new File([blob], "photo.jpg", { type: blob.type });
+            
+            // Upload the file
+            photoUrl = await uploadFileToStorage(file, 'task-photos');
+            console.log(`Converted blob and uploaded, new photoUrl: ${photoUrl}`);
+          } catch (error) {
+            console.error('Failed to convert blob URL:', error);
+            // Continue with the blob URL if conversion fails
+          }
+        }
+      } else if (!fileOrUrl) {
+        // Handle removal case
+        console.log('Empty input, treating as photo removal');
+        photoUrl = '';
+      }
       
       // Only save the previous status once when transitioning from pending to inprogress
       if (task && task.status === 'pending' && photoUrl && !previousStatus) {
@@ -204,12 +285,18 @@ export const useTaskOperations = (taskId: string | undefined) => {
         setHasInteractions(true);
       }
       
+      console.log(`Updating database with photoUrl: ${photoUrl}`);
       const { error } = await supabase
         .from('task_steps')
         .update({ photo_url: photoUrl })
         .eq('id', stepId);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase update error:', error);
+        throw error;
+      }
+      
+      console.log('Database updated successfully');
       
       // If a photo is added, update task status to inprogress
       if (photoUrl && task && task.status === 'pending') {
@@ -219,10 +306,17 @@ export const useTaskOperations = (taskId: string | undefined) => {
       // Optimistic update for better user experience
       queryClient.invalidateQueries({ queryKey: ["task", taskId] });
       
-      toast({
-        title: "Photo added",
-        description: "Your photo has been uploaded",
-      });
+      if (photoUrl) {
+        toast({
+          title: "Photo added",
+          description: "Your photo has been uploaded",
+        });
+      } else {
+        toast({
+          title: "Photo removed",
+          description: "Your photo has been removed",
+        });
+      }
       
       // Check if all interactions have been removed
       if (!photoUrl) {
@@ -241,48 +335,7 @@ export const useTaskOperations = (taskId: string | undefined) => {
         variant: "destructive",
       });
     }
-  }, [taskId, queryClient, toast, previousStatus, checkForInteractions]);
-
-  const handleTaskStatusUpdate = useCallback(async (newStatus: 'completed' | 'inprogress' | 'pending') => {
-    if (!taskId) return;
-
-    try {
-      const updateData = newStatus === 'completed' 
-        ? { status: newStatus, completed_at: new Date().toISOString() }
-        : { status: newStatus };
-
-      const { error } = await supabase
-        .from('tasks')
-        .update(updateData)
-        .eq('id', taskId);
-      
-      if (error) throw error;
-
-      // For user feedback
-      if (newStatus === 'completed') {
-        toast({
-          title: "Task Completed",
-          description: "All steps have been completed",
-        });
-        
-        // Use setTimeout to delay navigation until toast is visible
-        setTimeout(() => {
-          navigate('/tasks');
-        }, 1500);
-      }
-
-      // Update the cache for both this task and the tasks list
-      queryClient.invalidateQueries({ queryKey: ["task", taskId] });
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    } catch (error) {
-      console.error('Error updating task status:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update task status",
-        variant: "destructive",
-      });
-    }
-  }, [taskId, navigate, queryClient, toast]);
+  }, [taskId, queryClient, toast, previousStatus, checkForInteractions, handleTaskStatusUpdate]);
 
   return {
     handleStepComplete,
