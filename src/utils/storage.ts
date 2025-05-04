@@ -62,6 +62,36 @@ export const uploadFileToStorage = async (file: File, path: string): Promise<str
 };
 
 /**
+ * Convert a blob URL to a File object
+ * @param blobUrl The blob URL to convert
+ * @param fileName Optional file name (default: "photo.jpg")
+ * @returns Promise that resolves with the File object
+ */
+export const blobUrlToFile = async (blobUrl: string, fileName: string = "photo.jpg"): Promise<File> => {
+  try {
+    sendDebugLog('Storage', `Converting blob URL to file: ${blobUrl}`);
+    
+    // Fetch the blob from the URL
+    const response = await fetch(blobUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch blob: ${response.statusText}`);
+    }
+    
+    const blob = await response.blob();
+    
+    // Create a File object from the blob
+    const file = new File([blob], fileName, { type: blob.type || 'image/jpeg' });
+    
+    sendDebugLog('Storage', `Blob converted to file: ${file.name} (${Math.round(file.size/1024)}KB)`);
+    return file;
+  } catch (error) {
+    sendDebugLog('StorageError', `Blob conversion error: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(`Storage: Blob conversion error:`, error);
+    throw error;
+  }
+};
+
+/**
  * Get an image from the camera using a file input
  * @returns Promise that resolves with the File object or null if no file was selected
  */

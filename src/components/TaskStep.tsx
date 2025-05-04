@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { TaskStep as TaskStepType } from "@/types";
 import { Camera, X, CheckCircle, XCircle, Lock, Loader2, AlertTriangle } from "lucide-react";
@@ -144,16 +145,16 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
       // If we got a file back from the camera
       if (file && file.size > 0) {
         try {
-          // Create an immediate preview from the file
+          // Create an immediate preview from the file - only for local UI rendering
           const localPreviewUrl = URL.createObjectURL(file);
           console.log(`Local preview URL created: ${localPreviewUrl}`);
           setPhotoPreview(localPreviewUrl);
           
-          // Notify the parent about the photo (actual upload happens in parent)
+          // IMPORTANT: Pass the actual file instead of the blob URL to ensure proper upload
           if (onAddPhoto) {
-            console.log(`Calling onAddPhoto for step ${step.id} with file`);
+            console.log(`Calling onAddPhoto for step ${step.id} with file object`);
             
-            // IMPORTANT: Pass the actual file to ensure it gets uploaded
+            // Pass the actual File object to ensure it gets properly uploaded
             await onAddPhoto(step.id, file);
             
             toast({

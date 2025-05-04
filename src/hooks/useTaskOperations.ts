@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCallback, useState } from "react";
-import { uploadFileToStorage } from "@/utils/storage";
+import { uploadFileToStorage, blobUrlToFile } from "@/utils/storage";
 
 export const useTaskOperations = (taskId: string | undefined) => {
   const { toast } = useToast();
@@ -248,25 +248,30 @@ export const useTaskOperations = (taskId: string | undefined) => {
         console.log(`File uploaded, photoUrl: ${photoUrl}`);
       } else if (typeof fileOrUrl === 'string') {
         // If it's already a URL (like blob:// or https://)
-        photoUrl = fileOrUrl;
-        console.log(`Received URL directly: ${photoUrl}`);
+        console.log(`Received URL directly: ${fileOrUrl}`);
         
-        // If it's a local blob URL, we might want to fetch and reupload
-        if (photoUrl.startsWith('blob:')) {
+        // If it's a local blob URL, we need to fetch and reupload
+        if (fileOrUrl.startsWith('blob:')) {
           console.log('Converting blob URL to file for persistent storage...');
           try {
             // Convert blob URL to File object
-            const response = await fetch(photoUrl);
-            const blob = await response.blob();
-            const file = new File([blob], "photo.jpg", { type: blob.type });
+            const file = await blobUrlToFile(fileOrUrl, `photo_${Date.now()}.jpg`);
             
             // Upload the file
             photoUrl = await uploadFileToStorage(file, 'task-photos');
             console.log(`Converted blob and uploaded, new photoUrl: ${photoUrl}`);
           } catch (error) {
             console.error('Failed to convert blob URL:', error);
-            // Continue with the blob URL if conversion fails
+            throw new Error('Failed to process image from camera');
           }
+        } else if (fileOrUrl === "") {
+          // Handle removal case
+          console.log('Empty URL input, treating as photo removal');
+          photoUrl = '';
+        } else {
+          // If it's already a proper URL, keep it
+          photoUrl = fileOrUrl;
+          console.log(`Using existing URL: ${photoUrl}`);
         }
       } else if (!fileOrUrl) {
         // Handle removal case
@@ -308,12 +313,12 @@ export const useTaskOperations = (taskId: string | undefined) => {
       if (photoUrl) {
         toast({
           title: "Photo added",
-          description: "Your photo has been uploaded",
+          description: "Your photo has been uploaded"
         });
       } else {
         toast({
           title: "Photo removed",
-          description: "Your photo has been removed",
+          description: "Your photo has been removed"
         });
       }
       
@@ -331,7 +336,7 @@ export const useTaskOperations = (taskId: string | undefined) => {
       toast({
         title: "Error",
         description: "Failed to save photo",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   }, [taskId, queryClient, toast, previousStatus, checkForInteractions, handleTaskStatusUpdate]);
