@@ -44,14 +44,18 @@ const TaskDescription = ({
   const runningInWebView = isInAndroidView || isAndroidWebView();
   const hasNativeCamera = isNativeCameraAvailable();
   
-  console.log('TaskDescription mount:', { 
-    isMobile, 
-    isAndroidDevice, 
-    runningInWebView,
-    hasNativeCamera,
-    isCapturing,
-    userAgent: navigator.userAgent
-  });
+  // Log device detection info on component mount for debugging
+  useEffect(() => {
+    console.log('TaskDescription component environment:', { 
+      isMobile, 
+      isAndroidDevice, 
+      runningInWebView,
+      hasNativeCamera,
+      userAgent: navigator.userAgent
+    });
+    
+    sendDebugLog('TaskDescription', `Environment: Mobile=${isMobile}, Android=${isAndroidDevice}, WebView=${runningInWebView}, NativeCamera=${hasNativeCamera}`);
+  }, [isMobile, isAndroidDevice, runningInWebView, hasNativeCamera]);
   
   // Enhanced photo capture with Android WebView support
   const handlePhotoCapture = async () => {
@@ -235,6 +239,7 @@ const TaskDescription = ({
   }, []);
 
   // When running in Android WebView, prioritize native camera bridge
+  // Only show file input as fallback if NOT in WebView or native camera isn't available
   const shouldShowFileInput = !isInAndroidView && !hasNativeCamera;
 
   return (

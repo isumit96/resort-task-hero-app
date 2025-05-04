@@ -18,7 +18,7 @@ export function useAndroidCamera() {
   const [isCapturing, setIsCapturing] = useState(false);
   const [lastCaptureError, setLastCaptureError] = useState<string | null>(null);
   
-  // Detect if we're in an Android WebView - more aggressive detection
+  // Detect if we're in an Android WebView
   const isInAndroidWebView = isAndroidWebView();
   
   // Check for native camera availability
@@ -38,11 +38,6 @@ export function useAndroidCamera() {
       
       sendDebugLog('Setup', `Android WebView detected. Native camera available: ${hasNativeCamera}`);
     }
-    
-    // Cleanup function
-    return () => {
-      // We don't remove the global handlers as they might be used by other components
-    };
   }, [isInAndroidWebView, hasNativeCamera]);
 
   /**
@@ -148,7 +143,7 @@ export function useAndroidCamera() {
           resolve(file);
         });
         
-        // Try to use the camera method - LOG THE RESULT
+        // Try to use the camera method
         const cameraOpened = takeNativePhoto(requestId.toString());
         console.log('Native camera method called, result:', cameraOpened);
         sendDebugLog('Camera', `Native camera opened: ${cameraOpened}`);

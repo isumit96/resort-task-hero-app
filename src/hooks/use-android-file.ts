@@ -147,7 +147,7 @@ export function useAndroidFile() {
               // Fall back to standard file input approach
               sendDebugLog('AndroidFile', 'Native camera failed, falling back to file input');
               
-              // Fix: Don't use await in non-async callback
+              // Use the then method instead of await
               getImageFromCamera().then(result => {
                 setIsCapturing(false);
                 resolve(result);
@@ -315,7 +315,7 @@ export function useAndroidFile() {
               // Fall back to standard file input approach
               sendDebugLog('AndroidFile', 'Native video recording failed, falling back to file input');
               
-              // Fix: Don't use await in non-async callback
+              // Use the then method instead of await
               getVideoFromCamera().then(result => {
                 setIsCapturing(false);
                 resolve(result);

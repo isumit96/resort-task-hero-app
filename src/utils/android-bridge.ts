@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for the Android WebView JavaScript bridge.
  * These functions help with communication between the Android app and the web app.
@@ -34,6 +35,7 @@ export const isAndroidWebView = (): boolean => {
     userAgent: navigator.userAgent
   });
   
+  // More aggressive detection - consider it a WebView if ANY of these are true
   return isAndroid && (hasWebViewSignature || hasCustomMarker || hasAndroidObject);
 };
 
@@ -146,6 +148,7 @@ export const takeNativePhoto = async (requestId?: string): Promise<boolean> => {
   const actualRequestId = requestId || `photo_${Date.now()}`;
   
   console.log('Taking native photo with request ID:', actualRequestId);
+  sendDebugLog('Camera', `Taking photo with request ID: ${actualRequestId}`);
   console.log('AndroidCamera object status:', {
     exists: !!window.AndroidCamera,
     takePhotoMethod: window.AndroidCamera ? typeof window.AndroidCamera.takePhoto : 'undefined'
@@ -154,8 +157,8 @@ export const takeNativePhoto = async (requestId?: string): Promise<boolean> => {
   // Try using Android native camera if available
   if (window.AndroidCamera?.takePhoto) {
     try {
-      // Call the Android native method
-      sendDebugLog('Camera', `Taking photo with request ID: ${actualRequestId}`);
+      // Call the Android native method - this should trigger the camera in the Android app
+      sendDebugLog('Camera', `Calling AndroidCamera.takePhoto with ID: ${actualRequestId}`);
       window.AndroidCamera.takePhoto(actualRequestId);
       console.log('Native camera method called successfully');
       return true;
@@ -166,7 +169,7 @@ export const takeNativePhoto = async (requestId?: string): Promise<boolean> => {
     }
   }
   
-  sendDebugLog('Camera', 'Native camera methods not available');
+  sendDebugLog('Camera', 'Native camera methods not available - will use fallback');
   console.log('Native camera methods not available, fallback to file input needed');
   return false;
 };
@@ -216,8 +219,8 @@ export const initializeAndroidBridge = (): void => {
     return;
   }
   
-  console.log('Initializing Android bridge');
-  sendDebugLog('Bridge', 'Initializing Android bridge');
+  console.log('Creating android bridge handlers');
+  sendDebugLog('Bridge', 'Setting up Android bridge handlers');
   
   // Initialize the bridge object if it doesn't exist
   if (!window.androidBridge) {
@@ -233,9 +236,21 @@ export const initializeAndroidBridge = (): void => {
     console.log('Setting up receiveImageFromAndroid handler');
     window.receiveImageFromAndroid = (requestId, base64Data, fileName, mimeType) => {
       console.log(`Received image from Android: ${requestId}, ${fileName}, ${mimeType}, data length: ${base64Data ? base64Data.length : 0}`);
-      sendDebugLog('Camera', `Received image from Android: ${fileName} (${mimeType})`);
+      sendDebugLog('Camera', `Received image from Android: requestId=${requestId}, fileName=${fileName}, mimeType=${mimeType}`);
       
       try {
+        if (!base64Data || base64Data.length === 0) {
+          console.error('Received empty base64 data from Android');
+          sendDebugLog('CameraError', 'Received empty image data from Android');
+          
+          const callback = window.androidBridge?.captureRequests.get(Number(requestId));
+          if (callback) {
+            callback(null);
+            window.androidBridge?.captureRequests.delete(Number(requestId));
+          }
+          return;
+        }
+        
         // Convert base64 to Blob/File
         const byteCharacters = atob(base64Data);
         const byteArrays = [];
@@ -253,17 +268,18 @@ export const initializeAndroidBridge = (): void => {
         }
         
         const blob = new Blob(byteArrays, { type: mimeType });
-        const file = new File([blob], fileName, { 
-          type: mimeType,
+        const file = new File([blob], fileName || `image_${Date.now()}.jpg`, { 
+          type: mimeType || 'image/jpeg',
           lastModified: Date.now()
         });
         
-        console.log(`Created File object: ${fileName}, size: ${file.size} bytes, type: ${file.type}`);
+        console.log(`Created File object: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
+        sendDebugLog('Camera', `Processed image: size=${file.size} bytes`);
         
         // Call the stored callback
         const callback = window.androidBridge?.captureRequests.get(Number(requestId));
         if (callback) {
-          sendDebugLog('Camera', `Calling callback for request #${requestId} with file: ${fileName}`);
+          sendDebugLog('Camera', `Calling callback for request #${requestId} with file: ${file.name}`);
           console.log(`Calling callback for request #${requestId}`);
           callback(file);
           window.androidBridge?.captureRequests.delete(Number(requestId));
