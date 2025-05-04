@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCallback, useState } from "react";
+import { uploadFileToStorage } from "@/utils/storage";
 
 export const useTaskOperations = (taskId: string | undefined) => {
   const { toast } = useToast();
@@ -204,28 +205,60 @@ export const useTaskOperations = (taskId: string | undefined) => {
         setHasInteractions(true);
       }
       
+      // Handle blob URLs by uploading them to storage
+      let finalPhotoUrl = photoUrl;
+      
+      if (photoUrl && photoUrl.startsWith('blob:')) {
+        try {
+          // Fetch the blob content
+          const response = await fetch(photoUrl);
+          const blob = await response.blob();
+          
+          // Convert to file object with a unique name
+          const fileNameBase = `task_${taskId}_step_${stepId}`;
+          const extension = blob.type.split('/')[1] || 'jpg';
+          const fileName = `${fileNameBase}.${extension}`;
+          const file = new File([blob], fileName, { type: blob.type });
+          
+          // Upload to storage
+          finalPhotoUrl = await uploadFileToStorage(file, 'task-photos');
+          
+          // Revoke the blob URL to prevent memory leaks
+          URL.revokeObjectURL(photoUrl);
+        } catch (uploadError) {
+          console.error('Error uploading blob to storage:', uploadError);
+          throw new Error('Failed to upload image to storage');
+        }
+      } else if (!photoUrl && photoUrl !== '') {
+        // If photoUrl is null or undefined but not empty string, set to empty string
+        finalPhotoUrl = '';
+      }
+      
+      // Update the database with the storage URL
       const { error } = await supabase
         .from('task_steps')
-        .update({ photo_url: photoUrl })
+        .update({ photo_url: finalPhotoUrl })
         .eq('id', stepId);
       
       if (error) throw error;
       
       // If a photo is added, update task status to inprogress
-      if (photoUrl && task && task.status === 'pending') {
+      if (finalPhotoUrl && task && task.status === 'pending') {
         await handleTaskStatusUpdate('inprogress');
       }
       
       // Optimistic update for better user experience
       queryClient.invalidateQueries({ queryKey: ["task", taskId] });
       
-      toast({
-        title: "Photo added",
-        description: "Your photo has been uploaded",
-      });
+      if (finalPhotoUrl) {
+        toast({
+          title: "Photo added",
+          description: "Your photo has been uploaded and saved",
+        });
+      }
       
       // Check if all interactions have been removed
-      if (!photoUrl) {
+      if (!finalPhotoUrl) {
         const hasActiveInteractions = await checkForInteractions();
         if (!hasActiveInteractions && previousStatus === 'pending') {
           await handleTaskStatusUpdate('pending');
@@ -241,7 +274,7 @@ export const useTaskOperations = (taskId: string | undefined) => {
         variant: "destructive",
       });
     }
-  }, [taskId, queryClient, toast, previousStatus, checkForInteractions]);
+  }, [taskId, queryClient, toast, previousStatus, checkForInteractions, handleTaskStatusUpdate]);
 
   const handleTaskStatusUpdate = useCallback(async (newStatus: 'completed' | 'inprogress' | 'pending') => {
     if (!taskId) return;

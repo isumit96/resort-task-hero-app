@@ -1,27 +1,59 @@
 
 import { sendDebugLog } from './android-bridge';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Utility functions for handling file uploads and storage interactions.
  */
 
 /**
- * Simulate upload to storage (mock function)
+ * Upload a file to Supabase storage
  * @param file The file to upload
  * @param path The path to upload the file to
  * @returns Promise that resolves with the URL of the uploaded file
  */
 export const uploadFileToStorage = async (file: File, path: string): Promise<string> => {
-  return new Promise((resolve) => {
-    sendDebugLog('Storage', `Simulating upload of ${file.name} to ${path}`);
+  // Skip upload for empty files (used for removal)
+  if (file.size === 0 || file.name === "removed") {
+    return "";
+  }
+
+  try {
+    // Generate a unique filename to prevent collisions
+    const timestamp = new Date().getTime();
+    const fileName = `${timestamp}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    const filePath = `${path}/${fileName}`;
     
-    // Simulate a delay to mimic network latency
-    setTimeout(() => {
-      const url = `https://example.com/${path}/${file.name}`;
-      sendDebugLog('Storage', `Simulated upload complete. URL: ${url}`);
-      resolve(url);
-    }, 1000);
-  });
+    // Create a bucket if it doesn't exist (will be handled by RLS)
+    const { error: bucketError } = await supabase
+      .storage
+      .createBucket('task-media', {
+        public: true,
+        fileSizeLimit: 10485760, // 10MB
+      });
+    
+    // Upload the file
+    const { data, error } = await supabase
+      .storage
+      .from('task-media')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+    
+    if (error) throw error;
+    
+    // Get the public URL
+    const { data: publicURL } = supabase
+      .storage
+      .from('task-media')
+      .getPublicUrl(data.path);
+      
+    return publicURL.publicUrl;
+  } catch (error) {
+    console.error('Storage upload error:', error);
+    throw error;
+  }
 };
 
 /**
@@ -31,8 +63,6 @@ export const uploadFileToStorage = async (file: File, path: string): Promise<str
 export const getImageFromCamera = (): Promise<File | null> => {
   return new Promise((resolve, reject) => {
     try {
-      sendDebugLog('Camera', 'Opening file selection dialog');
-      
       // Create an input element
       const input = document.createElement('input');
       input.type = 'file';
@@ -49,24 +79,21 @@ export const getImageFromCamera = (): Promise<File | null> => {
         const file = target.files?.[0] || null;
         
         if (file) {
-          sendDebugLog('Camera', `File selected: ${file.name} (${Math.round(file.size/1024)}KB)`);
           resolve(file);
         } else {
-          sendDebugLog('Camera', 'No file selected');
           resolve(null);
         }
       };
       
       // Handle cancellation
       input.oncancel = () => {
-        sendDebugLog('Camera', 'File selection cancelled');
         resolve(null);
       };
       
       // Handle if the dialog is closed without selection
       setTimeout(() => {
         if (!input.files || input.files.length === 0) {
-          sendDebugLog('Camera', 'File selection assumed cancelled (timeout)');
+          // Timeout handling
         }
       }, 300000); // 5 minute timeout
       
@@ -75,7 +102,6 @@ export const getImageFromCamera = (): Promise<File | null> => {
       input.click();
       document.body.removeChild(input);
     } catch (error) {
-      sendDebugLog('CameraError', `File input error: ${error instanceof Error ? error.message : String(error)}`);
       reject(error);
     }
   });
@@ -100,17 +126,14 @@ export const getVideoFromCamera = (): Promise<File | null> => {
         const file = target.files?.[0] || null;
         
         if (file) {
-          sendDebugLog('Camera', `Video selected: ${file.name} (${Math.round(file.size/1024)}KB)`);
           resolve(file);
         } else {
-          sendDebugLog('Camera', 'No video selected');
           resolve(null);
         }
       };
       
       // Handle cancellation
       input.oncancel = () => {
-        sendDebugLog('Camera', 'Video selection cancelled');
         resolve(null);
       };
       
@@ -119,7 +142,6 @@ export const getVideoFromCamera = (): Promise<File | null> => {
       input.click();
       document.body.removeChild(input);
     } catch (error) {
-      sendDebugLog('CameraError', `Video input error: ${error instanceof Error ? error.message : String(error)}`);
       reject(error);
     }
   });

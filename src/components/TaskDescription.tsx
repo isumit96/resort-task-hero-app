@@ -1,4 +1,3 @@
-
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Camera, Video, Loader2, X, AlertTriangle } from "lucide-react";
@@ -82,23 +81,28 @@ const TaskDescription = ({
       console.log('📸 Calling capturePhoto() method');
       const file = await capturePhoto();
       
-      if (file) {
-        console.log(`✅ Processing uploaded photo: ${file.name} (${Math.round(file.size/1024)}KB)`);
-        sendDebugLog('TaskDescription', `Photo captured successfully: ${file.name} (${Math.round(file.size/1024)}KB)`);
+      if (file && file.size > 0) {
         await onPhotoUpload(file);
         
         toast({
           title: "Photo uploaded",
           description: "Your photo has been uploaded successfully"
         });
+      } else if (file && file.size === 0) {
+        // Empty file - likely a WebView issue
+        setUploadError(`Camera returned an empty image. Please try again.`);
+        setUploadErrorType('photo');
+        
+        toast({
+          title: `Photo upload failed`,
+          description: `Camera returned an empty image. Please try again.`,
+          variant: "destructive"
+        });
       } else {
-        console.log('❌ No photo file returned from capturePhoto');
-        sendDebugLog('TaskDescription', 'No photo file returned from capturePhoto');
-        // User may have canceled or there was an error that was already handled
+        // User likely canceled or there was a handled error
       }
     } catch (error) {
-      console.error('❌ Error capturing photo:', error);
-      sendDebugLog('TaskDescription', `Error capturing photo: ${error instanceof Error ? error.message : String(error)}`);
+      console.error('Error capturing photo:', error);
       
       setUploadError(`Failed to upload photo. Please try again.`);
       setUploadErrorType('photo');
@@ -126,23 +130,27 @@ const TaskDescription = ({
       // Use the enhanced captureVideo function that handles Android WebView
       const file = await captureVideo();
       
-      if (file) {
-        console.log(`Processing uploaded video: ${file.name} (${Math.round(file.size/1024)}KB)`);
-        sendDebugLog('TaskDescription', `Video captured successfully: ${file.name} (${Math.round(file.size/1024)}KB)`);
+      if (file && file.size > 0) {
         await onVideoUpload(file);
         
         toast({
           title: "Video uploaded",
           description: "Your video has been uploaded successfully"
         });
+      } else if (file && file.size === 0) {
+        setUploadError(`Camera returned an empty video. Please try again.`);
+        setUploadErrorType('video');
+        
+        toast({
+          title: `Video upload failed`,
+          description: `Camera returned an empty video. Please try again.`,
+          variant: "destructive"
+        });
       } else {
-        console.log('No video file returned from captureVideo');
-        sendDebugLog('TaskDescription', 'No video file returned from captureVideo');
-        // User may have canceled or there was an error that was already handled
+        // User likely canceled or there was a handled error
       }
     } catch (error) {
       console.error('Error capturing video:', error);
-      sendDebugLog('TaskDescription', `Error capturing video: ${error instanceof Error ? error.message : String(error)}`);
       
       setUploadError(`Failed to upload video. Please try again.`);
       setUploadErrorType('video');

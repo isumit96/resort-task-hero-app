@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 import { getImageFromCamera } from "@/utils/storage";
 import { useToast } from "@/hooks/use-toast";
 import { useAndroidCamera } from "@/hooks/useAndroidCamera";
-import { isAndroidWebView, isNativeCameraAvailable, sendDebugLog } from "@/utils/android-bridge";
+import { isAndroidWebView, isNativeCameraAvailable } from "@/utils/android-bridge";
 
 /**
  * Renders an individual task step with support for checkbox or yes/no.
@@ -54,24 +54,12 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
       else if (step.isCompleted === false) setYesNoValue("no");
       else setYesNoValue(undefined);
     }
-    // eslint-disable-next-line
-  }, [step.isCompleted]);
+  }, [step.isCompleted, step.interactionType]);
 
   // Update photo preview when step prop changes
   useEffect(() => {
     setPhotoPreview(step.photoUrl);
   }, [step.photoUrl]);
-
-  // Log detection status on component mount
-  useEffect(() => {
-    console.log('TaskStep component environment:', {
-      runningInWebView,
-      nativeCameraAvailable,
-      stepId: step.id
-    });
-    
-    sendDebugLog('TaskStep', `Step ${step.id} environment: WebView=${runningInWebView}, NativeCamera=${nativeCameraAvailable}`);
-  }, [runningInWebView, nativeCameraAvailable, step.id]);
 
   // Checkbox logic
   const handleCheck = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,49 +97,29 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
     setUploadError(null);
     setIsCapturing(true);
     
-    console.log(`Starting photo capture for step ${step.id}`);
-    sendDebugLog('TaskStep', `Starting photo capture for step ${step.id}`);
-    
-    // Log whether we're using AndroidCamera or file input
-    if (runningInWebView && nativeCameraAvailable) {
-      console.log('Will use Android native camera bridge');
-      sendDebugLog('Camera', 'Using native Android camera bridge');
-    } else {
-      console.log('Will use file input for camera capture');
-      sendDebugLog('Camera', 'Using file input for camera capture');
-    }
-    
     try {
       // Try using Android native camera first if available
       let file = null;
       
       // First try native camera if available
       if (runningInWebView && nativeCameraAvailable) {
-        console.log('Using Android native camera bridge');
-        sendDebugLog('Camera', 'Using Android native camera bridge for step photo');
         file = await capturePhotoWithAndroid();
       }
       
       // If native camera didn't work or isn't available, fall back to standard approach
       if (!file) {
-        console.log('Native camera unavailable or failed, using standard camera capture');
-        sendDebugLog('Camera', 'Using standard file input for step photo');
         file = await getImageFromCamera();
       }
-      
-      console.log(`Camera capture result:`, file ? `File received (${file.size} bytes)` : 'No file received');
       
       // If we got a file back from the camera
       if (file && file.size > 0) {
         try {
           // Create an immediate preview from the file
           const localPreviewUrl = URL.createObjectURL(file);
-          console.log(`Local preview URL created: ${localPreviewUrl}`);
           setPhotoPreview(localPreviewUrl);
           
           // Notify the parent about the photo (actual upload happens in parent)
           if (onAddPhoto) {
-            console.log(`Calling onAddPhoto for step ${step.id}`);
             await onAddPhoto(step.id, localPreviewUrl);
             
             toast({
@@ -171,7 +139,6 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
         }
       } else if (file && file.size === 0) {
         // Empty file - likely a WebView issue
-        console.error('Camera returned empty file');
         setUploadError("Camera returned an empty image. Please try again.");
         
         toast({
@@ -181,14 +148,7 @@ const TaskStep = ({ step, onComplete, onAddComment, onAddPhoto, isTaskCompleted 
         });
       } else {
         // No file received - user cancelled or WebView issue
-        console.log('No file received from camera');
         setUploadError("No photo was captured. Please try again.");
-        
-        toast({
-          title: "No photo",
-          description: "No photo was captured. Please try again.",
-          variant: "destructive"
-        });
       }
     } catch (error) {
       console.error('Camera capture error:', error);
