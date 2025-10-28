@@ -24,9 +24,8 @@ const Settings = () => {
   const { t } = useTranslation();
 
   useEffect(() => {
-    const isDarkMode = localStorage.getItem('darkMode') === 'true' || 
-                      (!('darkMode' in localStorage) && 
-                       window.matchMedia('(prefers-color-scheme: dark)').matches);
+    // Only enable dark mode if explicitly set to true
+    const isDarkMode = localStorage.getItem('darkMode') === 'true';
     
     setDarkMode(isDarkMode);
     
