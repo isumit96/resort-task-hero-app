@@ -8,8 +8,8 @@ const initializeDarkMode = () => {
   // Get value directly from localStorage instead of checking repeatedly
   const darkModeValue = localStorage.getItem('darkMode');
   
-  if (darkModeValue === 'true' || 
-     (!darkModeValue && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+  // Only enable dark mode if explicitly set to true
+  if (darkModeValue === 'true') {
     document.documentElement.classList.add('dark');
   }
 };
