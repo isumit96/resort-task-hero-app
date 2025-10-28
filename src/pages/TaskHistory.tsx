@@ -147,7 +147,7 @@ const TaskHistory = () => {
     <div className="h-screen flex flex-col bg-background">
       <Header title={t('navigation.history')} showBackButton={false} />
       
-      <div className="flex-1 overflow-y-auto px-4 py-4 pb-20">
+      <div className="flex-1 overflow-y-auto px-4 py-4 pb-20 max-w-2xl mx-auto w-full">
         {!tasks?.length ? (
           <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
             <p className="text-lg font-medium">{t('tasks.noCompletedTasks')}</p>
